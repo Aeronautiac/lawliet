@@ -1,3 +1,3 @@
-pub type ID = u64;
+pub type ID = usize;
 pub type Timestamp = u64;
-pub type SequenceNumber = u64;
+pub type SequenceNumber = usize;

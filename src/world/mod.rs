@@ -1,3 +1,5 @@
+use crate::action::ActionResult;
+
 pub struct World {
     pub blackout: bool,
     pub actors: Vec<crate::actor::Actor>,
