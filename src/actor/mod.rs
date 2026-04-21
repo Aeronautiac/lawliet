@@ -14,6 +14,7 @@ use crate::{
         restriction::Restrictions,
         state::{State, States},
     },
+    config::role::{self, Role},
 };
 use restriction::{Restriction, Source};
 
@@ -34,13 +35,13 @@ pub struct Actor {
 }
 
 impl Actor {
-    pub fn new_player() -> Self {
+    pub fn new_player(true_name: String, role: Role) -> Self {
         Actor {
             abilities: vec![],
             kills: vec![],
             restrictions: BTreeMap::new(),
             states: States::empty(),
-            actor_type: ActorType::Player(Player::new()),
+            actor_type: ActorType::Player(Player::new(true_name, role)),
         }
     }
 
@@ -62,7 +63,7 @@ impl Actor {
         self.restrictions.remove(&source);
     }
 
-    pub fn has_restriction(&mut self, restriction: Restriction) -> bool {
+    pub fn has_restriction(&self, restriction: Restriction) -> bool {
         let mut restrictions = Restrictions::empty();
         for restrict in self.restrictions.values() {
             restrictions |= *restrict;

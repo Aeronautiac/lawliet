@@ -1,23 +1,17 @@
+use enum_dispatch::enum_dispatch;
+
 use crate::{
     ID,
-    action::{add_states::*, kill::*, revive::*},
-    actor::Actor,
+    action::{add_player::*, add_states::*, command::*, kill::*, revive::*},
+    actor::{Actor, ActorType},
     engine::Engine,
 };
 
+pub mod add_player;
 pub mod add_states;
+pub mod command;
 pub mod kill;
 pub mod revive;
-
-// command the frontend
-pub enum Command {
-    AnnounceDeath {},
-}
-
-pub enum ResponseData {
-    Kill(KillData),
-    AddState(AddStateData),
-}
 
 pub struct ActionResponse {
     pub commands: Vec<Command>,
@@ -25,19 +19,36 @@ pub struct ActionResponse {
     pub data: ResponseData,
 }
 
+#[derive(Debug)]
 pub enum ActionError {
     ActorNotFound,
     ActorIsDead,
     InsufficientPermissions,
+    ActorIsNotPlayer,
+    NameNotUnique,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
 
+#[enum_dispatch]
+pub trait ActionInterface {
+    fn validate(&self, eng: &Engine, actor: &ActionActor) -> Result<(), ActionError>;
+    fn execute(self, eng: &mut Engine, actor: &ActionActor) -> ActionResponse; // consumes the action
+}
+
 #[derive(PartialEq, Eq, Clone)]
+#[enum_dispatch(ActionInterface)]
 pub enum Action {
-    AddState(AddStateArgs),
-    Kill(KillArgs),
-    Revive(ReviveArgs),
+    Kill(Kill),
+    AddState(AddState),
+    Revive(Revive),
+    AddPlayer(AddPlayer),
+}
+
+pub enum ResponseData {
+    Kill(KillResponse),
+    AddState(AddStateResponse),
+    AddPlayer(AddPlayerResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -64,19 +75,29 @@ impl ActionActor {
     }
 }
 
-pub fn get_actor(eng: &mut Engine, actor_id: ID) -> Result<&mut Actor, ActionError> {
+pub fn get_actor(eng: &Engine, actor_id: ID) -> Result<&Actor, ActionError> {
     let target = eng
         .world
         .actors
-        .get_mut(actor_id)
+        .get(&actor_id)
         .ok_or(ActionError::ActorNotFound)?;
     Ok(target)
 }
 
-pub fn action_dispatch(eng: &mut Engine, request: ActionRequest) -> ActionResult {
-    match request.payload {
-        Action::AddState(args) => add_state(eng, request.actor, args),
-        Action::Kill(args) => kill(eng, request.actor, args),
-        Action::Revive(args) => unimplemented!(),
+pub fn get_actor_mut(eng: &mut Engine, actor_id: ID) -> Result<&mut Actor, ActionError> {
+    let target = eng
+        .world
+        .actors
+        .get_mut(&actor_id)
+        .ok_or(ActionError::ActorNotFound)?;
+    Ok(target)
+}
+
+pub fn require_player(eng: &Engine, actor_id: ID) -> Result<(), ActionError> {
+    let target = get_actor(eng, actor_id)?;
+    if !matches!(target.actor_type, ActorType::Player(_)) {
+        Err(ActionError::ActorIsNotPlayer)
+    } else {
+        Ok(())
     }
 }

@@ -1,4 +1,5 @@
-use crate::action::{ActionActor, ActionRequest, ActionResult, Command, action_dispatch};
+use crate::action::command::Command;
+use crate::action::{ActionActor, ActionInterface, ActionRequest, ActionResult, command};
 use crate::common::SequenceNumber;
 use crate::config::Config;
 use crate::world::World;
@@ -9,6 +10,9 @@ use std::collections::BinaryHeap;
 struct Job {
     pub seq_num: SequenceNumber,
     pub request: ActionRequest,
+    pub cancelled: bool, // instead of a cancelled flag and weird logic to set it while it is in the
+                         // heap, there should instead be a set of "waiting jobs" based on sequence number. to cancel a
+                         // job, just remove it from the set. the engine will check if its in the set before executing.
 }
 
 impl Ord for Job {
@@ -44,10 +48,11 @@ impl Engine {
         }
     }
 
-    pub fn schedule(&mut self, request: ActionRequest) {
+    fn schedule(&mut self, request: ActionRequest) {
         let job = Job {
             seq_num: self.job_seq_num,
             request,
+            cancelled: false,
         };
         self.jobs.push(job);
         self.job_seq_num += 1;
@@ -55,17 +60,21 @@ impl Engine {
 
     // execute an action and the chain that follows
     // any sub-actions returned by top-level actions are assumed to be possible to execute by the system.
-    // the chain will stop on failure, so ensure that validation is done on the top level to prevent
-    // half-states.
-    pub fn execute_chain(&mut self, action: ActionRequest) -> ActionResult {
+    // the chain will crash on failure if the action is not top-level. this is to prevent invalid
+    // states which can potentially ruin the game.
+    // overflows are a non-issue. no action creates large enough of a chain to overflow the stack.
+    fn execute_chain(&mut self, action: ActionRequest) -> ActionResult {
         let timestamp = action.timestamp;
-        let mut top_response = action_dispatch(self, action)?;
+        action.payload.validate(self, &action.actor)?;
+        let mut top_response = action.payload.execute(self, &action.actor);
         for next_action in &mut top_response.next_actions {
-            let mut bottom_response = self.execute_chain(ActionRequest {
-                actor: ActionActor::System,
-                timestamp,
-                payload: next_action.clone(),
-            })?;
+            let mut bottom_response = self
+                .execute_chain(ActionRequest {
+                    actor: ActionActor::System,
+                    timestamp,
+                    payload: next_action.clone(),
+                })
+                .unwrap(); // crash on sub-action failure
             top_response.commands.append(&mut bottom_response.commands);
         }
         Ok(top_response)
@@ -78,22 +87,24 @@ impl Engine {
     // return only top level result (with the combined command buffer)
     pub fn execute(&mut self, action: ActionRequest) -> ActionResult {
         let mut commands: Vec<Command> = vec![];
-        let mut earlier_actions: Vec<ActionRequest> = vec![];
 
         // first execute pending jobs
-        while !self.jobs.is_empty() {
-            if self.jobs.peek().unwrap().request.timestamp > action.timestamp {
+        loop {
+            if self.jobs.is_empty() {
                 break;
             }
-            let pending_action = self.jobs.pop().unwrap().request;
-            earlier_actions.push(pending_action);
-        }
+            let job = self.jobs.peek().unwrap();
+            if job.cancelled {
+                self.jobs.pop();
+                continue;
+            }
+            if job.request.timestamp > action.timestamp {
+                break;
+            }
 
-        // ignore the errors of scheduled jobs. only append their commands if successful.
-        // later a situation might arise where errors themselves give commands to the front-end (for
-        // example, an execution failing because the person died), but for now ignore that and focus on main game functionality
-        for act in earlier_actions {
-            if let Ok(mut job_response) = self.execute_chain(act) {
+            // ignore the errors of scheduled jobs. only append their commands if successful.
+            let pending_action = self.jobs.pop().unwrap().request;
+            if let Ok(mut job_response) = self.execute_chain(pending_action) {
                 commands.append(&mut job_response.commands);
             }
         }
