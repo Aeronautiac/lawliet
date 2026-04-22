@@ -1,3 +1,8 @@
+/*
+* SYSTEM ACTION
+* Kill a player and handle side effects
+*/
+
 use crate::{
     ID,
     action::{
@@ -8,10 +13,6 @@ use crate::{
     config::role::Role,
     engine::Engine,
 };
-
-/*
-* Kill a player and handle side effects
-*/
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct KillResponse {}
@@ -55,11 +56,11 @@ impl ActionInterface for Kill {
 
         ActionResponse {
             commands: vec![Command::AnnounceDeath {
-                true_name,
+                true_name: String::from(&*true_name),
                 death_message: if let Some(msg) = self.death_message {
                     msg
                 } else {
-                    String::from("They died from a heart attack...")
+                    String::from("Placeholder death message")
                 },
                 role: Role::Civilian,
                 had_notebook: false,

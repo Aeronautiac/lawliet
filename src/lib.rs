@@ -83,14 +83,14 @@ mod tests {
     fn add_player(
         eng: &mut Engine,
         timestamp: Timestamp,
-        true_name: String,
+        true_name: &str,
         starting_role: Role,
     ) -> ActionResult {
         eng.execute(ActionRequest {
             timestamp,
             actor: ActionActor::System,
             payload: Action::AddPlayer(AddPlayer {
-                true_name,
+                true_name: String::from(true_name),
                 starting_role,
             }),
         })
@@ -125,8 +125,7 @@ mod tests {
     fn test_add_single_player() {
         let mut eng = Engine::new();
 
-        let john_result =
-            add_player(&mut eng, 0, String::from("John Pork"), Role::NewsAnchor).unwrap();
+        let john_result = add_player(&mut eng, 0, "John Pork", Role::NewsAnchor).unwrap();
         let response_data = player_response_data(john_result.data);
         assert!(eng.world.actors.contains_key(&response_data.id));
 
@@ -135,7 +134,7 @@ mod tests {
         else {
             unreachable!();
         };
-        assert!(player.true_name == "John Pork");
+        assert!(&*player.true_name == "john pork");
         assert!(player.role == Role::NewsAnchor);
     }
 
@@ -143,12 +142,11 @@ mod tests {
     fn add_duplicate_player() {
         let mut eng = Engine::new();
 
-        let john_result =
-            add_player(&mut eng, 0, String::from("John Pork"), Role::NewsAnchor).unwrap();
+        let john_result = add_player(&mut eng, 0, "John Pork", Role::NewsAnchor).unwrap();
         let response_data = player_response_data(john_result.data);
 
         // adding another player with the same true name should error
-        let second_result = add_player(&mut eng, 0, String::from("John Pork"), Role::Poser);
+        let second_result = add_player(&mut eng, 0, "John Pork", Role::Poser);
         assert!(second_result.is_err());
 
         // ensure that the data didn't change
@@ -157,7 +155,7 @@ mod tests {
         else {
             unreachable!();
         };
-        assert!(player.true_name == "John Pork");
+        assert!(&*player.true_name == "john pork");
         assert!(player.role == Role::NewsAnchor);
     }
 
@@ -166,8 +164,7 @@ mod tests {
     fn kill_player() {
         let mut eng = Engine::new();
 
-        let john_result =
-            add_player(&mut eng, 0, String::from("John Pork"), Role::NewsAnchor).unwrap();
+        let john_result = add_player(&mut eng, 0, "John Pork", Role::NewsAnchor).unwrap();
         let response_data = player_response_data(john_result.data);
         assert!(
             !eng.world
@@ -183,7 +180,7 @@ mod tests {
             0,
             response_data.id,
             None,
-            Some(String::from("Heart attack...")),
+            Some("Heart attack...".to_string()),
         )
         .unwrap();
         assert!(

@@ -1,14 +1,31 @@
-use std::collections::BTreeMap;
+use std::{
+    collections::{BTreeMap, btree_map::Entry},
+    rc::Rc,
+};
 
-use crate::{ID, actor::Actor};
+#[derive(Debug)]
+pub enum WorldError {
+    DuplicateName,
+}
 
-// BTreeMaps for determinism and system stability with add and remove operations
-// O(logn), so operations are essentially constant time at any scale that matters
+use crate::{
+    ID,
+    ability::Ability,
+    actor::{Actor, ActorType, Player},
+    config::role::Role,
+    notebook::Notebook,
+};
+
+#[derive(Debug)]
 pub struct World {
     pub blackout: bool,
-    pub actors: BTreeMap<ID, crate::actor::Actor>,
-    pub abilities: BTreeMap<ID, crate::ability::Ability>,
+    pub actors: BTreeMap<ID, Actor>,
+    pub player_names: BTreeMap<Rc<str>, ID>, // a map of true names to actor ids
+    pub abilities: BTreeMap<ID, Ability>,
+    pub notebooks: BTreeMap<ID, Notebook>,
     next_actor_id: ID,
+    next_notebook_id: ID,
+    next_ability_id: ID,
 }
 
 impl World {
@@ -17,7 +34,11 @@ impl World {
             blackout: false,
             actors: BTreeMap::new(),
             abilities: BTreeMap::new(),
+            notebooks: BTreeMap::new(),
+            player_names: BTreeMap::new(),
             next_actor_id: 0,
+            next_notebook_id: 0,
+            next_ability_id: 0,
         }
     }
 
@@ -26,5 +47,68 @@ impl World {
         self.next_actor_id += 1;
         self.actors.insert(id, actor);
         id
+    }
+
+    pub fn get_actor(&self, id: ID) -> Option<&Actor> {
+        self.actors.get(&id)
+    }
+
+    pub fn actor_mut(&mut self, id: ID) -> Option<&mut Actor> {
+        self.actors.get_mut(&id)
+    }
+
+    pub fn get_player_mut(&mut self, id: ID) -> Option<&mut Player> {
+        if let Some(actor) = self.actors.get_mut(&id) {
+            if let ActorType::Player(player) = &mut actor.actor_type {
+                Some(player)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn get_player(&self, id: ID) -> Option<&Player> {
+        if let Some(actor) = self.actors.get(&id) {
+            if let ActorType::Player(player) = &actor.actor_type {
+                Some(player)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn get_player_id_by_name(&self, name: &str) -> Option<ID> {
+        self.player_names.get(name.to_lowercase().as_str()).copied()
+    }
+
+    pub fn add_player(&mut self, true_name: &str, role: Role) -> Result<ID, WorldError> {
+        let id = self.add_actor(Actor::new_player(&true_name.to_lowercase(), role));
+        let name = self.get_player_mut(id).unwrap().true_name.clone();
+        match self.player_names.entry(name) {
+            Entry::Vacant(e) => {
+                e.insert(id);
+                Ok(id)
+            }
+            Entry::Occupied(_) => Err(WorldError::DuplicateName),
+        }
+    }
+
+    pub fn add_notebook(&mut self, fake: bool) -> ID {
+        let id = self.next_notebook_id;
+        self.next_notebook_id += 1;
+        self.notebooks.insert(id, Notebook::new(fake));
+        id
+    }
+
+    pub fn get_notebook_mut(&mut self, id: ID) -> Option<&mut Notebook> {
+        self.notebooks.get_mut(&id)
+    }
+
+    pub fn get_notebook(&self, id: ID) -> Option<&Notebook> {
+        self.notebooks.get(&id)
     }
 }

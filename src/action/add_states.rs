@@ -1,3 +1,8 @@
+/*
+* SYSTEM ACTION
+* Add states and any associated restrictions found in engine config to an actor
+*/
+
 use crate::{
     ID,
     action::{
@@ -7,10 +12,6 @@ use crate::{
     actor::state::State,
     engine::Engine,
 };
-
-/*
-* Add states and any associated restrictions found in engine config
-*/
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct AddStateResponse {}

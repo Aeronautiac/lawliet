@@ -2,16 +2,32 @@ use enum_dispatch::enum_dispatch;
 
 use crate::{
     ID,
-    action::{add_player::*, add_states::*, command::*, kill::*, revive::*},
+    action::{
+        add_notebook::{AddNotebook, AddNotebookResponse},
+        add_player::*,
+        add_states::*,
+        command::*,
+        give_notebook::{GiveNotebook, GiveNotebookResponse},
+        kill::*,
+        lend_notebook::{LendNotebook, LendNotebookResponse},
+        revive::*,
+        schedule_job::{ScheduleJob, ScheduleJobResponse},
+        write_name::{WriteName, WriteNameResponse},
+    },
     actor::{Actor, ActorType},
     engine::Engine,
 };
 
+pub mod add_notebook;
 pub mod add_player;
 pub mod add_states;
 pub mod command;
+pub mod give_notebook;
 pub mod kill;
+pub mod lend_notebook;
 pub mod revive;
+pub mod schedule_job;
+pub mod write_name;
 
 pub struct ActionResponse {
     pub commands: Vec<Command>,
@@ -26,6 +42,12 @@ pub enum ActionError {
     InsufficientPermissions,
     ActorIsNotPlayer,
     NameNotUnique,
+    NotebookNotFound,
+    NotebookNotOwned,
+    NotebookUsageBlocked, // later have it hold a vector of reasons/states
+    NotebookPassageBlocked,
+    NotebookOnCooldown,
+    TimestampAlreadyPassed,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -43,12 +65,22 @@ pub enum Action {
     AddState(AddState),
     Revive(Revive),
     AddPlayer(AddPlayer),
+    AddNotebook(AddNotebook),
+    GiveNotebook(GiveNotebook),
+    WriteName(WriteName),
+    LendNotebook(LendNotebook),
+    ScheduleJob(ScheduleJob),
 }
 
 pub enum ResponseData {
     Kill(KillResponse),
     AddState(AddStateResponse),
     AddPlayer(AddPlayerResponse),
+    AddNotebook(AddNotebookResponse),
+    GiveNotebook(GiveNotebookResponse),
+    WriteName(WriteNameResponse),
+    LendNotebook(LendNotebookResponse),
+    ScheduleJob(ScheduleJobResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -71,6 +103,14 @@ impl ActionActor {
             Ok(())
         } else {
             Err(ActionError::InsufficientPermissions)
+        }
+    }
+
+    pub fn player_only(&self) -> Result<(), ActionError> {
+        if matches!(self, ActionActor::Player(_)) {
+            Ok(())
+        } else {
+            Err(ActionError::ActorIsNotPlayer)
         }
     }
 }
@@ -99,5 +139,13 @@ pub fn require_player(eng: &Engine, actor_id: ID) -> Result<(), ActionError> {
         Err(ActionError::ActorIsNotPlayer)
     } else {
         Ok(())
+    }
+}
+
+pub fn actor_id(actor: &ActionActor) -> Option<ID> {
+    match actor {
+        ActionActor::System => None,
+        ActionActor::Player(id) => Some(*id),
+        ActionActor::Organization(id) => Some(*id),
     }
 }

@@ -1,14 +1,17 @@
+use std::rc::Rc;
+
 use crate::config::role::Role;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct Player {
     pub role: Role,
-    pub true_name: String,
+    pub true_name: Rc<str>,
     pub eyes: u32,
 }
 
 impl Player {
-    pub fn new(true_name: String, role: Role) -> Self {
+    pub fn new(name: &str, role: Role) -> Self {
+        let true_name = Rc::from(name);
         Player {
             role,
             true_name,

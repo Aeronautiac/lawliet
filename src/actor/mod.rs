@@ -14,18 +14,18 @@ use crate::{
         restriction::Restrictions,
         state::{State, States},
     },
-    config::role::{self, Role},
+    config::role::Role,
 };
 use restriction::{Restriction, Source};
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum ActorType {
     System,
     Org(Organization),
     Player(Player),
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct Actor {
     pub abilities: Vec<ID>,
     pub kills: Vec<ID>,
@@ -35,7 +35,7 @@ pub struct Actor {
 }
 
 impl Actor {
-    pub fn new_player(true_name: String, role: Role) -> Self {
+    pub fn new_player(true_name: &str, role: Role) -> Self {
         Actor {
             abilities: vec![],
             kills: vec![],

@@ -1,11 +1,11 @@
 /*
+* SYSTEM ACTION
 * Add a new player to the world
 */
 
 use crate::{
     ID,
     action::{ActionActor, ActionError, ActionInterface, ActionResponse, ResponseData},
-    actor::{Actor, ActorType},
     config::role::Role,
     engine::Engine,
 };
@@ -25,27 +25,18 @@ pub struct AddPlayer {
 impl ActionInterface for AddPlayer {
     fn validate(&self, eng: &Engine, actor: &ActionActor) -> Result<(), ActionError> {
         actor.require_system()?;
-        // check if name is unique (player insertion is O(n) - this can likely be optimized through
-        // usage of a name set or similar)
-        for player in eng.world.actors.values() {
-            if !matches!(player.actor_type, ActorType::Player(_)) {
-                continue;
-            }
-            let ActorType::Player(player_data) = &player.actor_type else {
-                unreachable!()
-            };
-            if self.true_name == player_data.true_name {
-                return Err(ActionError::NameNotUnique);
-            }
+        if eng.world.get_player_id_by_name(&self.true_name).is_some() {
+            return Err(ActionError::NameNotUnique);
         }
         Ok(())
     }
 
     // add player actor to the world, return the actor id
-    fn execute(self, eng: &mut Engine, actor: &ActionActor) -> ActionResponse {
+    fn execute(self, eng: &mut Engine, _: &ActionActor) -> ActionResponse {
         let id = eng
             .world
-            .add_actor(Actor::new_player(self.true_name, self.starting_role));
+            .add_player(&self.true_name, self.starting_role)
+            .unwrap();
         ActionResponse {
             commands: vec![],
             next_actions: vec![],

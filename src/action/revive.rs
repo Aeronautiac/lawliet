@@ -1,12 +1,13 @@
+/*
+* SYSTEM ACTION
+* Revive a dead player
+*/
+
 use crate::{
     ID,
     action::{ActionActor, ActionError, ActionInterface, ActionResponse},
     engine::Engine,
 };
-
-/*
-* Revive a dead player
-*/
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct ReviveResponse {}

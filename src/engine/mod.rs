@@ -1,3 +1,4 @@
+use crate::Timestamp;
 use crate::action::command::Command;
 use crate::action::{ActionActor, ActionInterface, ActionRequest, ActionResult, command};
 use crate::common::SequenceNumber;
@@ -10,9 +11,6 @@ use std::collections::BinaryHeap;
 struct Job {
     pub seq_num: SequenceNumber,
     pub request: ActionRequest,
-    pub cancelled: bool, // instead of a cancelled flag and weird logic to set it while it is in the
-                         // heap, there should instead be a set of "waiting jobs" based on sequence number. to cancel a
-                         // job, just remove it from the set. the engine will check if its in the set before executing.
 }
 
 impl Ord for Job {
@@ -34,6 +32,7 @@ impl PartialOrd for Job {
 pub struct Engine {
     pub world: World,
     pub config: Config,
+    pub time: Timestamp,
     jobs: BinaryHeap<Job>,
     job_seq_num: SequenceNumber,
 }
@@ -44,6 +43,7 @@ impl Engine {
             world: World::new(),
             config: Config::new(),
             jobs: BinaryHeap::new(),
+            time: 0,
             job_seq_num: 0,
         }
     }
@@ -52,7 +52,6 @@ impl Engine {
         let job = Job {
             seq_num: self.job_seq_num,
             request,
-            cancelled: false,
         };
         self.jobs.push(job);
         self.job_seq_num += 1;
@@ -66,6 +65,7 @@ impl Engine {
     fn execute_chain(&mut self, action: ActionRequest) -> ActionResult {
         let timestamp = action.timestamp;
         action.payload.validate(self, &action.actor)?;
+        self.time = timestamp;
         let mut top_response = action.payload.execute(self, &action.actor);
         for next_action in &mut top_response.next_actions {
             let mut bottom_response = self
@@ -94,10 +94,6 @@ impl Engine {
                 break;
             }
             let job = self.jobs.peek().unwrap();
-            if job.cancelled {
-                self.jobs.pop();
-                continue;
-            }
             if job.request.timestamp > action.timestamp {
                 break;
             }
