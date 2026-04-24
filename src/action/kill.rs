@@ -6,10 +6,12 @@
 use crate::{
     ID,
     action::{
-        ActionActor, ActionError, ActionInterface, ActionResponse, Command, ResponseData,
-        add_states::state_addition, get_actor, require_player,
+        Action, ActionActor, ActionInterface, ActionResponse, ActionResult, Command, ResponseData,
+        add_state::state_addition, get_actor, get_actor_mut, give_notebook::GiveNotebook,
+        require_alive,
     },
     actor::{ActorType, state::State},
+    common::Version,
     config::role::Role,
     engine::Engine,
 };
@@ -25,48 +27,57 @@ pub struct Kill {
 }
 
 impl ActionInterface for Kill {
-    fn validate(&self, eng: &Engine, actor: &ActionActor) -> Result<(), ActionError> {
+    fn handle(
+        &mut self,
+        eng: &mut Engine,
+        actor: &ActionActor,
+        _: Version,
+        mutate: bool,
+    ) -> ActionResult {
         actor.require_system()?;
-        require_player(eng, self.target_id)?;
+        require_alive(eng, self.target_id)?;
 
         let target = get_actor(eng, self.target_id)?;
-        if target.states.contains(State::Dead) {
-            return Err(ActionError::ActorIsDead);
-        }
-
-        if let Some(killer_id) = self.killer_id {
-            get_actor(eng, killer_id)?;
-        }
-
-        Ok(())
-    }
-
-    fn execute(self, eng: &mut Engine, actor: &ActionActor) -> ActionResponse {
-        let target = get_actor(eng, self.target_id).unwrap();
         let ActorType::Player(target_data) = &target.actor_type else {
             unreachable!()
         };
         let true_name = target_data.true_name.clone();
 
-        // handle stuff like ability transfers, notebook transfers, etc...
         let mut next_actions = vec![state_addition(self.target_id, State::Dead)];
         if let Some(killer_id) = self.killer_id {
-            let killer = get_actor(eng, killer_id).unwrap();
+            let killer = get_actor_mut(eng, killer_id)?;
+
+            if mutate {
+                killer.kills.push(self.target_id);
+            }
+
+            // notebook transfers
+            for (id, notebook) in eng.world.notebooks.iter() {
+                if let Some(owner) = notebook.owner
+                    && owner == self.target_id
+                    && !notebook.is_owner_borrowing()
+                {
+                    next_actions.push(Action::GiveNotebook(GiveNotebook {
+                        notebook_id: *id,
+                        actor_id: killer_id,
+                    }));
+                };
+            }
         }
 
-        ActionResponse {
+        Ok(ActionResponse {
             commands: vec![Command::AnnounceDeath {
                 true_name: String::from(&*true_name),
-                death_message: if let Some(msg) = self.death_message {
-                    msg
+                death_message: if let Some(msg) = &self.death_message {
+                    msg.clone()
                 } else {
-                    String::from("Placeholder death message")
+                    String::from("Placeholder default")
                 },
                 role: Role::Civilian,
                 had_notebook: false,
             }],
             next_actions,
             data: ResponseData::Kill(KillResponse {}),
-        }
+        })
     }
 }

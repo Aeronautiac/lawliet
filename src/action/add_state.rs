@@ -6,10 +6,11 @@
 use crate::{
     ID,
     action::{
-        Action, ActionActor, ActionError, ActionInterface, ActionResponse, ResponseData, get_actor,
+        Action, ActionActor, ActionInterface, ActionResponse, ActionResult, ResponseData,
         get_actor_mut,
     },
     actor::state::State,
+    common::Version,
     engine::Engine,
 };
 
@@ -27,13 +28,15 @@ pub fn state_addition(actor_id: ID, state: State) -> Action {
 }
 
 impl ActionInterface for AddState {
-    fn validate(&self, eng: &Engine, actor: &ActionActor) -> Result<(), ActionError> {
+    fn handle(
+        &mut self,
+        eng: &mut Engine,
+        actor: &ActionActor,
+        _: Version,
+        mutate: bool,
+    ) -> ActionResult {
         actor.require_system()?;
-        get_actor(eng, self.actor_id)?;
-        Ok(())
-    }
 
-    fn execute(self, eng: &mut Engine, actor: &ActionActor) -> ActionResponse {
         let restrictions = eng
             .config
             .state_restrictions
@@ -41,13 +44,15 @@ impl ActionInterface for AddState {
             .cloned()
             .unwrap_or_default();
 
-        let target = get_actor_mut(eng, self.actor_id).unwrap();
-        target.add_state(self.state, restrictions);
+        let target = get_actor_mut(eng, self.actor_id)?;
+        if mutate {
+            target.add_state(self.state, restrictions);
+        }
 
-        ActionResponse {
+        Ok(ActionResponse {
             commands: vec![],
             next_actions: vec![],
             data: ResponseData::AddState(AddStateResponse {}),
-        }
+        })
     }
 }

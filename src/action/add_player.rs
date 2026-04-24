@@ -5,7 +5,10 @@
 
 use crate::{
     ID,
-    action::{ActionActor, ActionError, ActionInterface, ActionResponse, ResponseData},
+    action::{
+        ActionActor, ActionError, ActionInterface, ActionResponse, ActionResult, ResponseData,
+    },
+    common::Version,
     config::role::Role,
     engine::Engine,
 };
@@ -23,24 +26,31 @@ pub struct AddPlayer {
 }
 
 impl ActionInterface for AddPlayer {
-    fn validate(&self, eng: &Engine, actor: &ActionActor) -> Result<(), ActionError> {
+    fn handle(
+        &mut self,
+        eng: &mut Engine,
+        actor: &ActionActor,
+        _: Version,
+        mutate: bool,
+    ) -> ActionResult {
         actor.require_system()?;
+
         if eng.world.get_player_id_by_name(&self.true_name).is_some() {
             return Err(ActionError::NameNotUnique);
         }
-        Ok(())
-    }
 
-    // add player actor to the world, return the actor id
-    fn execute(self, eng: &mut Engine, _: &ActionActor) -> ActionResponse {
-        let id = eng
-            .world
-            .add_player(&self.true_name, self.starting_role)
-            .unwrap();
-        ActionResponse {
+        let id = if mutate {
+            eng.world
+                .add_player(&self.true_name, self.starting_role.clone())
+                .unwrap()
+        } else {
+            0
+        };
+
+        Ok(ActionResponse {
             commands: vec![],
             next_actions: vec![],
             data: ResponseData::AddPlayer(AddPlayerResponse { id }),
-        }
+        })
     }
 }

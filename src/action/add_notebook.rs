@@ -5,7 +5,8 @@
 
 use crate::{
     ID,
-    action::{ActionActor, ActionError, ActionInterface, ActionResponse, ResponseData},
+    action::{ActionActor, ActionInterface, ActionResponse, ActionResult, ResponseData},
+    common::Version,
     engine::Engine,
 };
 
@@ -16,21 +17,29 @@ pub struct AddNotebookResponse {
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct AddNotebook {
-    fake: bool,
+    pub fake: bool,
 }
 
 impl ActionInterface for AddNotebook {
-    fn validate(&self, _: &Engine, actor: &ActionActor) -> Result<(), ActionError> {
+    fn handle(
+        &mut self,
+        eng: &mut Engine,
+        actor: &ActionActor,
+        _: Version,
+        mutate: bool,
+    ) -> ActionResult {
         actor.require_system()?;
-        Ok(())
-    }
 
-    fn execute(self, eng: &mut Engine, _: &ActionActor) -> ActionResponse {
-        let id = eng.world.add_notebook(self.fake);
-        ActionResponse {
+        let id = if mutate {
+            eng.world.add_notebook(self.fake)
+        } else {
+            0
+        };
+
+        Ok(ActionResponse {
             commands: vec![],
             next_actions: vec![],
             data: ResponseData::AddNotebook(AddNotebookResponse { id }),
-        }
+        })
     }
 }

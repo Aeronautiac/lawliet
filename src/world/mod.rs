@@ -53,7 +53,7 @@ impl World {
         self.actors.get(&id)
     }
 
-    pub fn actor_mut(&mut self, id: ID) -> Option<&mut Actor> {
+    pub fn get_actor_mut(&mut self, id: ID) -> Option<&mut Actor> {
         self.actors.get_mut(&id)
     }
 

@@ -6,8 +6,10 @@
 use crate::{
     ID,
     action::{
-        ActionActor, ActionError, ActionInterface, ActionResponse, ResponseData, require_player,
+        ActionActor, ActionError, ActionInterface, ActionResponse, ActionResult, ResponseData,
+        require_player,
     },
+    common::Version,
     engine::Engine,
 };
 
@@ -16,27 +18,35 @@ pub struct GiveNotebookResponse {}
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct GiveNotebook {
-    notebook_id: ID,
-    actor_id: ID,
+    pub notebook_id: ID,
+    pub actor_id: ID,
 }
 
 impl ActionInterface for GiveNotebook {
-    fn validate(&self, eng: &Engine, actor: &ActionActor) -> Result<(), ActionError> {
+    fn handle(
+        &mut self,
+        eng: &mut Engine,
+        actor: &ActionActor,
+        _: Version,
+        mutate: bool,
+    ) -> ActionResult {
         actor.require_system()?;
         require_player(eng, self.actor_id)?;
-        if eng.world.get_notebook(self.notebook_id).is_none() {
+
+        let notebook = eng.world.get_notebook_mut(self.notebook_id);
+        if notebook.is_none() {
             return Err(ActionError::NotebookNotFound);
         }
-        Ok(())
-    }
+        let notebook = notebook.unwrap();
 
-    fn execute(self, eng: &mut Engine, _: &ActionActor) -> ActionResponse {
-        let notebook = eng.world.get_notebook_mut(self.notebook_id).unwrap();
-        notebook.set_true_owner(self.actor_id);
-        ActionResponse {
+        if mutate {
+            notebook.set_true_owner(self.actor_id);
+        }
+
+        Ok(ActionResponse {
             commands: vec![],
             next_actions: vec![],
             data: ResponseData::GiveNotebook(GiveNotebookResponse {}),
-        }
+        })
     }
 }

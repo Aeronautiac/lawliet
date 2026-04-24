@@ -6,12 +6,13 @@
 use crate::{
     ID,
     action::{
-        Action, ActionActor, ActionError, ActionInterface, ActionResponse, ResponseData, actor_id,
-        kill::Kill, require_player,
+        Action, ActionActor, ActionError, ActionInterface, ActionResponse, ActionResult,
+        ResponseData, actor_id, kill::Kill,
     },
     actor::restriction::Restriction,
+    common::Version,
     engine::Engine,
-    notebook::{Notebook, NotebookError},
+    notebook::NotebookError,
 };
 
 #[derive(Debug)]
@@ -19,29 +20,31 @@ pub struct WriteNameResponse {}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct WriteName {
-    true_name: String,
-    death_message: Option<String>,
-    notebook_id: ID,
+    pub true_name: String,
+    pub death_message: Option<String>,
+    pub notebook_id: ID,
 }
 
 impl ActionInterface for WriteName {
-    // the notebook must exist
-    // the player must own the notebook
-    // the player must not be blocked by a game rule
-    // the player must not have a notebook writing restriction
-    // the number of successes must be < the iteration limit
-    // the number of failures must be < the iteration limit
-    fn validate(&self, eng: &Engine, actor: &ActionActor) -> Result<(), ActionError> {
+    fn handle(
+        &mut self,
+        eng: &mut Engine,
+        actor: &ActionActor,
+        _: Version,
+        mutate: bool,
+    ) -> ActionResult {
         actor.player_only()?;
         let player_id = actor_id(actor).unwrap();
+        let target = eng.world.get_player_id_by_name(&self.true_name);
 
-        let Some(book) = eng.world.get_notebook(self.notebook_id) else {
-            return Err(ActionError::NotebookNotFound);
-        };
-        let player_actor = eng.world.get_actor(player_id).unwrap();
+        let player_actor = eng.world.get_actor_mut(player_id).unwrap();
         if player_actor.has_restriction(Restriction::NotebookUsage) {
             return Err(ActionError::NotebookUsageBlocked);
         }
+
+        let Some(book) = eng.world.get_notebook_mut(self.notebook_id) else {
+            return Err(ActionError::NotebookNotFound);
+        };
 
         // still need to implement game rule blockage
 
@@ -53,36 +56,34 @@ impl ActionInterface for WriteName {
             });
         }
 
-        Ok(())
-    }
+        if let Some(target_id) = target
+            && !book.fake
+        {
+            if mutate {
+                book.on_write_success(player_id);
+            }
 
-    fn execute(self, eng: &mut Engine, actor: &ActionActor) -> ActionResponse {
-        let player_id = actor_id(actor).unwrap();
-        let target = eng.world.get_player_id_by_name(&self.true_name);
-        let book = eng.world.get_notebook_mut(self.notebook_id).unwrap();
-
-        if let Some(target_id) = target {
-            book.on_write_success(player_id);
-
-            ActionResponse {
+            Ok(ActionResponse {
                 commands: vec![], // later tell the frontend to acknowledge the kill or similar. not
                 // important right now as the focus is on working game logic.
                 next_actions: vec![Action::Kill(Kill {
                     target_id,
                     killer_id: Some(player_id),
-                    death_message: self.death_message,
+                    death_message: self.death_message.clone(),
                 })],
                 data: ResponseData::WriteName(WriteNameResponse {}),
-            }
+            })
         } else {
-            book.on_write_failure(player_id);
+            if mutate {
+                book.on_write_failure(player_id);
+            }
 
-            ActionResponse {
+            Ok(ActionResponse {
                 commands: vec![], // tell the frontend to inform the player of the write failure
                 // along with the number of attempts remaining
                 next_actions: vec![],
                 data: ResponseData::WriteName(WriteNameResponse {}),
-            }
+            })
         }
     }
 }

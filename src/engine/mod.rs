@@ -1,6 +1,6 @@
 use crate::Timestamp;
 use crate::action::command::Command;
-use crate::action::{ActionActor, ActionInterface, ActionRequest, ActionResult, command};
+use crate::action::{ActionActor, ActionRequest, ActionResult};
 use crate::common::SequenceNumber;
 use crate::config::Config;
 use crate::world::World;
@@ -48,7 +48,7 @@ impl Engine {
         }
     }
 
-    fn schedule(&mut self, request: ActionRequest) {
+    pub fn schedule(&mut self, request: ActionRequest) {
         let job = Job {
             seq_num: self.job_seq_num,
             request,
@@ -57,27 +57,40 @@ impl Engine {
         self.job_seq_num += 1;
     }
 
-    // execute an action and the chain that follows
-    // any sub-actions returned by top-level actions are assumed to be possible to execute by the system.
-    // the chain will crash on failure if the action is not top-level. this is to prevent invalid
-    // states which can potentially ruin the game.
-    // overflows are a non-issue. no action creates large enough of a chain to overflow the stack.
-    fn execute_chain(&mut self, action: ActionRequest) -> ActionResult {
+    pub fn is_future_timestamp(&self, timestamp: Timestamp) -> bool {
+        timestamp >= self.time
+    }
+
+    fn handle_chain(&mut self, action: &mut ActionRequest, mutate: bool) -> ActionResult {
         let timestamp = action.timestamp;
-        action.payload.validate(self, &action.actor)?;
         self.time = timestamp;
-        let mut top_response = action.payload.execute(self, &action.actor);
+        let mut top_response = if mutate {
+            action.payload.execute(self, &action.actor, 0)
+        } else {
+            action.payload.dry_run(self, &action.actor, 0)
+        }?;
         for next_action in &mut top_response.next_actions {
-            let mut bottom_response = self
-                .execute_chain(ActionRequest {
+            let mut bottom_response = self.handle_chain(
+                &mut ActionRequest {
                     actor: ActionActor::System,
                     timestamp,
                     payload: next_action.clone(),
-                })
-                .unwrap(); // crash on sub-action failure
+                },
+                mutate,
+            )?;
             top_response.commands.append(&mut bottom_response.commands);
         }
         Ok(top_response)
+    }
+
+    // attempt to execute an action and the chain that follows.
+    // first run a validation pass. this will propagate any sub action failures upwards without
+    // modifying game state. after this, run the execution pass. this will crash on failure
+    // (although this should never happen in practice due to the validation pass).
+    // overflows are a non-issue. no action creates large enough of a chain to overflow the stack.
+    fn execute_chain(&mut self, mut action: ActionRequest) -> ActionResult {
+        self.handle_chain(&mut action, false)?;
+        self.handle_chain(&mut action, true)
     }
 
     // store a command buffer

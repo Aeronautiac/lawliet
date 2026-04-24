@@ -5,7 +5,12 @@
 
 use crate::{
     ID,
-    action::{ActionActor, ActionError, ActionInterface, ActionResponse},
+    action::{
+        Action, ActionActor, ActionInterface, ActionResponse, ActionResult, ResponseData,
+        remove_state::RemoveState, require_dead,
+    },
+    actor::state::State,
+    common::Version,
     engine::Engine,
 };
 
@@ -18,11 +23,23 @@ pub struct Revive {
 }
 
 impl ActionInterface for Revive {
-    fn validate(&self, eng: &Engine, actor: &ActionActor) -> Result<(), ActionError> {
-        Ok(())
-    }
+    fn handle(
+        &mut self,
+        eng: &mut Engine,
+        actor: &ActionActor,
+        _: Version,
+        _: bool,
+    ) -> ActionResult {
+        actor.require_system()?;
+        require_dead(eng, self.target_id)?;
 
-    fn execute(self, eng: &mut Engine, actor: &ActionActor) -> ActionResponse {
-        unimplemented!()
+        Ok(ActionResponse {
+            commands: vec![],
+            next_actions: vec![Action::RemoveState(RemoveState {
+                actor_id: self.target_id,
+                state: State::Dead,
+            })],
+            data: ResponseData::Revive(ReviveResponse {}),
+        })
     }
 }

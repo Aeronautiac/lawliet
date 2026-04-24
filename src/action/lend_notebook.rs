@@ -5,8 +5,12 @@
 
 use crate::{
     ID,
-    action::{ActionActor, ActionError, ActionInterface, ActionResponse, ResponseData, actor_id},
+    action::{
+        ActionActor, ActionError, ActionInterface, ActionResponse, ActionResult, ResponseData,
+        actor_id,
+    },
     actor::restriction::Restriction,
+    common::Version,
     engine::Engine,
 };
 
@@ -15,39 +19,42 @@ pub struct LendNotebookResponse {}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LendNotebook {
-    notebook_id: ID,
-    target_id: ID,
+    pub notebook_id: ID,
+    pub target_id: ID,
 }
 
 impl ActionInterface for LendNotebook {
-    fn validate(&self, eng: &Engine, actor: &ActionActor) -> Result<(), ActionError> {
+    fn handle(
+        &mut self,
+        eng: &mut Engine,
+        actor: &ActionActor,
+        _: Version,
+        mutate: bool,
+    ) -> ActionResult {
         actor.player_only()?;
         let player_id = actor_id(actor).unwrap();
-
-        let Some(book) = eng.world.get_notebook(self.notebook_id) else {
-            return Err(ActionError::NotebookNotFound);
-        };
 
         let player_actor = eng.world.get_actor(player_id).unwrap();
         if player_actor.has_restriction(Restriction::NotebookPassage) {
             return Err(ActionError::NotebookPassageBlocked);
         }
 
+        let Some(book) = eng.world.get_notebook_mut(self.notebook_id) else {
+            return Err(ActionError::NotebookNotFound);
+        };
+
         if book.can_lend(player_id).is_err() {
             return Err(ActionError::NotebookNotOwned);
         }
 
-        Ok(())
-    }
+        if mutate {
+            book.lend(self.target_id).unwrap();
+        }
 
-    fn execute(self, eng: &mut Engine, _: &ActionActor) -> ActionResponse {
-        let book = eng.world.get_notebook_mut(self.notebook_id).unwrap();
-        book.lend(self.target_id).unwrap();
-
-        ActionResponse {
+        Ok(ActionResponse {
             commands: vec![],
             next_actions: vec![],
             data: ResponseData::LendNotebook(LendNotebookResponse {}),
-        }
+        })
     }
 }
