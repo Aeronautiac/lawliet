@@ -90,7 +90,11 @@ impl Engine {
     // overflows are a non-issue. no action creates large enough of a chain to overflow the stack.
     fn execute_chain(&mut self, mut action: ActionRequest) -> ActionResult {
         self.handle_chain(&mut action, false)?;
-        self.handle_chain(&mut action, true)
+        let result = self.handle_chain(&mut action, true);
+        result
+            .as_ref()
+            .expect("Validate and execute pass desync detected.");
+        result
     }
 
     // store a command buffer
