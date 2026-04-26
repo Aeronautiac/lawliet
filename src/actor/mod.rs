@@ -27,7 +27,6 @@ pub enum ActorType {
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Actor {
-    pub abilities: Vec<ID>,
     pub kills: Vec<ID>,
     pub restrictions: BTreeMap<Source, Restrictions>,
     pub states: States,
@@ -37,7 +36,6 @@ pub struct Actor {
 impl Actor {
     pub fn new_player(true_name: &str, role: Role) -> Self {
         Actor {
-            abilities: vec![],
             kills: vec![],
             restrictions: BTreeMap::new(),
             states: States::empty(),
@@ -47,7 +45,6 @@ impl Actor {
 
     pub fn new_org() -> Self {
         Actor {
-            abilities: vec![],
             kills: vec![],
             restrictions: BTreeMap::new(),
             states: States::empty(),

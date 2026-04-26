@@ -1,3 +1,7 @@
+use std::collections::BTreeMap;
+
+use crate::config::ability::AbilityName;
+
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Role {
     Kira,
@@ -16,10 +20,18 @@ pub enum Role {
     Mello,
 }
 
-pub struct RoleConfig {}
-
-impl RoleConfig {
-    pub fn new() -> Self {
-        RoleConfig {}
-    }
+#[derive(PartialEq, PartialOrd, Eq, Ord)]
+pub struct AbilityIdentifier {
+    pub ability_name: AbilityName,
+    pub variant: u8,
 }
+
+pub struct RoleConfig {
+    pub charges: u8,
+    pub cooldown: u8,
+    pub abilities: Vec<AbilityName>,
+}
+
+pub type RoleConfigMap = BTreeMap<Role, RoleConfig>;
+
+pub fn default_role_config() -> RoleConfigMap {}

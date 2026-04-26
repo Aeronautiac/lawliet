@@ -52,6 +52,7 @@ pub enum ActionError {
     NotebookPassageBlocked,
     NotebookOnCooldown,
     TimeAlreadyPassed,
+    AbilityCategoryBlocked,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -59,7 +60,6 @@ pub type ActionResult = Result<ActionResponse, ActionError>;
 #[enum_dispatch]
 pub trait ActionInterface {
     /// next_actions must not depend on state mutations performed by the action itself.
-    /// depending on pre-existing state is safe.
     fn handle(
         &mut self,
         eng: &mut Engine,

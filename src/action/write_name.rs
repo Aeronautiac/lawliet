@@ -4,10 +4,10 @@
 */
 
 use crate::{
-    ID,
+    ID, Timestamp,
     action::{
         Action, ActionActor, ActionError, ActionInterface, ActionResponse, ActionResult,
-        ResponseData, actor_id, kill::Kill,
+        ResponseData, actor_id, kill::Kill, schedule_kill::ScheduleKill,
     },
     actor::restriction::Restriction,
     common::Version,
@@ -23,6 +23,7 @@ pub struct WriteName {
     pub true_name: String,
     pub death_message: Option<String>,
     pub notebook_id: ID,
+    pub delay: Option<Timestamp>, // the time (in seconds) after the current time to kill the player
 }
 
 impl ActionInterface for WriteName {
@@ -63,16 +64,32 @@ impl ActionInterface for WriteName {
                 book.on_write_success(player_id);
             }
 
-            Ok(ActionResponse {
-                commands: vec![], // later tell the frontend to acknowledge the kill or similar. not
-                // important right now as the focus is on working game logic.
-                next_actions: vec![Action::Kill(Kill {
-                    target_id,
-                    killer_id: Some(player_id),
-                    death_message: self.death_message.clone(),
-                })],
-                data: ResponseData::WriteName(WriteNameResponse {}),
-            })
+            if let Some(delay) = self.delay {
+                Ok(ActionResponse {
+                    commands: vec![], // later tell the frontend to acknowledge the kill or similar. not
+                    // important right now as the focus is on working game logic.
+                    next_actions: vec![Action::ScheduleKill(ScheduleKill {
+                        timestamp: eng.time + delay,
+                        kill: Kill {
+                            target_id,
+                            killer_id: Some(player_id),
+                            death_message: self.death_message.clone(),
+                        },
+                    })],
+                    data: ResponseData::WriteName(WriteNameResponse {}),
+                })
+            } else {
+                Ok(ActionResponse {
+                    commands: vec![], // later tell the frontend to acknowledge the kill or similar. not
+                    // important right now as the focus is on working game logic.
+                    next_actions: vec![Action::Kill(Kill {
+                        target_id,
+                        killer_id: Some(player_id),
+                        death_message: self.death_message.clone(),
+                    })],
+                    data: ResponseData::WriteName(WriteNameResponse {}),
+                })
+            }
         } else {
             if mutate {
                 book.on_write_failure(player_id);
