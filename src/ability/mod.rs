@@ -15,6 +15,7 @@ use crate::{
     ID,
     ability::pseudocide::{Pseudocide, PseudocideResponse},
     action::{Action, ActionActor, ActionError},
+    common::Variant,
     config::ability::AbilityName,
     engine::Engine,
 };
@@ -77,7 +78,7 @@ pub struct Ability {
     pub iterations_to_reset: u8,   // the number of iterations until charges are reset
     pub ability_name: AbilityName, // the other stuff about the ability (like its category) is
     // determined by the config struct
-    pub variant: u8, // 0 by default. use associated constants to define meanings in different abilities.
+    pub variant: Variant, // 0 by default. use associated constants to define meanings in different abilities.
     // variants also have meanings in config files.
     pub volatile: bool, // determines whether or not the ability is deleted when the owner changes
                         // significantly (i.e., the role changes)
