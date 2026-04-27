@@ -111,4 +111,7 @@ impl World {
     pub fn get_notebook(&self, id: ID) -> Option<&Notebook> {
         self.notebooks.get(&id)
     }
+
+    /// returns false if the ability variant is not specified in config
+    pub fn add_ability(&self) {}
 }

@@ -58,6 +58,7 @@
 mod ability;
 mod action;
 mod actor;
+mod command;
 mod common;
 mod config;
 mod engine;
@@ -117,6 +118,7 @@ mod tests {
                 target_id: player_id,
                 death_message,
                 killer_id,
+                silent: false,
             }),
         })
     }

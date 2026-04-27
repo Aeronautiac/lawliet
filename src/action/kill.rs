@@ -6,13 +6,13 @@
 use crate::{
     ID,
     action::{
-        Action, ActionActor, ActionInterface, ActionResponse, ActionResult, Command, ResponseData,
+        Action, ActionActor, ActionInterface, ActionResponse, ActionResult, ResponseData,
         add_state::state_addition, get_actor, get_actor_mut, give_notebook::GiveNotebook,
         require_alive,
     },
     actor::{ActorType, state::State},
+    command::Command,
     common::Version,
-    config::role::Role,
     engine::Engine,
 };
 
@@ -24,6 +24,7 @@ pub struct Kill {
     pub target_id: ID,
     pub killer_id: Option<ID>,
     pub death_message: Option<String>,
+    pub silent: bool,
 }
 
 impl ActionInterface for Kill {
@@ -42,6 +43,8 @@ impl ActionInterface for Kill {
             unreachable!()
         };
         let true_name = target_data.true_name.clone();
+        let role = target_data.role;
+        let mut notebook_transferred = false;
 
         let mut next_actions = vec![state_addition(self.target_id, State::Dead)];
         if let Some(killer_id) = self.killer_id {
@@ -57,6 +60,7 @@ impl ActionInterface for Kill {
                     && owner == self.target_id
                     && !notebook.is_owner_borrowing()
                 {
+                    notebook_transferred = true;
                     next_actions.push(Action::GiveNotebook(GiveNotebook {
                         notebook_id: *id,
                         actor_id: killer_id,
@@ -65,17 +69,22 @@ impl ActionInterface for Kill {
             }
         }
 
-        Ok(ActionResponse {
-            commands: vec![Command::AnnounceDeath {
+        let mut commands = vec![];
+        if !self.silent {
+            commands.push(Command::AnnounceDeath {
                 true_name: String::from(&*true_name),
                 death_message: if let Some(msg) = &self.death_message {
                     msg.clone()
                 } else {
-                    String::from("Placeholder default")
+                    eng.config.defaults.death_message.clone()
                 },
-                role: Role::Civilian,
-                had_notebook: false,
-            }],
+                role,
+                notebook_transferred,
+            });
+        }
+
+        Ok(ActionResponse {
+            commands,
             next_actions,
             data: ResponseData::Kill(KillResponse {}),
         })

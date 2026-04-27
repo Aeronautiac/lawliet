@@ -6,8 +6,9 @@ use crate::{
         add_notebook::{AddNotebook, AddNotebookResponse},
         add_player::*,
         add_state::*,
-        command::*,
+        create_ability_links::{CreateAbilityLinks, CreateAbilityLinksResponse},
         give_notebook::{GiveNotebook, GiveNotebookResponse},
+        give_role::{GiveRole, GiveRoleResponse},
         kill::*,
         lend_notebook::{LendNotebook, LendNotebookResponse},
         remove_state::{RemoveState, RemoveStateResponse},
@@ -16,6 +17,7 @@ use crate::{
         write_name::{WriteName, WriteNameResponse},
     },
     actor::{Actor, ActorType, state::State},
+    command::Command,
     common::Version,
     engine::Engine,
 };
@@ -23,8 +25,9 @@ use crate::{
 pub mod add_notebook;
 pub mod add_player;
 pub mod add_state;
-pub mod command;
+pub mod create_ability_links;
 pub mod give_notebook;
+pub mod give_role;
 pub mod kill;
 pub mod lend_notebook;
 pub mod remove_state;
@@ -53,6 +56,7 @@ pub enum ActionError {
     NotebookOnCooldown,
     TimeAlreadyPassed,
     AbilityCategoryBlocked,
+    AlreadyHadRole,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -67,6 +71,19 @@ pub trait ActionInterface {
         version: Version,
         mutate: bool,
     ) -> ActionResult;
+    // PROBLEM:
+    // This prevents the pattern of:
+    // - adding a new item to the world
+    // - modifying the item which was just created
+    // This means:
+    // - creating a role, creating the abilities with that role, and linking the newly created
+    // ability to some existing ability will fail if it checks for ability existence (because adding
+    // an ability is a state mutation)
+    // - a solution to this is to make it impossible for the link action to return an error and
+    // simply just make it do nothing if either ability doesnt exist, but this is a bandaid and
+    // there may be other scenarios where this same pattern is necessary
+    // - another solution is to have some shared handler function which does the state mutation and
+    // just call it directly from both actions
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -82,6 +99,8 @@ pub enum Action {
     LendNotebook(LendNotebook),
     ScheduleKill(ScheduleKill),
     RemoveState(RemoveState),
+    GiveRole(GiveRole),
+    CreateAbilityLinks(CreateAbilityLinks),
 }
 
 pub enum ResponseData {
@@ -95,6 +114,8 @@ pub enum ResponseData {
     RemoveState(RemoveStateResponse),
     Revive(ReviveResponse),
     ScheduleKill(ScheduleKillResponse),
+    GiveRole(GiveRoleResponse),
+    CreateAbilityLinks(CreateAbilityLinksResponse),
 }
 
 impl Action {

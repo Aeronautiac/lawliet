@@ -1,6 +1,6 @@
 use crate::Timestamp;
-use crate::action::command::Command;
 use crate::action::{ActionActor, ActionRequest, ActionResult};
+use crate::command::Command;
 use crate::common::SequenceNumber;
 use crate::config::Config;
 use crate::world::World;

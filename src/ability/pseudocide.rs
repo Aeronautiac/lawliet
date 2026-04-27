@@ -1,6 +1,6 @@
 use crate::{
     ability::{AbilityInterface, AbilityResponseData},
-    action::{actor_id, require_alive},
+    action::{actor_id, kill::Kill, require_alive, schedule_kill::ScheduleKill},
     config::ability::AbilityName,
 };
 
@@ -22,6 +22,7 @@ impl AbilityInterface for Pseudocide {
         mutate: bool,
     ) -> super::AbilityResult {
         Ok(super::AbilityResponse {
+            commands: vec![],
             actions: vec![],
             data: AbilityResponseData::Psuedocide(PseudocideResponse {}),
         })

@@ -1,6 +1,7 @@
 /*
 * PLAYER ACTION
 * Write a player's name in a notebook
+* IPP blocks this
 */
 
 use crate::{
@@ -74,6 +75,7 @@ impl ActionInterface for WriteName {
                             target_id,
                             killer_id: Some(player_id),
                             death_message: self.death_message.clone(),
+                            silent: false,
                         },
                     })],
                     data: ResponseData::WriteName(WriteNameResponse {}),
@@ -86,6 +88,7 @@ impl ActionInterface for WriteName {
                         target_id,
                         killer_id: Some(player_id),
                         death_message: self.death_message.clone(),
+                        silent: false,
                     })],
                     data: ResponseData::WriteName(WriteNameResponse {}),
                 })

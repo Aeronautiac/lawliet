@@ -1,12 +1,13 @@
 pub mod ability;
+pub mod defaults;
 pub mod organization;
 pub mod role;
 pub mod ruleset;
 pub mod state;
 
-use ability::AbilityConfig;
-
 use crate::config::{
+    ability::{AbilityConfigMap, default_ability_config},
+    defaults::{DefaultConfig, default_defaults},
     role::{RoleConfigMap, default_role_config},
     state::{StateRestrictionMap, default_state_restrictions},
 };
@@ -14,16 +15,18 @@ use crate::config::{
 // these should be maps
 pub struct Config {
     pub roles: RoleConfigMap,
-    pub abilities: AbilityConfig,
+    pub abilities: AbilityConfigMap,
     pub state_restrictions: StateRestrictionMap,
+    pub defaults: DefaultConfig,
 }
 
 impl Config {
     pub fn new() -> Self {
         Config {
             roles: default_role_config(),
-            abilities: vec![],
+            abilities: default_ability_config(),
             state_restrictions: default_state_restrictions(),
+            defaults: default_defaults(), // defaults are things like fallback death messages
         }
     }
 }

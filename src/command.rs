@@ -6,6 +6,6 @@ pub enum Command {
         true_name: String,
         death_message: String,
         role: Role,
-        had_notebook: bool,
+        notebook_transferred: bool,
     },
 }

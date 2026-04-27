@@ -6,7 +6,25 @@
 * A volatile ability is one which disappears on role change
 */
 
-pub struct SetRoleResponse {}
+use crate::{ID, action::ActionInterface, config::role::Role};
+
+pub struct GiveRoleResponse {}
 
 #[derive(PartialEq, Eq, Clone)]
-pub struct SetRole {}
+pub struct GiveRole {
+    target_id: ID,
+    role: Role,
+}
+
+impl ActionInterface for GiveRole {
+    fn handle(
+        &mut self,
+        eng: &mut crate::engine::Engine,
+        actor: &super::ActionActor,
+        version: crate::common::Version,
+        mutate: bool,
+    ) -> super::ActionResult {
+        actor.require_system()?;
+        unimplemented!()
+    }
+}
