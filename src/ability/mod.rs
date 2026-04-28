@@ -9,13 +9,16 @@
 // 1. UseAbility called with a specialized struct in an ability usage enum/
 // 2. UseAbility calls the struct's functions and returns its results
 
-use std::{collections::BTreeSet, process::Command};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    process::Command,
+};
 
 use crate::{
     ID,
     ability::pseudocide::{Pseudocide, PseudocideResponse},
     action::{Action, ActionActor, ActionError},
-    common::Variant,
+    common::{ChargeCount, IterationCount, LinkWeight, Variant},
     config::ability::AbilityName,
     engine::Engine,
 };
@@ -42,7 +45,7 @@ pub enum AbilityBehaviour {
 }
 
 pub enum AbilityResponseData {
-    Psuedocide(PseudocideResponse),
+    Pseudocide(PseudocideResponse),
 }
 
 pub struct AbilityResponse {
@@ -51,7 +54,7 @@ pub struct AbilityResponse {
     data: AbilityResponseData,
 }
 
-#[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]
+#[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy)]
 pub enum AbilityLinkType {
     Limit, // the ability is limited by the ability linked to (if at least one limit ability has 0 charges,
     // then the ability cannot be used)
@@ -63,6 +66,7 @@ pub enum AbilityLinkType {
 pub struct AbilityLink {
     pub link_type: AbilityLinkType,
     pub link_dest: ID,
+    pub weight: LinkWeight,
 }
 
 type AbilityResult = Result<AbilityResponse, ActionError>;
@@ -74,8 +78,8 @@ pub struct Ability {
     // charges dont matter if the other ability has none). this ability will also decrement the
     // charges of the linked ability on success. links may be unidirectional (the presence of a link in
     // one ability does not imply the presence of another link in the ability linked to although possible).
-    pub charges: u8,               // how many times the ability can be used
-    pub iterations_to_reset: u8,   // the number of iterations until charges are reset
+    pub charges: ChargeCount, // how many times the ability can be used
+    pub iterations_to_reset: IterationCount, // the number of iterations until charges are reset
     pub ability_name: AbilityName, // the other stuff about the ability (like its category) is
     // determined by the config struct
     pub variant: Variant, // 0 by default. use associated constants to define meanings in different abilities.
@@ -85,6 +89,23 @@ pub struct Ability {
 }
 
 impl Ability {
+    pub fn new(
+        ability_name: AbilityName,
+        variant: Variant,
+        charges: ChargeCount,
+        volatile: bool,
+    ) -> Self {
+        Ability {
+            owner: None,
+            links: BTreeSet::new(),
+            iterations_to_reset: 0,
+            charges,
+            variant,
+            volatile,
+            ability_name,
+        }
+    }
+
     /// checks if some person can use the ability
     pub fn can_be_used(&self, user: ID) -> bool {
         if let Some(owner_id) = self.owner
@@ -99,7 +120,12 @@ impl Ability {
     /// creates a new ability link
     /// if there is already a link to an ability, it replaces it
     /// return the old link to the ability (if any)
-    pub fn add_link(&mut self, link_dest: ID, link_type: AbilityLinkType) -> Option<AbilityLink> {
+    pub fn add_link(
+        &mut self,
+        link_dest: ID,
+        link_type: AbilityLinkType,
+        weight: LinkWeight,
+    ) -> Option<AbilityLink> {
         let removed: Option<AbilityLink> = self
             .links
             .extract_if(.., |l| l.link_dest == link_dest)
@@ -107,11 +133,20 @@ impl Ability {
         self.links.insert(AbilityLink {
             link_type,
             link_dest,
+            weight,
         });
         removed
     }
 
     pub fn remove_link(&mut self, link_dest: ID) {
         self.links.retain(|l| l.link_dest != link_dest)
+    }
+
+    pub fn set_owner(&mut self, id: ID) {
+        self.owner = Some(id);
+    }
+
+    pub fn clear_links(&mut self) {
+        self.links = BTreeSet::new();
     }
 }

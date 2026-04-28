@@ -6,7 +6,11 @@
 
 use crate::{
     ID,
-    action::{ActionInterface, ActionResponse, ResponseData},
+    action::{
+        ActionInterface, ActionResponse, ResponseData, get_ability, get_ability_config,
+        get_ability_mut, get_actor,
+    },
+    config::ability::AbilityIdentifier,
 };
 
 #[derive(PartialEq, Eq, Clone)]
@@ -14,7 +18,7 @@ pub struct CreateAbilityLinksResponse {}
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct CreateAbilityLinks {
-    target_id: ID,
+    pub target_id: ID,
 }
 
 impl ActionInterface for CreateAbilityLinks {
@@ -26,6 +30,7 @@ impl ActionInterface for CreateAbilityLinks {
         mutate: bool,
     ) -> super::ActionResult {
         actor.require_system()?;
+        get_actor(eng, self.target_id)?;
 
         let owned_abilities: Vec<ID> = eng
             .world
@@ -35,10 +40,20 @@ impl ActionInterface for CreateAbilityLinks {
             .filter(|id| *id == self.target_id)
             .collect();
 
-        if mutate {
-            for ability in &owned_abilities {
-                // TODO: link the ability to every other ability it must be linked to based on config
-                for other_ability in &owned_abilities {}
+        for ability_id in &owned_abilities {
+            let config = get_ability_config(eng, *ability_id)?;
+            let links = config.default_links.clone();
+            for link in links {
+                for other_ability_id in &owned_abilities {
+                    let other_ability = get_ability(eng, *other_ability_id)?;
+                    let variant = other_ability.variant;
+                    let name = other_ability.ability_name;
+                    let ability = get_ability_mut(eng, *ability_id)?;
+                    if mutate && link.identifier.variant == variant && link.identifier.name == name
+                    {
+                        ability.add_link(*other_ability_id, link.link_type, link.weight);
+                    }
+                }
             }
         }
 

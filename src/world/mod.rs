@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, btree_map::Entry},
+    collections::{BTreeMap, BTreeSet, btree_map::Entry},
     rc::Rc,
 };
 
@@ -12,7 +12,8 @@ use crate::{
     ID,
     ability::Ability,
     actor::{Actor, ActorType, Player},
-    config::role::Role,
+    common::Variant,
+    config::{ability::AbilityName, role::Role},
     notebook::Notebook,
 };
 
@@ -113,5 +114,23 @@ impl World {
     }
 
     /// returns false if the ability variant is not specified in config
-    pub fn add_ability(&self) {}
+    pub fn add_ability(&mut self, ability: Ability) -> ID {
+        let id = self.next_ability_id;
+        self.next_ability_id += 1;
+        self.abilities.insert(id, ability);
+        id
+    }
+
+    /// be that there are no dangling ids
+    pub fn remove_abiliy(&mut self, id: ID) {
+        self.abilities.remove(&id);
+    }
+
+    pub fn get_ability(&self, id: ID) -> Option<&Ability> {
+        self.abilities.get(&id)
+    }
+
+    pub fn get_ability_mut(&mut self, id: ID) -> Option<&mut Ability> {
+        self.abilities.get_mut(&id)
+    }
 }

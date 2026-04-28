@@ -2,8 +2,6 @@ use std::collections::BTreeMap;
 
 use crate::ID;
 
-// later split cooldown into two errors
-
 #[derive(Debug)]
 pub enum NotebookError {
     NoOwner,

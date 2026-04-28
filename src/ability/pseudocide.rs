@@ -23,7 +23,7 @@ impl AbilityInterface for Pseudocide {
         Ok(super::AbilityResponse {
             commands: vec![],
             actions: vec![],
-            data: AbilityResponseData::Psuedocide(PseudocideResponse {}),
+            data: AbilityResponseData::Pseudocide(PseudocideResponse {}),
         })
     }
 }

@@ -1,8 +1,11 @@
 use std::collections::BTreeMap;
 
-use crate::{ability::AbilityLinkType, common::Variant};
+use crate::{
+    ability::AbilityLinkType,
+    common::{LinkWeight, Variant},
+};
 
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 pub enum AbilityName {
     Contact,
     Pseudocide,
@@ -27,16 +30,17 @@ pub enum AbilityName {
     AnonymousKidnap,
 }
 
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
 pub struct AbilityIdentifier {
-    name: AbilityName,
-    variant: Variant,
+    pub name: AbilityName,
+    pub variant: Variant,
 }
 
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
 pub struct ConfigAbilityLink {
-    link_type: AbilityLinkType,
-    identifier: AbilityIdentifier,
+    pub link_type: AbilityLinkType,
+    pub identifier: AbilityIdentifier,
+    pub weight: LinkWeight,
 }
 
 fn identifier(name: AbilityName, variant: Variant) -> AbilityIdentifier {
@@ -50,19 +54,22 @@ pub type AbilityConfigMap = BTreeMap<AbilityIdentifier, AbilityConfig>;
 // have nothing to do with this. Only org config will.
 //
 // Certain abilities may be transferred between players on kill. This is specific to individual
-// ability objects and as such will be specified in role config. It is denoted with a boolean flag.
+// ability objects and as such will be specified in role config to be applied on creation. It is denoted with a boolean flag.
 //
 // If an ability with an existing link is transferred, all existing links are broken, and new links
 // are created after the transfer.
+//
+// Must add link weight to ability config to allow for things like group chat creation using up all
+// contact charges.
 
 // TODO: Add ability categories like "Supernatural", "Physical", etc... An ability's source of truth
 // for category is the config struct.
 #[derive(Debug)]
 pub struct AbilityConfig {
-    reset_time: u16,
-    base_charges: u16,
-    default_links: Vec<ConfigAbilityLink>, // what this should ability link to if given the
-                                           // opportunity
+    pub reset_time: u16,
+    pub base_charges: u16,
+    pub default_links: Vec<ConfigAbilityLink>, // what this should ability link to if given the
+                                               // opportunity
 }
 
 pub fn default_ability_config() -> AbilityConfigMap {
@@ -85,6 +92,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
             default_links: vec![ConfigAbilityLink {
                 identifier: identifier(AbilityName::Contact, 0),
                 link_type: AbilityLinkType::Limit,
+                weight: 1,
             }],
         },
     );
@@ -97,6 +105,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
             default_links: vec![ConfigAbilityLink {
                 identifier: identifier(AbilityName::Contact, 0),
                 link_type: AbilityLinkType::Limit,
+                weight: 1,
             }],
         },
     );
@@ -124,6 +133,44 @@ pub fn default_ability_config() -> AbilityConfigMap {
         AbilityConfig {
             base_charges: 1,
             reset_time: 2,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::Bug, 0),
+        AbilityConfig {
+            base_charges: 1,
+            reset_time: 2,
+            default_links: vec![],
+        },
+    );
+
+    // full channel variant
+    map.insert(
+        identifier(AbilityName::TapIn, 0),
+        AbilityConfig {
+            base_charges: 1,
+            reset_time: 1,
+            default_links: vec![],
+        },
+    );
+
+    // 12 hr variant (wanted civ)
+    map.insert(
+        identifier(AbilityName::TapIn, 1),
+        AbilityConfig {
+            base_charges: 1,
+            reset_time: 1,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::Blackout, 0),
+        AbilityConfig {
+            base_charges: 1,
+            reset_time: u16::MAX,
             default_links: vec![],
         },
     );

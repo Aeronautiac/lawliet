@@ -55,10 +55,12 @@ impl ActionInterface for Kill {
             }
 
             // notebook transfers
+            // transfer any currently held notebook to the person who killed them regardless of if
+            // the person holding the notebook actually owned the notebook
             for (id, notebook) in eng.world.notebooks.iter() {
                 if let Some(owner) = notebook.owner
                     && owner == self.target_id
-                    && !notebook.is_owner_borrowing()
+                // && !notebook.is_owner_borrowing()
                 {
                     notebook_transferred = true;
                     next_actions.push(Action::GiveNotebook(GiveNotebook {

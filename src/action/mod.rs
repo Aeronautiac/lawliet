@@ -2,11 +2,14 @@ use enum_dispatch::enum_dispatch;
 
 use crate::{
     ID, Timestamp,
+    ability::Ability,
     action::{
+        add_ability::{AddAbility, AddAbilityResponse},
         add_notebook::{AddNotebook, AddNotebookResponse},
         add_player::*,
         add_state::*,
         create_ability_links::{CreateAbilityLinks, CreateAbilityLinksResponse},
+        give_ability::{GiveAbility, GiveAbilityResponse},
         give_notebook::{GiveNotebook, GiveNotebookResponse},
         give_role::{GiveRole, GiveRoleResponse},
         kill::*,
@@ -19,13 +22,16 @@ use crate::{
     actor::{Actor, ActorType, state::State},
     command::Command,
     common::Version,
+    config::ability::{AbilityConfig, AbilityIdentifier},
     engine::Engine,
 };
 
+pub mod add_ability;
 pub mod add_notebook;
 pub mod add_player;
 pub mod add_state;
 pub mod create_ability_links;
+pub mod give_ability;
 pub mod give_notebook;
 pub mod give_role;
 pub mod kill;
@@ -57,6 +63,8 @@ pub enum ActionError {
     TimeAlreadyPassed,
     AbilityCategoryBlocked,
     AlreadyHadRole,
+    AbilityConfigNotFound,
+    AbilityNotFound,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -71,19 +79,6 @@ pub trait ActionInterface {
         version: Version,
         mutate: bool,
     ) -> ActionResult;
-    // PROBLEM:
-    // This prevents the pattern of:
-    // - adding a new item to the world
-    // - modifying the item which was just created
-    // This means:
-    // - creating a role, creating the abilities with that role, and linking the newly created
-    // ability to some existing ability will fail if it checks for ability existence (because adding
-    // an ability is a state mutation)
-    // - a solution to this is to make it impossible for the link action to return an error and
-    // simply just make it do nothing if either ability doesnt exist, but this is a bandaid and
-    // there may be other scenarios where this same pattern is necessary
-    // - another solution is to have some shared handler function which does the state mutation and
-    // just call it directly from both actions
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -101,6 +96,8 @@ pub enum Action {
     RemoveState(RemoveState),
     GiveRole(GiveRole),
     CreateAbilityLinks(CreateAbilityLinks),
+    AddAbility(AddAbility),
+    GiveAbility(GiveAbility),
 }
 
 pub enum ResponseData {
@@ -116,6 +113,8 @@ pub enum ResponseData {
     ScheduleKill(ScheduleKillResponse),
     GiveRole(GiveRoleResponse),
     CreateAbilityLinks(CreateAbilityLinksResponse),
+    AddAbility(AddAbilityResponse),
+    GiveAbility(GiveAbilityResponse),
 }
 
 impl Action {
@@ -227,4 +226,36 @@ pub fn require_dead(eng: &Engine, actor_id: ID) -> Result<(), ActionError> {
         return Ok(());
     }
     Err(ActionError::ActorIsAlive)
+}
+
+pub fn get_ability_mut(eng: &mut Engine, ability_id: ID) -> Result<&mut Ability, ActionError> {
+    let target = eng
+        .world
+        .get_ability_mut(ability_id)
+        .ok_or(ActionError::AbilityNotFound)?;
+    Ok(target)
+}
+
+pub fn get_ability(eng: &Engine, ability_id: ID) -> Result<&Ability, ActionError> {
+    let target = eng
+        .world
+        .get_ability(ability_id)
+        .ok_or(ActionError::AbilityNotFound)?;
+    Ok(target)
+}
+
+pub fn get_ability_config(
+    eng: &Engine,
+    ability: ID, // the ability is stored within the engine
+) -> Result<&AbilityConfig, ActionError> {
+    let ability = get_ability(eng, ability)?;
+    let target = eng.config.abilities.get(&AbilityIdentifier {
+        name: ability.ability_name,
+        variant: ability.variant,
+    });
+    if let Some(data) = target {
+        Ok(data)
+    } else {
+        Err(ActionError::AbilityConfigNotFound)
+    }
 }
