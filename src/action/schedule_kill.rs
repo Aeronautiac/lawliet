@@ -10,8 +10,8 @@
 use crate::{
     Timestamp,
     action::{
-        Action, ActionActor, ActionInterface, ActionRequest, ActionResponse, ActionResult,
-        ResponseData, kill::Kill, require_time_not_passed,
+        Action, ActionActor, ActionContext, ActionInterface, ActionRequest, ActionResponse,
+        ActionResult, kill::Kill, require_time_not_passed,
     },
     common::Version,
     engine::Engine,
@@ -30,8 +30,9 @@ impl ActionInterface for ScheduleKill {
     fn handle(
         &mut self,
         eng: &mut Engine,
+        ctx: &mut ActionContext,
         actor: &ActionActor,
-        _: Version,
+        version: Version,
         mutate: bool,
     ) -> ActionResult {
         actor.require_system()?;
@@ -45,10 +46,6 @@ impl ActionInterface for ScheduleKill {
             })
         }
 
-        Ok(ActionResponse {
-            commands: vec![],
-            next_actions: vec![],
-            data: ResponseData::ScheduleKill(ScheduleKillResponse {}),
-        })
+        Ok(ActionResponse::ScheduleKill(ScheduleKillResponse {}))
     }
 }

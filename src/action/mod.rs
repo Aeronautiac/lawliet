@@ -1,3 +1,12 @@
+// TODO:
+// REFACTOR:
+// actions create other action structs and call their handle function directly while propagating errors
+// a shared context object is passed into handle functions which contains a command buffer
+// the command buffer is reversed after the top level call
+// keep in mind that there still may be issues with dry runs here if for example an action relies on
+// the result of another action such as "create action", but these can likely be sidestepped by
+// ending early if mutate is false and just accepting without going deeper
+
 use enum_dispatch::enum_dispatch;
 
 use crate::{
@@ -41,12 +50,6 @@ pub mod revive;
 pub mod schedule_kill;
 pub mod write_name;
 
-pub struct ActionResponse {
-    pub commands: Vec<Command>,
-    pub next_actions: Vec<Action>,
-    pub data: ResponseData,
-}
-
 #[derive(Debug)]
 pub enum ActionError {
     ActorNotFound,
@@ -69,12 +72,17 @@ pub enum ActionError {
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
 
+pub struct ActionContext {
+    pub commands: Vec<Command>,
+}
+
 #[enum_dispatch]
 pub trait ActionInterface {
     /// next_actions must not depend on state mutations performed by the action itself.
     fn handle(
         &mut self,
         eng: &mut Engine,
+        ctx: &mut ActionContext,
         actor: &ActionActor,
         version: Version,
         mutate: bool,
@@ -100,7 +108,7 @@ pub enum Action {
     GiveAbility(GiveAbility),
 }
 
-pub enum ResponseData {
+pub enum ActionResponse {
     Kill(KillResponse),
     AddState(AddStateResponse),
     AddPlayer(AddPlayerResponse),
@@ -115,26 +123,6 @@ pub enum ResponseData {
     CreateAbilityLinks(CreateAbilityLinksResponse),
     AddAbility(AddAbilityResponse),
     GiveAbility(GiveAbilityResponse),
-}
-
-impl Action {
-    pub fn dry_run(
-        &mut self,
-        eng: &mut Engine,
-        actor: &ActionActor,
-        version: Version,
-    ) -> ActionResult {
-        self.handle(eng, actor, version, false)
-    }
-
-    pub fn execute(
-        &mut self,
-        eng: &mut Engine,
-        actor: &ActionActor,
-        version: Version,
-    ) -> ActionResult {
-        self.handle(eng, actor, version, true)
-    }
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -244,10 +232,7 @@ pub fn get_ability(eng: &Engine, ability_id: ID) -> Result<&Ability, ActionError
     Ok(target)
 }
 
-pub fn get_ability_config(
-    eng: &Engine,
-    ability: ID, // the ability is stored within the engine
-) -> Result<&AbilityConfig, ActionError> {
+pub fn get_ability_config(eng: &Engine, ability: ID) -> Result<&AbilityConfig, ActionError> {
     let ability = get_ability(eng, ability)?;
     let target = eng.config.abilities.get(&AbilityIdentifier {
         name: ability.ability_name,

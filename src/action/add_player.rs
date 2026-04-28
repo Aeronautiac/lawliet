@@ -6,7 +6,7 @@
 use crate::{
     ID,
     action::{
-        ActionActor, ActionError, ActionInterface, ActionResponse, ActionResult, ResponseData,
+        ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse, ActionResult,
     },
     common::Version,
     config::role::Role,
@@ -29,6 +29,7 @@ impl ActionInterface for AddPlayer {
     fn handle(
         &mut self,
         eng: &mut Engine,
+        ctx: &mut ActionContext,
         actor: &ActionActor,
         _: Version,
         mutate: bool,
@@ -47,10 +48,6 @@ impl ActionInterface for AddPlayer {
             0
         };
 
-        Ok(ActionResponse {
-            commands: vec![],
-            next_actions: vec![],
-            data: ResponseData::AddPlayer(AddPlayerResponse { id }),
-        })
+        Ok(ActionResponse::AddPlayer(AddPlayerResponse { id }))
     }
 }

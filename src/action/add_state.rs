@@ -6,7 +6,7 @@
 use crate::{
     ID,
     action::{
-        Action, ActionActor, ActionInterface, ActionResponse, ActionResult, ResponseData,
+        Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         get_actor_mut,
     },
     actor::state::State,
@@ -31,6 +31,7 @@ impl ActionInterface for AddState {
     fn handle(
         &mut self,
         eng: &mut Engine,
+        ctx: &mut ActionContext,
         actor: &ActionActor,
         _: Version,
         mutate: bool,
@@ -49,10 +50,6 @@ impl ActionInterface for AddState {
             target.add_state(self.state, restrictions);
         }
 
-        Ok(ActionResponse {
-            commands: vec![],
-            next_actions: vec![],
-            data: ResponseData::AddState(AddStateResponse {}),
-        })
+        Ok(ActionResponse::AddState(AddStateResponse {}))
     }
 }

@@ -6,7 +6,7 @@
 use crate::{
     ID,
     action::{
-        Action, ActionActor, ActionInterface, ActionResponse, ActionResult, ResponseData,
+        Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         add_state::state_addition, get_actor, get_actor_mut, give_notebook::GiveNotebook,
         require_alive,
     },
@@ -31,8 +31,9 @@ impl ActionInterface for Kill {
     fn handle(
         &mut self,
         eng: &mut Engine,
+        ctx: &mut ActionContext,
         actor: &ActionActor,
-        _: Version,
+        version: Version,
         mutate: bool,
     ) -> ActionResult {
         actor.require_system()?;
@@ -71,9 +72,12 @@ impl ActionInterface for Kill {
             }
         }
 
-        let mut commands = vec![];
+        for mut action in next_actions {
+            action.handle(eng, ctx, actor, version, mutate)?;
+        }
+
         if !self.silent {
-            commands.push(Command::AnnounceDeath {
+            ctx.commands.push(Command::AnnounceDeath {
                 true_name: String::from(&*true_name),
                 death_message: if let Some(msg) = &self.death_message {
                     msg.clone()
@@ -85,10 +89,6 @@ impl ActionInterface for Kill {
             });
         }
 
-        Ok(ActionResponse {
-            commands,
-            next_actions,
-            data: ResponseData::Kill(KillResponse {}),
-        })
+        Ok(ActionResponse::Kill(KillResponse {}))
     }
 }

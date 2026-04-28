@@ -6,7 +6,7 @@
 use crate::{
     ID,
     ability::Ability,
-    action::{ActionError, ActionInterface, ActionResponse, ResponseData},
+    action::{ActionContext, ActionError, ActionInterface, ActionResponse},
     common::Variant,
     config::ability::{AbilityIdentifier, AbilityName},
 };
@@ -27,6 +27,7 @@ impl ActionInterface for AddAbility {
     fn handle(
         &mut self,
         eng: &mut crate::engine::Engine,
+        ctx: &mut ActionContext,
         actor: &super::ActionActor,
         version: crate::common::Version,
         mutate: bool,
@@ -52,10 +53,6 @@ impl ActionInterface for AddAbility {
             0
         };
 
-        Ok(ActionResponse {
-            commands: vec![],
-            next_actions: vec![],
-            data: ResponseData::AddAbility(AddAbilityResponse { id }),
-        })
+        Ok(ActionResponse::AddAbility(AddAbilityResponse { id }))
     }
 }

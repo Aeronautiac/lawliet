@@ -7,8 +7,8 @@
 use crate::{
     ID, Timestamp,
     action::{
-        Action, ActionActor, ActionError, ActionInterface, ActionResponse, ActionResult,
-        ResponseData, actor_id, kill::Kill, schedule_kill::ScheduleKill,
+        Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
+        ActionResult, actor_id, kill::Kill, schedule_kill::ScheduleKill,
     },
     actor::restriction::Restriction,
     common::Version,
@@ -31,8 +31,9 @@ impl ActionInterface for WriteName {
     fn handle(
         &mut self,
         eng: &mut Engine,
+        ctx: &mut ActionContext,
         actor: &ActionActor,
-        _: Version,
+        version: Version,
         mutate: bool,
     ) -> ActionResult {
         actor.player_only()?;
@@ -64,46 +65,32 @@ impl ActionInterface for WriteName {
             if mutate {
                 book.on_write_success(player_id);
             }
-
             if let Some(delay) = self.delay {
-                Ok(ActionResponse {
-                    commands: vec![], // later tell the frontend to acknowledge the kill or similar. not
-                    // important right now as the focus is on working game logic.
-                    next_actions: vec![Action::ScheduleKill(ScheduleKill {
-                        timestamp: eng.time + delay,
-                        kill: Kill {
-                            target_id,
-                            killer_id: Some(player_id),
-                            death_message: self.death_message.clone(),
-                            silent: false,
-                        },
-                    })],
-                    data: ResponseData::WriteName(WriteNameResponse {}),
-                })
-            } else {
-                Ok(ActionResponse {
-                    commands: vec![], // later tell the frontend to acknowledge the kill or similar. not
-                    // important right now as the focus is on working game logic.
-                    next_actions: vec![Action::Kill(Kill {
+                Action::ScheduleKill(ScheduleKill {
+                    timestamp: eng.time + delay,
+                    kill: Kill {
                         target_id,
                         killer_id: Some(player_id),
                         death_message: self.death_message.clone(),
                         silent: false,
-                    })],
-                    data: ResponseData::WriteName(WriteNameResponse {}),
+                    },
                 })
+                .handle(eng, ctx, actor, version, mutate)?;
+            } else {
+                Action::Kill(Kill {
+                    target_id,
+                    killer_id: Some(player_id),
+                    death_message: self.death_message.clone(),
+                    silent: false,
+                })
+                .handle(eng, ctx, actor, version, mutate)?;
             }
+            Ok(ActionResponse::WriteName(WriteNameResponse {}))
         } else {
             if mutate {
                 book.on_write_failure(player_id);
             }
-
-            Ok(ActionResponse {
-                commands: vec![], // tell the frontend to inform the player of the write failure
-                // along with the number of attempts remaining
-                next_actions: vec![],
-                data: ResponseData::WriteName(WriteNameResponse {}),
-            })
+            Ok(ActionResponse::WriteName(WriteNameResponse {}))
         }
     }
 }

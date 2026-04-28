@@ -6,7 +6,7 @@
 use crate::{
     ID,
     action::{
-        ActionActor, ActionError, ActionInterface, ActionResponse, ActionResult, ResponseData,
+        ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse, ActionResult,
         require_player,
     },
     common::Version,
@@ -26,6 +26,7 @@ impl ActionInterface for GiveNotebook {
     fn handle(
         &mut self,
         eng: &mut Engine,
+        ctx: &mut ActionContext,
         actor: &ActionActor,
         _: Version,
         mutate: bool,
@@ -43,10 +44,6 @@ impl ActionInterface for GiveNotebook {
             notebook.set_true_owner(self.actor_id);
         }
 
-        Ok(ActionResponse {
-            commands: vec![],
-            next_actions: vec![],
-            data: ResponseData::GiveNotebook(GiveNotebookResponse {}),
-        })
+        Ok(ActionResponse::GiveNotebook(GiveNotebookResponse {}))
     }
 }

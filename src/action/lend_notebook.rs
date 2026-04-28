@@ -6,7 +6,7 @@
 use crate::{
     ID,
     action::{
-        ActionActor, ActionError, ActionInterface, ActionResponse, ActionResult, ResponseData,
+        ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse, ActionResult,
         actor_id,
     },
     actor::restriction::Restriction,
@@ -27,8 +27,9 @@ impl ActionInterface for LendNotebook {
     fn handle(
         &mut self,
         eng: &mut Engine,
+        ctx: &mut ActionContext,
         actor: &ActionActor,
-        _: Version,
+        version: Version,
         mutate: bool,
     ) -> ActionResult {
         actor.player_only()?;
@@ -51,10 +52,6 @@ impl ActionInterface for LendNotebook {
             book.lend(self.target_id).unwrap();
         }
 
-        Ok(ActionResponse {
-            commands: vec![],
-            next_actions: vec![],
-            data: ResponseData::LendNotebook(LendNotebookResponse {}),
-        })
+        Ok(ActionResponse::LendNotebook(LendNotebookResponse {}))
     }
 }

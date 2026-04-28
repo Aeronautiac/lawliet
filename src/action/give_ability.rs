@@ -6,7 +6,7 @@
 use crate::{
     ID,
     action::{
-        Action, ActionInterface, ActionResponse, ResponseData,
+        Action, ActionContext, ActionInterface, ActionResponse,
         create_ability_links::CreateAbilityLinks, get_ability_mut, get_actor,
     },
 };
@@ -24,6 +24,7 @@ impl ActionInterface for GiveAbility {
     fn handle(
         &mut self,
         eng: &mut crate::engine::Engine,
+        ctx: &mut ActionContext,
         actor: &super::ActionActor,
         version: crate::common::Version,
         mutate: bool,
@@ -37,12 +38,15 @@ impl ActionInterface for GiveAbility {
             ability.set_owner(self.actor_id);
         }
 
-        Ok(ActionResponse {
-            commands: vec![],
-            next_actions: vec![Action::CreateAbilityLinks(CreateAbilityLinks {
-                target_id: self.actor_id,
-            })],
-            data: ResponseData::GiveAbility(GiveAbilityResponse {}),
+        // potential issue with the version system here
+        // if i change to the latest version for this specific ability, and then i pass it down to
+        // the next, but that ability is still at version 0, then what do i do? i need to explicitly
+        // pick sub-action versions depending on version here. not a big problem.
+        Action::CreateAbilityLinks(CreateAbilityLinks {
+            target_id: self.actor_id,
         })
+        .handle(eng, ctx, actor, 0, mutate)?;
+
+        Ok(ActionResponse::GiveAbility(GiveAbilityResponse {}))
     }
 }

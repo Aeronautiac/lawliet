@@ -6,7 +6,7 @@
 use crate::{
     ID,
     action::{
-        Action, ActionActor, ActionInterface, ActionResponse, ActionResult, ResponseData,
+        Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         remove_state::RemoveState, require_dead,
     },
     actor::state::State,
@@ -26,20 +26,20 @@ impl ActionInterface for Revive {
     fn handle(
         &mut self,
         eng: &mut Engine,
+        ctx: &mut ActionContext,
         actor: &ActionActor,
-        _: Version,
-        _: bool,
+        version: Version,
+        mutate: bool,
     ) -> ActionResult {
         actor.require_system()?;
         require_dead(eng, self.target_id)?;
 
-        Ok(ActionResponse {
-            commands: vec![],
-            next_actions: vec![Action::RemoveState(RemoveState {
-                actor_id: self.target_id,
-                state: State::Dead,
-            })],
-            data: ResponseData::Revive(ReviveResponse {}),
+        Action::RemoveState(RemoveState {
+            actor_id: self.target_id,
+            state: State::Dead,
         })
+        .handle(eng, ctx, actor, version, mutate)?;
+
+        Ok(ActionResponse::Revive(ReviveResponse {}))
     }
 }

@@ -6,7 +6,7 @@
 use crate::{
     ID,
     action::{
-        ActionActor, ActionInterface, ActionResponse, ActionResult, ResponseData, get_actor_mut,
+        ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult, get_actor_mut,
     },
     actor::state::State,
     common::Version,
@@ -26,6 +26,7 @@ impl ActionInterface for RemoveState {
     fn handle(
         &mut self,
         eng: &mut Engine,
+        ctx: &mut ActionContext,
         actor: &ActionActor,
         _: Version,
         mutate: bool,
@@ -37,10 +38,6 @@ impl ActionInterface for RemoveState {
             target.remove_state(self.state);
         }
 
-        Ok(ActionResponse {
-            commands: vec![],
-            next_actions: vec![],
-            data: ResponseData::RemoveState(RemoveStateResponse {}),
-        })
+        Ok(ActionResponse::RemoveState(RemoveStateResponse {}))
     }
 }

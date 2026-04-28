@@ -1,6 +1,7 @@
 use crate::Timestamp;
-use crate::action::{ActionActor, ActionRequest, ActionResult};
-use crate::command::Command;
+use crate::action::{
+    ActionContext, ActionError, ActionInterface, ActionRequest, ActionResponse, ActionResult,
+};
 use crate::common::SequenceNumber;
 use crate::config::Config;
 use crate::world::World;
@@ -61,36 +62,25 @@ impl Engine {
         timestamp >= self.time
     }
 
-    fn handle_chain(&mut self, action: &mut ActionRequest, mutate: bool) -> ActionResult {
-        let timestamp = action.timestamp;
-        self.time = timestamp;
-        let mut top_response = if mutate {
-            action.payload.execute(self, &action.actor, 0)
-        } else {
-            action.payload.dry_run(self, &action.actor, 0)
-        }?;
-        for next_action in &mut top_response.next_actions {
-            let mut bottom_response = self.handle_chain(
-                &mut ActionRequest {
-                    actor: ActionActor::System,
-                    timestamp,
-                    payload: next_action.clone(),
-                },
-                mutate,
-            )?;
-            top_response.commands.append(&mut bottom_response.commands);
-        }
-        Ok(top_response)
-    }
-
-    // attempt to execute an action and the chain that follows.
+    // attempt to execute an action atomically
     // first run a validation pass. this will propagate any sub action failures upwards without
     // modifying game state. after this, run the execution pass. this will crash on failure
     // (although this should never happen in practice due to the validation pass).
     // overflows are a non-issue. no action creates large enough of a chain to overflow the stack.
-    fn execute_chain(&mut self, mut action: ActionRequest) -> ActionResult {
-        self.handle_chain(&mut action, false)?;
-        let result = self.handle_chain(&mut action, true);
+    fn execute_atomic(
+        &mut self,
+        ctx: &mut ActionContext,
+        mut action: ActionRequest,
+    ) -> ActionResult {
+        let old_time = self.time;
+        self.time = action.timestamp;
+        let dry_result = action.payload.handle(self, ctx, &action.actor, 0, false);
+        if dry_result.is_err() {
+            self.time = old_time;
+            return dry_result;
+        }
+        self.time = action.timestamp;
+        let result = action.payload.handle(self, ctx, &action.actor, 0, true);
         result
             .as_ref()
             .expect("Validate and execute pass desync detected.");
@@ -100,10 +90,13 @@ impl Engine {
     // store a command buffer
     // check action timestamp and execute any pending jobs that happen before/at the timestamp
     // execute the requested action
-    // recursively execute sub-actions and append command buffers
+    // recursively execute sub-actions
     // return only top level result (with the combined command buffer)
-    pub fn execute(&mut self, action: ActionRequest) -> ActionResult {
-        let mut commands: Vec<Command> = vec![];
+    pub fn execute(
+        &mut self,
+        action: ActionRequest,
+    ) -> Result<(ActionResponse, ActionContext), ActionError> {
+        let mut ctx = ActionContext { commands: vec![] };
 
         // first execute pending jobs
         loop {
@@ -115,17 +108,13 @@ impl Engine {
                 break;
             }
 
-            // ignore the errors of scheduled jobs. only append their commands if successful.
+            // ignore the errors of scheduled jobs.
             let pending_action = self.jobs.pop().unwrap().request;
-            if let Ok(mut job_response) = self.execute_chain(pending_action) {
-                commands.append(&mut job_response.commands);
-            }
+            self.execute_atomic(&mut ctx, pending_action);
         }
 
-        let mut main_response = self.execute_chain(action)?;
-        commands.append(&mut main_response.commands);
-        main_response.commands = commands;
-
-        Ok(main_response)
+        // also need to return command buffer
+        let main_response = self.execute_atomic(&mut ctx, action)?;
+        Ok((main_response, ctx))
     }
 }

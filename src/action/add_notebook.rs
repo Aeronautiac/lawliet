@@ -5,7 +5,7 @@
 
 use crate::{
     ID,
-    action::{ActionActor, ActionInterface, ActionResponse, ActionResult, ResponseData},
+    action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
     common::Version,
     engine::Engine,
 };
@@ -24,6 +24,7 @@ impl ActionInterface for AddNotebook {
     fn handle(
         &mut self,
         eng: &mut Engine,
+        ctx: &mut ActionContext,
         actor: &ActionActor,
         _: Version,
         mutate: bool,
@@ -36,10 +37,6 @@ impl ActionInterface for AddNotebook {
             0
         };
 
-        Ok(ActionResponse {
-            commands: vec![],
-            next_actions: vec![],
-            data: ResponseData::AddNotebook(AddNotebookResponse { id }),
-        })
+        Ok(ActionResponse::AddNotebook(AddNotebookResponse { id }))
     }
 }

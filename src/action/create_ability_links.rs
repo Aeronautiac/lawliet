@@ -7,7 +7,7 @@
 use crate::{
     ID,
     action::{
-        ActionInterface, ActionResponse, ResponseData, get_ability, get_ability_config,
+        ActionContext, ActionInterface, ActionResponse, get_ability, get_ability_config,
         get_ability_mut, get_actor,
     },
     config::ability::AbilityIdentifier,
@@ -25,6 +25,7 @@ impl ActionInterface for CreateAbilityLinks {
     fn handle(
         &mut self,
         eng: &mut crate::engine::Engine,
+        ctx: &mut ActionContext,
         actor: &super::ActionActor,
         version: crate::common::Version,
         mutate: bool,
@@ -57,10 +58,8 @@ impl ActionInterface for CreateAbilityLinks {
             }
         }
 
-        Ok(ActionResponse {
-            next_actions: vec![],
-            commands: vec![],
-            data: ResponseData::CreateAbilityLinks(CreateAbilityLinksResponse {}),
-        })
+        Ok(ActionResponse::CreateAbilityLinks(
+            CreateAbilityLinksResponse {},
+        ))
     }
 }
