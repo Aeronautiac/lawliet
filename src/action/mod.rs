@@ -104,9 +104,9 @@ pub enum Action {
     GiveRole(GiveRole),
     CreateAbilityLinks(CreateAbilityLinks),
     AddAbility(AddAbility),
-    GiveAbility(GiveAbility),
     UseAbility(UseAbility),
     ScheduleRevive(ScheduleRevive),
+    GiveAbility(GiveAbility),
 }
 
 pub enum ActionResponse {

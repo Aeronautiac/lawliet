@@ -12,9 +12,9 @@ use crate::{
     ID,
     ability::Ability,
     actor::{Actor, ActorType, Player},
-    common::Variant,
-    config::{ability::AbilityName, role::Role},
+    config::role::Role,
     notebook::Notebook,
+    passive::Passive,
 };
 
 #[derive(Debug)]
@@ -24,9 +24,11 @@ pub struct World {
     pub player_names: BTreeMap<Rc<str>, ID>, // a map of true names to actor ids
     pub abilities: BTreeMap<ID, Ability>,
     pub notebooks: BTreeMap<ID, Notebook>,
+    pub passives: BTreeMap<ID, Passive>,
     next_actor_id: ID,
     next_notebook_id: ID,
     next_ability_id: ID,
+    next_passive_id: ID,
 }
 
 impl World {
@@ -37,9 +39,11 @@ impl World {
             abilities: BTreeMap::new(),
             notebooks: BTreeMap::new(),
             player_names: BTreeMap::new(),
+            passives: BTreeMap::new(),
             next_actor_id: 0,
             next_notebook_id: 0,
             next_ability_id: 0,
+            next_passive_id: 0,
         }
     }
 
@@ -121,7 +125,7 @@ impl World {
         id
     }
 
-    /// be that there are no dangling ids
+    /// be careful that there are no dangling ids
     pub fn remove_abiliy(&mut self, id: ID) {
         self.abilities.remove(&id);
     }
@@ -132,5 +136,18 @@ impl World {
 
     pub fn get_ability_mut(&mut self, id: ID) -> Option<&mut Ability> {
         self.abilities.get_mut(&id)
+    }
+
+    /// be careful that there are no dangling ids
+    pub fn remove_passive(&mut self, id: ID) {
+        self.passives.remove(&id);
+    }
+
+    pub fn get_passive(&self, id: ID) -> Option<&Passive> {
+        self.passives.get(&id)
+    }
+
+    pub fn get_passive_mut(&mut self, id: ID) -> Option<&mut Passive> {
+        self.passives.get_mut(&id)
     }
 }

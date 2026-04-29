@@ -13,7 +13,7 @@ use crate::{
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct AddAbilityResponse {
-    id: ID,
+    pub id: ID,
 }
 
 #[derive(PartialEq, Eq, Clone)]

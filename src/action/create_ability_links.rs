@@ -37,7 +37,7 @@ impl ActionInterface for CreateAbilityLinks {
             .world
             .abilities
             .iter()
-            .filter(|(_id, ability)| ability.owner == Some(self.target_id))
+            .filter(|(_id, ability)| ability.ownership_struct.owner == Some(self.target_id))
             .map(|(id, _ability)| *id)
             .collect();
 

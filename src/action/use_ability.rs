@@ -52,7 +52,7 @@ impl ActionInterface for UseAbility {
         };
 
         let ability = get_ability_mut(eng, self.ability_id)?;
-        if Some(self.ability_id) != ability.owner {
+        if Some(self.ability_id) != ability.ownership_struct.owner {
             return Err(ActionError::AbilityNotOwned);
         }
         if ability.ability_name != self.ability_args.ability_name() {

@@ -18,6 +18,7 @@ use crate::{
     common::{ChargeCount, IterationCount, LinkWeight, Variant},
     config::ability::AbilityName,
     engine::Engine,
+    ownership::OwnershipStruct,
 };
 use enum_dispatch::enum_dispatch;
 
@@ -67,7 +68,7 @@ type AbilityResult = Result<AbilityResponse, ActionError>;
 
 #[derive(Debug)]
 pub struct Ability {
-    pub owner: Option<ID>, // the actor which this ability is owned by (if any)
+    pub ownership_struct: OwnershipStruct,
     pub links: BTreeSet<AbilityLink>, // any ability in this set gates this ability (this ability's
     // charges dont matter if the other ability has none). this ability will also decrement the
     // charges of the linked ability on success, and the magnitude of the decrement is based on the link weight.
@@ -78,11 +79,7 @@ pub struct Ability {
     pub ability_name: AbilityName, // the other stuff about the ability (like its category) is
     // determined by the config struct
     pub variant: Variant, // 0 by default. use associated constants to define meanings in different abilities.
-    // variants also have meanings in config files.
-    pub volatile: bool, // determines whether or not the ability is deleted when the owner changes
-    // significantly (i.e., the role changes)
-    pub transferrable: bool, // determines whether or not the ability will transfer on death (on
-                             // transfer, the ability will no longer be volatile)
+                          // variants also have meanings in config files.
 }
 
 impl Ability {
@@ -94,14 +91,12 @@ impl Ability {
         transferrable: bool,
     ) -> Self {
         Ability {
-            owner: None,
             links: BTreeSet::new(),
             iterations_to_reset: 0,
             charges,
             variant,
-            volatile,
             ability_name,
-            transferrable,
+            ownership_struct: OwnershipStruct::new(volatile, transferrable),
         }
     }
 
@@ -139,21 +134,6 @@ impl Ability {
 
     pub fn remove_link(&mut self, link_dest: ID) {
         self.links.retain(|l| l.link_dest != link_dest)
-    }
-
-    pub fn set_owner(&mut self, id: ID) {
-        self.owner = Some(id);
-    }
-
-    /// true if the ability is transferrable and the transfer was a success, false otherwise
-    pub fn try_transfer(&mut self, id: ID) -> bool {
-        if !self.transferrable {
-            false
-        } else {
-            self.volatile = false;
-            self.owner = Some(id);
-            true
-        }
     }
 
     pub fn clear_links(&mut self) {

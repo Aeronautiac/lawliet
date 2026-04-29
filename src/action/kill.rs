@@ -7,8 +7,8 @@ use crate::{
     ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
-        add_state::state_addition, get_actor, get_actor_mut, give_notebook::GiveNotebook,
-        require_alive,
+        add_state::state_addition, get_actor, get_actor_mut, give_ability::GiveAbility,
+        give_notebook::GiveNotebook, require_alive,
     },
     actor::{ActorType, state::State},
     command::Command,
@@ -46,6 +46,7 @@ impl ActionInterface for Kill {
         let true_name = target_data.true_name.clone();
         let role = target_data.role;
         let mut notebook_transferred = false;
+        let mut ability_transferred = false;
 
         let mut next_actions = vec![state_addition(self.target_id, State::Dead)];
         if let Some(killer_id) = self.killer_id {
@@ -70,6 +71,22 @@ impl ActionInterface for Kill {
                     }));
                 };
             }
+
+            // ability transfers
+            for (id, ability) in eng.world.abilities.iter() {
+                if let Some(owner) = ability.ownership_struct.owner
+                    && owner == self.target_id
+                    && ability.ownership_struct.transferrable
+                {
+                    ability_transferred = true;
+                    next_actions.push(Action::GiveAbility(GiveAbility {
+                        ability_id: *id,
+                        actor_id: killer_id,
+                    }));
+                }
+            }
+
+            // passive transfers
         }
 
         for mut action in next_actions {
@@ -86,6 +103,7 @@ impl ActionInterface for Kill {
                 },
                 role,
                 notebook_transferred,
+                ability_transferred,
             });
         }
 

@@ -6,7 +6,8 @@
 use crate::{
     ID,
     action::{
-        ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse, ActionResult,
+        Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
+        ActionResult, add_ability::AddAbility, give_ability::GiveAbility,
     },
     common::Version,
     config::role::Role,
@@ -31,7 +32,7 @@ impl ActionInterface for AddPlayer {
         eng: &mut Engine,
         ctx: &mut ActionContext,
         actor: &ActionActor,
-        _: Version,
+        version: Version,
         mutate: bool,
     ) -> ActionResult {
         actor.require_system()?;
@@ -40,14 +41,47 @@ impl ActionInterface for AddPlayer {
             return Err(ActionError::NameNotUnique);
         }
 
-        let id = if mutate {
+        let player_id = if mutate {
             eng.world
-                .add_player(&self.true_name, self.starting_role.clone())
+                .add_player(&self.true_name, self.starting_role)
                 .unwrap()
         } else {
             0
         };
 
-        Ok(ActionResponse::AddPlayer(AddPlayerResponse { id }))
+        let mut ability_ids = vec![];
+        let default_abilities = eng.config.defaults.universal_abilities.clone();
+        for default_ability in default_abilities {
+            let response = Action::AddAbility(AddAbility {
+                volatile: false,
+                ability_name: default_ability.name,
+                transferrable: false,
+                variant: default_ability.variant,
+            })
+            .handle(eng, ctx, actor, version, mutate)?;
+            let ActionResponse::AddAbility(response_data) = response else {
+                unreachable!()
+            };
+            let ability_id = response_data.id;
+            ability_ids.push(ability_id);
+        }
+
+        // TODO:
+        // Role abilities
+
+        // abilities will only be physically created in the mutation path
+        if mutate {
+            for ability in ability_ids {
+                Action::GiveAbility(GiveAbility {
+                    ability_id: ability,
+                    actor_id: player_id,
+                })
+                .handle(eng, ctx, actor, version, mutate)?;
+            }
+        }
+
+        Ok(ActionResponse::AddPlayer(AddPlayerResponse {
+            id: player_id,
+        }))
     }
 }

@@ -63,6 +63,8 @@ mod common;
 mod config;
 mod engine;
 mod notebook;
+mod ownership;
+mod passive;
 mod world;
 
 pub use common::{ID, Timestamp};

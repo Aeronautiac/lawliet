@@ -18,6 +18,7 @@ pub struct Pseudocide {
     pub death_message: String,
     pub role: Role,
     pub notebook_transferred: bool,
+    pub ability_transferred: bool,
 }
 
 impl AbilityInterface for Pseudocide {
@@ -47,6 +48,7 @@ impl AbilityInterface for Pseudocide {
             death_message: self.death_message.clone(),
             role: self.role,
             notebook_transferred: self.notebook_transferred,
+            ability_transferred: self.ability_transferred,
         });
 
         Action::ScheduleRevive(ScheduleRevive {

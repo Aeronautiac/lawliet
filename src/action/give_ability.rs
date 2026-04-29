@@ -35,7 +35,7 @@ impl ActionInterface for GiveAbility {
         let ability = get_ability_mut(eng, self.ability_id)?;
         if mutate {
             ability.clear_links();
-            ability.set_owner(self.actor_id);
+            ability.ownership_struct.set_owner(self.actor_id);
         }
 
         Action::CreateAbilityLinks(CreateAbilityLinks {

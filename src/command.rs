@@ -7,5 +7,6 @@ pub enum Command {
         death_message: String,
         role: Role,
         notebook_transferred: bool,
+        ability_transferred: bool,
     },
 }
