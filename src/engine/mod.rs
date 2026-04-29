@@ -66,7 +66,9 @@ impl Engine {
     // first run a validation pass. this will propagate any sub action failures upwards without
     // modifying game state. after this, run the execution pass. this will crash on failure
     // (although this should never happen in practice due to the validation pass).
-    // overflows are a non-issue. no action creates large enough of a chain to overflow the stack.
+    // overflows are a non-issue. no action creates large enough of a chain to naturally overflow
+    // the stack. if a stack overflow occurs it is due to an infinite recursion bug, and in this
+    // case, a crash is necessary regardless.
     fn execute_atomic(
         &mut self,
         ctx: &mut ActionContext,
@@ -110,7 +112,7 @@ impl Engine {
 
             // ignore the errors of scheduled jobs.
             let pending_action = self.jobs.pop().unwrap().request;
-            self.execute_atomic(&mut ctx, pending_action);
+            let _ = self.execute_atomic(&mut ctx, pending_action);
         }
 
         // also need to return command buffer

@@ -36,9 +36,9 @@ impl ActionInterface for CreateAbilityLinks {
         let owned_abilities: Vec<ID> = eng
             .world
             .abilities
-            .keys()
-            .cloned()
-            .filter(|id| *id == self.target_id)
+            .iter()
+            .filter(|(_id, ability)| ability.owner == Some(self.target_id))
+            .map(|(id, _ability)| *id)
             .collect();
 
         for ability_id in &owned_abilities {

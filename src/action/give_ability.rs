@@ -38,14 +38,10 @@ impl ActionInterface for GiveAbility {
             ability.set_owner(self.actor_id);
         }
 
-        // potential issue with the version system here
-        // if i change to the latest version for this specific ability, and then i pass it down to
-        // the next, but that ability is still at version 0, then what do i do? i need to explicitly
-        // pick sub-action versions depending on version here. not a big problem.
         Action::CreateAbilityLinks(CreateAbilityLinks {
             target_id: self.actor_id,
         })
-        .handle(eng, ctx, actor, 0, mutate)?;
+        .handle(eng, ctx, actor, version, mutate)?;
 
         Ok(ActionResponse::GiveAbility(GiveAbilityResponse {}))
     }

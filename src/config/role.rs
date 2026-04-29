@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::config::ability::AbilityName;
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy)]
 pub enum Role {
     Kira,
     Kira2nd,

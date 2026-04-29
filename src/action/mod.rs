@@ -1,12 +1,3 @@
-// TODO:
-// REFACTOR:
-// actions create other action structs and call their handle function directly while propagating errors
-// a shared context object is passed into handle functions which contains a command buffer
-// the command buffer is reversed after the top level call
-// keep in mind that there still may be issues with dry runs here if for example an action relies on
-// the result of another action such as "create action", but these can likely be sidestepped by
-// ending early if mutate is false and just accepting without going deeper
-
 use enum_dispatch::enum_dispatch;
 
 use crate::{
@@ -26,6 +17,8 @@ use crate::{
         remove_state::{RemoveState, RemoveStateResponse},
         revive::*,
         schedule_kill::{ScheduleKill, ScheduleKillResponse},
+        schedule_revive::{ScheduleRevive, ScheduleReviveResponse},
+        use_ability::{UseAbility, UseAbilityResponse},
         write_name::{WriteName, WriteNameResponse},
     },
     actor::{Actor, ActorType, state::State},
@@ -48,6 +41,8 @@ pub mod lend_notebook;
 pub mod remove_state;
 pub mod revive;
 pub mod schedule_kill;
+pub mod schedule_revive;
+pub mod use_ability;
 pub mod write_name;
 
 #[derive(Debug)]
@@ -68,6 +63,10 @@ pub enum ActionError {
     AlreadyHadRole,
     AbilityConfigNotFound,
     AbilityNotFound,
+    ActorIsSystem,
+    AbilityNotOwned,
+    AbilityMismatch,
+    AbilityNotEnoughCharges,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -106,6 +105,8 @@ pub enum Action {
     CreateAbilityLinks(CreateAbilityLinks),
     AddAbility(AddAbility),
     GiveAbility(GiveAbility),
+    UseAbility(UseAbility),
+    ScheduleRevive(ScheduleRevive),
 }
 
 pub enum ActionResponse {
@@ -123,6 +124,8 @@ pub enum ActionResponse {
     CreateAbilityLinks(CreateAbilityLinksResponse),
     AddAbility(AddAbilityResponse),
     GiveAbility(GiveAbilityResponse),
+    UseAbility(UseAbilityResponse),
+    ScheduleRevive(ScheduleReviveResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -153,6 +156,14 @@ impl ActionActor {
             Ok(())
         } else {
             Err(ActionError::ActorIsNotPlayer)
+        }
+    }
+
+    pub fn require_not_system(&self) -> Result<(), ActionError> {
+        if matches!(self, ActionActor::System) {
+            Ok(())
+        } else {
+            Err(ActionError::ActorIsSystem)
         }
     }
 }

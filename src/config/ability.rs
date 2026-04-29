@@ -2,8 +2,14 @@ use std::collections::BTreeMap;
 
 use crate::{
     ability::AbilityLinkType,
-    common::{LinkWeight, Variant},
+    common::{IterationCount, LinkWeight, Variant},
 };
+
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
+pub enum AbilityCategory {
+    Supernatural,
+    Physical,
+}
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 pub enum AbilityName {
@@ -24,10 +30,12 @@ pub enum AbilityName {
     KiraConnection,
     AnonymousProsecution,
     Autopsy,
-    IPP,
+    Ipp,
     TrueNameReroll,
     PublicKidnap,
     AnonymousKidnap,
+    TrueNameReveal,
+    NotebookReveal,
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
@@ -62,14 +70,13 @@ pub type AbilityConfigMap = BTreeMap<AbilityIdentifier, AbilityConfig>;
 // Must add link weight to ability config to allow for things like group chat creation using up all
 // contact charges.
 
-// TODO: Add ability categories like "Supernatural", "Physical", etc... An ability's source of truth
-// for category is the config struct.
 #[derive(Debug)]
 pub struct AbilityConfig {
-    pub reset_time: u16,
+    pub reset_time: IterationCount,
     pub base_charges: u16,
     pub default_links: Vec<ConfigAbilityLink>, // what this should ability link to if given the
-                                               // opportunity
+    // opportunity
+    pub category: AbilityCategory,
 }
 
 pub fn default_ability_config() -> AbilityConfigMap {
@@ -78,6 +85,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::Contact, 0),
         AbilityConfig {
+            category: AbilityCategory::Physical,
             base_charges: 5,
             reset_time: 1,
             default_links: vec![],
@@ -87,6 +95,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::AnonymousContact, 0),
         AbilityConfig {
+            category: AbilityCategory::Physical,
             base_charges: 1,
             reset_time: 1,
             default_links: vec![ConfigAbilityLink {
@@ -100,6 +109,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::FalseAnonymousContact, 0),
         AbilityConfig {
+            category: AbilityCategory::Physical,
             base_charges: 1,
             reset_time: 1,
             default_links: vec![ConfigAbilityLink {
@@ -113,6 +123,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::AnonymousAnnouncement, 0),
         AbilityConfig {
+            category: AbilityCategory::Physical,
             base_charges: 2,
             reset_time: 1,
             default_links: vec![],
@@ -122,6 +133,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::FabricateLounge, 0),
         AbilityConfig {
+            category: AbilityCategory::Physical,
             base_charges: 2,
             reset_time: 1,
             default_links: vec![],
@@ -131,6 +143,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::Pseudocide, 0),
         AbilityConfig {
+            category: AbilityCategory::Physical,
             base_charges: 1,
             reset_time: 2,
             default_links: vec![],
@@ -140,6 +153,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::Bug, 0),
         AbilityConfig {
+            category: AbilityCategory::Physical,
             base_charges: 1,
             reset_time: 2,
             default_links: vec![],
@@ -150,6 +164,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::TapIn, 0),
         AbilityConfig {
+            category: AbilityCategory::Physical,
             base_charges: 1,
             reset_time: 1,
             default_links: vec![],
@@ -160,6 +175,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::TapIn, 1),
         AbilityConfig {
+            category: AbilityCategory::Physical,
             base_charges: 1,
             reset_time: 1,
             default_links: vec![],
@@ -169,9 +185,44 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::Blackout, 0),
         AbilityConfig {
+            category: AbilityCategory::Physical,
             base_charges: 1,
-            reset_time: u16::MAX,
+            reset_time: IterationCount::MAX,
             default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::TrueNameReveal, 0),
+        AbilityConfig {
+            category: AbilityCategory::Supernatural,
+            base_charges: 2,
+            reset_time: 1,
+            default_links: vec![ConfigAbilityLink {
+                link_type: AbilityLinkType::Limit,
+                identifier: AbilityIdentifier {
+                    name: AbilityName::NotebookReveal,
+                    variant: 0,
+                },
+                weight: 1,
+            }],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::NotebookReveal, 0),
+        AbilityConfig {
+            category: AbilityCategory::Supernatural,
+            base_charges: 1,
+            reset_time: 1,
+            default_links: vec![ConfigAbilityLink {
+                link_type: AbilityLinkType::Limit,
+                identifier: AbilityIdentifier {
+                    name: AbilityName::TrueNameReveal,
+                    variant: 0,
+                },
+                weight: 2,
+            }],
         },
     );
 
