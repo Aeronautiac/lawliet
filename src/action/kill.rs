@@ -9,6 +9,7 @@ use crate::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         add_state::state_addition, get_actor, get_actor_mut, give_ability::GiveAbility,
         give_notebook::GiveNotebook, give_passive::GivePassive, require_alive,
+        sever_links::SeverLinks,
     },
     actor::{ActorType, state::State},
     command::Command,
@@ -25,6 +26,7 @@ pub struct Kill {
     pub killer_id: Option<ID>,
     pub death_message: Option<String>,
     pub silent: bool,
+    pub ignore_links: bool,
 }
 
 impl ActionInterface for Kill {
@@ -99,6 +101,27 @@ impl ActionInterface for Kill {
                     }));
                 }
             }
+        }
+
+        if !self.ignore_links {
+            let target = get_actor(eng, self.target_id)?;
+
+            // life links
+            let links = target.actor_links.clone();
+            for link in links {
+                next_actions.push(Action::Kill(Kill {
+                    target_id: link.link_dest,
+                    silent: self.silent,
+                    death_message: Some(eng.config.defaults.life_link_death_message.clone()),
+                    ignore_links: false,
+                    killer_id: self.killer_id,
+                }));
+            }
+
+            // sever all links pointing to this actor
+            next_actions.push(Action::SeverLinks(SeverLinks {
+                actor_id: self.target_id,
+            }));
         }
 
         for mut action in next_actions {

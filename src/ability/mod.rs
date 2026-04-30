@@ -13,7 +13,10 @@ use std::collections::BTreeSet;
 
 use crate::{
     ID,
-    ability::pseudocide::{Pseudocide, PseudocideResponse},
+    ability::{
+        gun::{Gun, GunResponse},
+        pseudocide::{Pseudocide, PseudocideResponse},
+    },
     action::{ActionActor, ActionContext, ActionError},
     common::{ChargeCount, IterationCount, LinkWeight, Variant},
     config::ability::AbilityName,
@@ -22,6 +25,7 @@ use crate::{
 };
 use enum_dispatch::enum_dispatch;
 
+pub mod gun;
 pub mod pseudocide;
 
 #[enum_dispatch]
@@ -42,11 +46,13 @@ pub trait AbilityInterface {
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]
 pub enum AbilityBehaviour {
     Pseudocide(Pseudocide),
+    Gun(Gun),
 }
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]
 pub enum AbilityResponse {
     Pseudocide(PseudocideResponse),
+    Gun(GunResponse),
 }
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy)]

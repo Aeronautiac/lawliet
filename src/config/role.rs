@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::{
+    actor::ActorLinkType,
     config::ability::{AbilityIdentifier, AbilityName},
     passive::{ContactLogType, PassiveType},
 };
@@ -10,11 +11,15 @@ use crate::{
 // and linking deaths.
 // For example, L and Watari have two links. L has a life link to Watari, and Watari has a passive
 // link to L.
-// The passive link enables their shared contact log ability. If Watari dies, the link is disabled
-// and L loses the ability to view contact logs.
+// The passive link enables their shared contact log ability. If Watari dies (and link
+// acknowledgement is set to true in the kill action), the links are severed and L loses the ability to view contact logs.
 // L's life link ensures that Watari dies if L dies.
 // If L is revived, Watari is also revived.
-// To enable things like pseudocide, life links may be explicitly ignored in the kill and revive actions.
+// In the case that there are multiple Wataris, all Wataris will die when L dies, and all are
+// revived when L is revived.
+// In the case that a Watari dies, L will still have contact logs.
+// Link acknowledgement is an option in the kill action which determines if link behaviour is
+// considered or not.
 
 // TODO:
 // Certain roles spawn with death notes (either real or fake).
@@ -56,10 +61,16 @@ pub struct RoleNotebook {
     pub fake: bool,
 }
 
+pub struct RoleLink {
+    pub role: Role,
+    pub link_type: ActorLinkType,
+}
+
 pub struct RoleConfig {
     pub abilities: Vec<RoleAbility>,
     pub passives: Vec<RolePassive>,
     pub notebooks: Vec<RoleNotebook>,
+    pub actor_links: Vec<RoleLink>,
 }
 
 pub type RoleConfigMap = BTreeMap<Role, RoleConfig>;
@@ -88,6 +99,7 @@ pub fn default_role_config() -> RoleConfigMap {
             ],
             passives: vec![],
             notebooks: vec![RoleNotebook { fake: false }],
+            actor_links: vec![],
         },
     );
 
@@ -136,6 +148,7 @@ pub fn default_role_config() -> RoleConfigMap {
                 transferrable: false,
             }],
             notebooks: vec![RoleNotebook { fake: false }],
+            actor_links: vec![],
         },
     );
 
@@ -160,6 +173,16 @@ pub fn default_role_config() -> RoleConfigMap {
             ],
             passives: vec![],
             notebooks: vec![],
+            actor_links: vec![
+                RoleLink {
+                    role: Role::Watari,
+                    link_type: ActorLinkType::Life,
+                },
+                RoleLink {
+                    role: Role::Watari,
+                    link_type: ActorLinkType::Passive,
+                },
+            ],
         },
     );
 
@@ -187,6 +210,7 @@ pub fn default_role_config() -> RoleConfigMap {
                 transferrable: true,
             }],
             notebooks: vec![],
+            actor_links: vec![],
         },
     );
 
@@ -218,6 +242,7 @@ pub fn default_role_config() -> RoleConfigMap {
             ],
             passives: vec![],
             notebooks: vec![],
+            actor_links: vec![],
         },
     );
 
@@ -242,6 +267,7 @@ pub fn default_role_config() -> RoleConfigMap {
             ],
             passives: vec![],
             notebooks: vec![],
+            actor_links: vec![],
         },
     );
 
@@ -260,6 +286,7 @@ pub fn default_role_config() -> RoleConfigMap {
                 transferrable: false,
             }],
             notebooks: vec![],
+            actor_links: vec![],
         },
     );
 
@@ -269,6 +296,7 @@ pub fn default_role_config() -> RoleConfigMap {
             abilities: vec![],
             passives: vec![],
             notebooks: vec![],
+            actor_links: vec![],
         },
     );
 
@@ -278,6 +306,7 @@ pub fn default_role_config() -> RoleConfigMap {
             abilities: vec![],
             passives: vec![],
             notebooks: vec![RoleNotebook { fake: false }],
+            actor_links: vec![],
         },
     );
 
@@ -302,6 +331,7 @@ pub fn default_role_config() -> RoleConfigMap {
             ],
             passives: vec![],
             notebooks: vec![],
+            actor_links: vec![],
         },
     );
 
@@ -317,6 +347,7 @@ pub fn default_role_config() -> RoleConfigMap {
             }],
             passives: vec![],
             notebooks: vec![RoleNotebook { fake: true }],
+            actor_links: vec![],
         },
     );
 
@@ -344,6 +375,7 @@ pub fn default_role_config() -> RoleConfigMap {
                 transferrable: false,
             }],
             notebooks: vec![],
+            actor_links: vec![],
         },
     );
 
@@ -362,6 +394,7 @@ pub fn default_role_config() -> RoleConfigMap {
                 transferrable: true,
             }],
             notebooks: vec![RoleNotebook { fake: true }],
+            actor_links: vec![],
         },
     );
 
@@ -380,6 +413,7 @@ pub fn default_role_config() -> RoleConfigMap {
                 transferrable: true,
             }],
             notebooks: vec![],
+            actor_links: vec![],
         },
     );
 

@@ -10,6 +10,7 @@ use crate::{
         add_player::*,
         add_state::*,
         create_ability_links::{CreateAbilityLinks, CreateAbilityLinksResponse},
+        create_actor_links::{CreateActorLinks, CreateActorLinksResponse},
         give_ability::{GiveAbility, GiveAbilityResponse},
         give_notebook::{GiveNotebook, GiveNotebookResponse},
         give_passive::{GivePassive, GivePassiveResponse},
@@ -20,6 +21,7 @@ use crate::{
         revive::*,
         schedule_kill::{ScheduleKill, ScheduleKillResponse},
         schedule_revive::{ScheduleRevive, ScheduleReviveResponse},
+        sever_links::{SeverLinks, SeverLinksResponse},
         use_ability::{UseAbility, UseAbilityResponse},
         write_name::{WriteName, WriteNameResponse},
     },
@@ -28,7 +30,7 @@ use crate::{
     common::Version,
     config::ability::{AbilityConfig, AbilityIdentifier},
     engine::Engine,
-    passive::Passive,
+    passive::{Passive, PassiveType},
 };
 
 pub mod add_ability;
@@ -37,6 +39,7 @@ pub mod add_passive;
 pub mod add_player;
 pub mod add_state;
 pub mod create_ability_links;
+pub mod create_actor_links;
 pub mod give_ability;
 pub mod give_notebook;
 pub mod give_passive;
@@ -47,6 +50,7 @@ pub mod remove_state;
 pub mod revive;
 pub mod schedule_kill;
 pub mod schedule_revive;
+pub mod sever_links;
 pub mod use_ability;
 pub mod write_name;
 
@@ -114,6 +118,8 @@ pub enum Action {
     GiveAbility(GiveAbility),
     AddPassive(AddPassive),
     GivePassive(GivePassive),
+    SeverLinks(SeverLinks),
+    CreateActorLinks(CreateActorLinks),
 }
 
 pub enum ActionResponse {
@@ -135,6 +141,8 @@ pub enum ActionResponse {
     ScheduleRevive(ScheduleReviveResponse),
     AddPassive(AddPassiveResponse),
     GivePassive(GivePassiveResponse),
+    SeverLinks(SeverLinksResponse),
+    CreateActorLinks(CreateActorLinksResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -279,4 +287,16 @@ pub fn get_ability_config(eng: &Engine, ability: ID) -> Result<&AbilityConfig, A
     } else {
         Err(ActionError::AbilityConfigNotFound)
     }
+}
+
+/// true if a matching passive is found with the actor id as the owner
+/// O(n) - can likely be improved upon later
+pub fn actor_has_effective_passive(eng: &Engine, actor_id: ID, passive_type: PassiveType) -> bool {
+    for (_, passive) in eng.world.passives.iter() {
+        if passive.ownership_struct.owner == Some(actor_id) && passive.passive_type == passive_type
+        {
+            return true;
+        }
+    }
+    false
 }

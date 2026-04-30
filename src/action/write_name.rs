@@ -69,6 +69,7 @@ impl ActionInterface for WriteName {
                 Action::ScheduleKill(ScheduleKill {
                     timestamp: eng.time + delay,
                     kill: Kill {
+                        ignore_links: false,
                         target_id,
                         killer_id: Some(player_id),
                         death_message: self.death_message.clone(),
@@ -78,6 +79,7 @@ impl ActionInterface for WriteName {
                 .handle(eng, ctx, actor, version, mutate)?;
             } else {
                 Action::Kill(Kill {
+                    ignore_links: false,
                     target_id,
                     killer_id: Some(player_id),
                     death_message: self.death_message.clone(),

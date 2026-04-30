@@ -36,6 +36,7 @@ pub enum AbilityName {
     AnonymousKidnap,
     TrueNameReveal,
     NotebookReveal,
+    Gun,
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
@@ -213,7 +214,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::NotebookReveal, 0),
         AbilityConfig {
             category: AbilityCategory::Supernatural,
-            base_charges: 1,
+            base_charges: 2,
             reset_time: 1,
             default_links: vec![ConfigAbilityLink {
                 link_type: AbilityLinkType::Limit,
@@ -221,7 +222,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
                     name: AbilityName::TrueNameReveal,
                     variant: 0,
                 },
-                weight: 2,
+                weight: 1,
             }],
         },
     );

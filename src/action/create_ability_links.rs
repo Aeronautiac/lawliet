@@ -10,7 +10,6 @@ use crate::{
         ActionContext, ActionInterface, ActionResponse, get_ability, get_ability_config,
         get_ability_mut, get_actor,
     },
-    config::ability::AbilityIdentifier,
 };
 
 #[derive(PartialEq, Eq, Clone)]

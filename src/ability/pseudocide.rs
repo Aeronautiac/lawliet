@@ -36,6 +36,7 @@ impl AbilityInterface for Pseudocide {
         mutate: bool,
     ) -> super::AbilityResult {
         Action::Kill(Kill {
+            ignore_links: true,
             silent: true,
             death_message: None,
             killer_id: None,
@@ -54,6 +55,7 @@ impl AbilityInterface for Pseudocide {
         Action::ScheduleRevive(ScheduleRevive {
             timestamp: eng.time + eng.config.defaults.pseudocide_duration,
             revive: Revive {
+                ignore_links: true,
                 target_id: self.target_id,
             },
         })
