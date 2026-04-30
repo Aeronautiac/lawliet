@@ -7,25 +7,6 @@ use crate::{
 };
 
 // TODO:
-// Add actor link configurations. Actor links are unidirectional and allow things like sharing passives
-// and linking deaths.
-// For example, L and Watari have two links. L has a life link to Watari, and Watari has a passive
-// link to L.
-// The passive link enables their shared contact log ability. If Watari dies (and link
-// acknowledgement is set to true in the kill action), the links are severed and L loses the ability to view contact logs.
-// L's life link ensures that Watari dies if L dies.
-// If L is revived, Watari is also revived.
-// In the case that there are multiple Wataris, all Wataris will die when L dies, and all are
-// revived when L is revived.
-// In the case that a Watari dies, L will still have contact logs.
-// Link acknowledgement is an option in the kill action which determines if link behaviour is
-// considered or not.
-
-// TODO:
-// Certain roles spawn with death notes (either real or fake).
-// Death notes shall be considered volatile until their true owner is changed.
-
-// TODO:
 // Add organization configurations. Certain roles spawn in organizations with a certain rank.
 // For example, Near spawns as the leader of the SPK.
 
@@ -47,25 +28,30 @@ pub enum Role {
     Mello,
 }
 
+#[derive(PartialEq, Eq, Clone)]
 pub struct RolePassive {
     pub passive_type: PassiveType,
     pub transferrable: bool,
 }
 
+#[derive(PartialEq, Eq, Clone)]
 pub struct RoleAbility {
     pub identifier: AbilityIdentifier,
     pub transferrable: bool,
 }
 
+#[derive(PartialEq, Eq, Clone)]
 pub struct RoleNotebook {
     pub fake: bool,
 }
 
+#[derive(PartialEq, Eq, Clone)]
 pub struct RoleLink {
     pub role: Role,
     pub link_type: ActorLinkType,
 }
 
+#[derive(PartialEq, Eq, Clone)]
 pub struct RoleConfig {
     pub abilities: Vec<RoleAbility>,
     pub passives: Vec<RolePassive>,

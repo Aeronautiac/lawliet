@@ -1,7 +1,6 @@
 /*
 * SYSTEM ACTION
 * Go through every ability owned by a certain actor and apply any links that config dictates
-* Apply links through the ability API directly. This action has no sub-actions.
 */
 
 use crate::{
@@ -30,16 +29,9 @@ impl ActionInterface for CreateAbilityLinks {
         mutate: bool,
     ) -> super::ActionResult {
         actor.require_system()?;
-        get_actor(eng, self.target_id)?;
+        let actor_data = get_actor(eng, self.target_id)?;
 
-        let owned_abilities: Vec<ID> = eng
-            .world
-            .abilities
-            .iter()
-            .filter(|(_id, ability)| ability.ownership_struct.owner == Some(self.target_id))
-            .map(|(id, _ability)| *id)
-            .collect();
-
+        let owned_abilities = actor_data.abilities.clone();
         for ability_id in &owned_abilities {
             let config = get_ability_config(eng, *ability_id)?;
             let links = config.default_links.clone();

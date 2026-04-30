@@ -7,7 +7,7 @@ use crate::{
     ID,
     action::{
         Action, ActionContext, ActionInterface, ActionResponse,
-        create_ability_links::CreateAbilityLinks, get_ability_mut, get_actor,
+        create_ability_links::CreateAbilityLinks, get_ability_mut, get_actor, get_actor_mut,
     },
 };
 
@@ -36,6 +36,8 @@ impl ActionInterface for GiveAbility {
         if mutate {
             ability.clear_links();
             ability.ownership_struct.set_owner(self.actor_id);
+            let actor_data = get_actor_mut(eng, self.actor_id)?;
+            actor_data.add_ability(self.ability_id);
         }
 
         Action::CreateAbilityLinks(CreateAbilityLinks {

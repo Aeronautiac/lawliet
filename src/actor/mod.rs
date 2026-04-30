@@ -18,7 +18,7 @@ use crate::{
 };
 use restriction::{Restriction, Source};
 
-#[derive(PartialEq, Eq, Debug, Ord, PartialOrd, Clone)]
+#[derive(PartialEq, Eq, Debug, Ord, PartialOrd, Clone, Copy)]
 pub enum ActorLinkType {
     Life, // if an actor has a life link to another actor, then when the main actor dies, so will
     // the other actor, and the same is true for revivals.
@@ -45,6 +45,9 @@ pub enum ActorType {
 #[derive(PartialEq, Eq, Debug)]
 pub struct Actor {
     pub kills: Vec<ID>,
+    pub abilities: BTreeSet<ID>, // true ability ownership is represented by the OwnershipStruct for both
+    // passives and abilities. this only exists for performance. it must be correctly maintained.
+    pub passives: BTreeSet<ID>,
     pub restrictions: BTreeMap<Source, Restrictions>,
     pub states: States,
     pub actor_type: ActorType,
@@ -55,6 +58,8 @@ impl Actor {
     pub fn new_player(true_name: &str, role: Role) -> Self {
         Actor {
             kills: vec![],
+            abilities: BTreeSet::new(),
+            passives: BTreeSet::new(),
             restrictions: BTreeMap::new(),
             states: States::empty(),
             actor_links: BTreeSet::new(),
@@ -65,6 +70,8 @@ impl Actor {
     pub fn new_org() -> Self {
         Actor {
             kills: vec![],
+            abilities: BTreeSet::new(),
+            passives: BTreeSet::new(),
             restrictions: BTreeMap::new(),
             actor_links: BTreeSet::new(),
             states: States::empty(),
@@ -108,5 +115,21 @@ impl Actor {
 
     pub fn sever_link(&mut self, link: ActorLink) {
         self.actor_links.remove(&link);
+    }
+
+    pub fn remove_ability(&mut self, id: ID) {
+        self.abilities.remove(&id);
+    }
+
+    pub fn add_ability(&mut self, id: ID) {
+        self.abilities.insert(id);
+    }
+
+    pub fn remove_passive(&mut self, id: ID) {
+        self.passives.remove(&id);
+    }
+
+    pub fn add_passive(&mut self, id: ID) {
+        self.passives.insert(id);
     }
 }

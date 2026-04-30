@@ -28,7 +28,10 @@ use crate::{
     actor::{Actor, ActorType, state::State},
     command::Command,
     common::Version,
-    config::ability::{AbilityConfig, AbilityIdentifier},
+    config::{
+        ability::{AbilityConfig, AbilityIdentifier},
+        role::{Role, RoleConfig},
+    },
     engine::Engine,
     passive::{Passive, PassiveType},
 };
@@ -76,6 +79,7 @@ pub enum ActionError {
     AbilityNotOwned,
     AbilityMismatch,
     AbilityNotEnoughCharges,
+    RoleNotImplemented,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -289,10 +293,24 @@ pub fn get_ability_config(eng: &Engine, ability: ID) -> Result<&AbilityConfig, A
     }
 }
 
+pub fn get_role_config(eng: &Engine, role: Role) -> Result<&RoleConfig, ActionError> {
+    if let Some(role_config) = eng.config.roles.get(&role) {
+        Ok(role_config)
+    } else {
+        Err(ActionError::RoleNotImplemented)
+    }
+}
+
 /// true if a matching passive is found with the actor id as the owner
 /// O(n) - can likely be improved upon later
 pub fn actor_has_effective_passive(eng: &Engine, actor_id: ID, passive_type: PassiveType) -> bool {
-    for (_, passive) in eng.world.passives.iter() {
+    let Some(actor_data) = eng.world.get_actor(actor_id) else {
+        return false;
+    };
+    for id in actor_data.passives.iter() {
+        let passive = eng.world.get_passive(*id).unwrap(); // if the list is not accurate
+        // to the passives that actually exist, then something is wrong with the engine and a crash
+        // is warranted.
         if passive.ownership_struct.owner == Some(actor_id) && passive.passive_type == passive_type
         {
             return true;

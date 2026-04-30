@@ -5,7 +5,9 @@
 
 use crate::{
     ID,
-    action::{ActionContext, ActionInterface, ActionResponse, get_actor, get_passive_mut},
+    action::{
+        ActionContext, ActionInterface, ActionResponse, get_actor, get_actor_mut, get_passive_mut,
+    },
 };
 
 #[derive(PartialEq, Eq, Clone)]
@@ -32,6 +34,8 @@ impl ActionInterface for GivePassive {
         let passive = get_passive_mut(eng, self.passive_id)?;
         if mutate {
             passive.ownership_struct.set_owner(self.actor_id);
+            let actor_data = get_actor_mut(eng, self.actor_id)?;
+            actor_data.add_passive(self.passive_id);
         }
 
         Ok(ActionResponse::GivePassive(GivePassiveResponse {}))
