@@ -117,7 +117,6 @@ impl World {
         self.notebooks.get(&id)
     }
 
-    /// returns false if the ability variant is not specified in config
     pub fn add_ability(&mut self, ability: Ability) -> ID {
         let id = self.next_ability_id;
         self.next_ability_id += 1;
@@ -136,6 +135,13 @@ impl World {
 
     pub fn get_ability_mut(&mut self, id: ID) -> Option<&mut Ability> {
         self.abilities.get_mut(&id)
+    }
+
+    pub fn add_passive(&mut self, passive: Passive) -> ID {
+        let id = self.next_ability_id;
+        self.next_passive_id += 1;
+        self.passives.insert(id, passive);
+        id
     }
 
     /// be careful that there are no dangling ids

@@ -6,11 +6,13 @@ use crate::{
     action::{
         add_ability::{AddAbility, AddAbilityResponse},
         add_notebook::{AddNotebook, AddNotebookResponse},
+        add_passive::{AddPassive, AddPassiveResponse},
         add_player::*,
         add_state::*,
         create_ability_links::{CreateAbilityLinks, CreateAbilityLinksResponse},
         give_ability::{GiveAbility, GiveAbilityResponse},
         give_notebook::{GiveNotebook, GiveNotebookResponse},
+        give_passive::{GivePassive, GivePassiveResponse},
         give_role::{GiveRole, GiveRoleResponse},
         kill::*,
         lend_notebook::{LendNotebook, LendNotebookResponse},
@@ -26,15 +28,18 @@ use crate::{
     common::Version,
     config::ability::{AbilityConfig, AbilityIdentifier},
     engine::Engine,
+    passive::Passive,
 };
 
 pub mod add_ability;
 pub mod add_notebook;
+pub mod add_passive;
 pub mod add_player;
 pub mod add_state;
 pub mod create_ability_links;
 pub mod give_ability;
 pub mod give_notebook;
+pub mod give_passive;
 pub mod give_role;
 pub mod kill;
 pub mod lend_notebook;
@@ -107,6 +112,8 @@ pub enum Action {
     UseAbility(UseAbility),
     ScheduleRevive(ScheduleRevive),
     GiveAbility(GiveAbility),
+    AddPassive(AddPassive),
+    GivePassive(GivePassive),
 }
 
 pub enum ActionResponse {
@@ -126,6 +133,8 @@ pub enum ActionResponse {
     GiveAbility(GiveAbilityResponse),
     UseAbility(UseAbilityResponse),
     ScheduleRevive(ScheduleReviveResponse),
+    AddPassive(AddPassiveResponse),
+    GivePassive(GivePassiveResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -239,6 +248,22 @@ pub fn get_ability(eng: &Engine, ability_id: ID) -> Result<&Ability, ActionError
     let target = eng
         .world
         .get_ability(ability_id)
+        .ok_or(ActionError::AbilityNotFound)?;
+    Ok(target)
+}
+
+pub fn get_passive_mut(eng: &mut Engine, ability_id: ID) -> Result<&mut Passive, ActionError> {
+    let target = eng
+        .world
+        .get_passive_mut(ability_id)
+        .ok_or(ActionError::AbilityNotFound)?;
+    Ok(target)
+}
+
+pub fn get_passive(eng: &Engine, ability_id: ID) -> Result<&Passive, ActionError> {
+    let target = eng
+        .world
+        .get_passive(ability_id)
         .ok_or(ActionError::AbilityNotFound)?;
     Ok(target)
 }

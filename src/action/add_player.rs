@@ -7,7 +7,7 @@ use crate::{
     ID,
     action::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
-        ActionResult, add_ability::AddAbility, give_ability::GiveAbility,
+        ActionResult, add_ability::AddAbility, give_ability::GiveAbility, give_role::GiveRole,
     },
     common::Version,
     config::role::Role,
@@ -66,11 +66,8 @@ impl ActionInterface for AddPlayer {
             ability_ids.push(ability_id);
         }
 
-        // TODO:
-        // Role abilities
-
-        // abilities will only be physically created in the mutation path
         if mutate {
+            // abilities will only be physically created in the mutation path
             for ability in ability_ids {
                 Action::GiveAbility(GiveAbility {
                     ability_id: ability,
@@ -78,6 +75,13 @@ impl ActionInterface for AddPlayer {
                 })
                 .handle(eng, ctx, actor, version, mutate)?;
             }
+
+            // giving a role only works if the player exists which only happens in the mutation path
+            Action::GiveRole(GiveRole {
+                target_id: player_id,
+                role: self.starting_role,
+            })
+            .handle(eng, ctx, actor, version, mutate)?;
         }
 
         Ok(ActionResponse::AddPlayer(AddPlayerResponse {

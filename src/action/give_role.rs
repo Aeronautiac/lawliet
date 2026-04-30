@@ -16,8 +16,8 @@ pub struct GiveRoleResponse {}
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct GiveRole {
-    target_id: ID,
-    role: Role,
+    pub target_id: ID,
+    pub role: Role,
 }
 
 impl ActionInterface for GiveRole {

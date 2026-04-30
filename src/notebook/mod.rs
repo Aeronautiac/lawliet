@@ -11,6 +11,8 @@ pub enum NotebookError {
 
 #[derive(Debug, PartialEq)]
 pub struct Notebook {
+    pub volatile: bool, // if a notebook is volatile, it will be destroyed when the original owner's
+    // role changes
     pub fake: bool, // if a notebook is fake, it cannot actually kill people
     pub original_owner: Option<ID>,
     pub owner: Option<ID>,    // the person this notebook currently belongs to
@@ -23,6 +25,7 @@ impl Notebook {
     pub fn new(fake: bool) -> Self {
         Notebook {
             fake,
+            volatile: false,
             original_owner: None,
             owner: None,
             borrowed: None,
@@ -31,11 +34,13 @@ impl Notebook {
         }
     }
 
+    pub fn set_original_owner(&mut self, id: ID, volatile: bool) {
+        self.original_owner = Some(id);
+        self.volatile = volatile;
+    }
+
     pub fn set_true_owner(&mut self, id: ID) {
         self.borrowed = None;
-        if self.original_owner.is_none() {
-            self.original_owner = Some(id);
-        }
         self.owner = Some(id);
     }
 

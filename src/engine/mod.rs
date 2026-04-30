@@ -119,4 +119,10 @@ impl Engine {
         let main_response = self.execute_atomic(&mut ctx, action)?;
         Ok((main_response, ctx))
     }
+
+    // every update to any place in code after the engine is publicly usable requires the version number to be incremented by 1
+    /// return the latest version of the engine
+    pub fn version() -> u64 {
+        0
+    }
 }

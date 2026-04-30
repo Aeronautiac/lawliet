@@ -1,6 +1,6 @@
 use crate::ID;
 
-#[derive(Debug)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct OwnershipStruct {
     pub owner: Option<ID>, // the actor which this item is owned by (if any)
     pub volatile: bool,    // determines whether or not the item is deleted when the owner changes

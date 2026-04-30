@@ -8,7 +8,7 @@ use crate::{
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         add_state::state_addition, get_actor, get_actor_mut, give_ability::GiveAbility,
-        give_notebook::GiveNotebook, require_alive,
+        give_notebook::GiveNotebook, give_passive::GivePassive, require_alive,
     },
     actor::{ActorType, state::State},
     command::Command,
@@ -87,6 +87,18 @@ impl ActionInterface for Kill {
             }
 
             // passive transfers
+            for (id, passive) in eng.world.passives.iter() {
+                if let Some(owner) = passive.ownership_struct.owner
+                    && owner == self.target_id
+                    && passive.ownership_struct.transferrable
+                {
+                    ability_transferred = true;
+                    next_actions.push(Action::GivePassive(GivePassive {
+                        passive_id: *id,
+                        actor_id: killer_id,
+                    }));
+                }
+            }
         }
 
         for mut action in next_actions {

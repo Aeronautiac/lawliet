@@ -1,19 +1,28 @@
 use std::collections::BTreeMap;
 
-use crate::config::ability::{AbilityIdentifier, AbilityName};
+use crate::{
+    config::ability::{AbilityIdentifier, AbilityName},
+    passive::{ContactLogType, PassiveType},
+};
 
 // TODO:
-// Add passives such as:
-// - Wanted (silent prosecutable off spawn)
-// - Contact logs (with variants such as full, even, odd)
-// - Jury duty (news anchor gets two votes)
-// Passives are much more simple to implement than active abilities, but they are still
-// stateful. They are not simple flags. Certain passives are transferrable (contact logs for example).
-// They are also fairly versatile. A passive can act is basically a slightly more complex flag that
-// does stuff like allow players to add people to the news or make them silent prosecutable off spawn.
-// The ability system as a whole can likely be generalized even further. Abilities have the exact
-// same ownership semantics. The only difference is that they have additional state to handle active
-// usage.
+// Add actor link configurations. Actor links are unidirectional and allow things like sharing passives
+// and linking deaths.
+// For example, L and Watari have two links. L has a life link to Watari, and Watari has a passive
+// link to L.
+// The passive link enables their shared contact log ability. If Watari dies, the link is disabled
+// and L loses the ability to view contact logs.
+// L's life link ensures that Watari dies if L dies.
+// If L is revived, Watari is also revived.
+// To enable things like pseudocide, life links may be explicitly ignored in the kill and revive actions.
+
+// TODO:
+// Certain roles spawn with death notes (either real or fake).
+// Death notes shall be considered volatile until their true owner is changed.
+
+// TODO:
+// Add organization configurations. Certain roles spawn in organizations with a certain rank.
+// For example, Near spawns as the leader of the SPK.
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy)]
 pub enum Role {
@@ -33,13 +42,24 @@ pub enum Role {
     Mello,
 }
 
+pub struct RolePassive {
+    pub passive_type: PassiveType,
+    pub transferrable: bool,
+}
+
 pub struct RoleAbility {
     pub identifier: AbilityIdentifier,
     pub transferrable: bool,
 }
 
+pub struct RoleNotebook {
+    pub fake: bool,
+}
+
 pub struct RoleConfig {
     pub abilities: Vec<RoleAbility>,
+    pub passives: Vec<RolePassive>,
+    pub notebooks: Vec<RoleNotebook>,
 }
 
 pub type RoleConfigMap = BTreeMap<Role, RoleConfig>;
@@ -66,6 +86,8 @@ pub fn default_role_config() -> RoleConfigMap {
                     transferrable: false,
                 },
             ],
+            passives: vec![],
+            notebooks: vec![RoleNotebook { fake: false }],
         },
     );
 
@@ -109,6 +131,11 @@ pub fn default_role_config() -> RoleConfigMap {
                     transferrable: false,
                 },
             ],
+            passives: vec![RolePassive {
+                passive_type: PassiveType::OwnedNotebookBlock,
+                transferrable: false,
+            }],
+            notebooks: vec![RoleNotebook { fake: false }],
         },
     );
 
@@ -131,6 +158,8 @@ pub fn default_role_config() -> RoleConfigMap {
                     transferrable: false,
                 },
             ],
+            passives: vec![],
+            notebooks: vec![],
         },
     );
 
@@ -153,6 +182,11 @@ pub fn default_role_config() -> RoleConfigMap {
                     transferrable: false,
                 },
             ],
+            passives: vec![RolePassive {
+                passive_type: PassiveType::ContactLogs(ContactLogType::Full),
+                transferrable: true,
+            }],
+            notebooks: vec![],
         },
     );
 
@@ -182,6 +216,8 @@ pub fn default_role_config() -> RoleConfigMap {
                     transferrable: false,
                 },
             ],
+            passives: vec![],
+            notebooks: vec![],
         },
     );
 
@@ -204,6 +240,8 @@ pub fn default_role_config() -> RoleConfigMap {
                     transferrable: false,
                 },
             ],
+            passives: vec![],
+            notebooks: vec![],
         },
     );
 
@@ -217,6 +255,131 @@ pub fn default_role_config() -> RoleConfigMap {
                 },
                 transferrable: false,
             }],
+            passives: vec![RolePassive {
+                passive_type: PassiveType::JuryDuty,
+                transferrable: false,
+            }],
+            notebooks: vec![],
+        },
+    );
+
+    map.insert(
+        Role::Civilian,
+        RoleConfig {
+            abilities: vec![],
+            passives: vec![],
+            notebooks: vec![],
+        },
+    );
+
+    map.insert(
+        Role::RogueCivilian,
+        RoleConfig {
+            abilities: vec![],
+            passives: vec![],
+            notebooks: vec![RoleNotebook { fake: false }],
+        },
+    );
+
+    map.insert(
+        Role::Poser,
+        RoleConfig {
+            abilities: vec![
+                RoleAbility {
+                    identifier: AbilityIdentifier {
+                        name: AbilityName::FalseAnonymousContact,
+                        variant: 0,
+                    },
+                    transferrable: false,
+                },
+                RoleAbility {
+                    identifier: AbilityIdentifier {
+                        name: AbilityName::AnonymousAnnouncement,
+                        variant: 0,
+                    },
+                    transferrable: false,
+                },
+            ],
+            passives: vec![],
+            notebooks: vec![],
+        },
+    );
+
+    map.insert(
+        Role::ConArtist,
+        RoleConfig {
+            abilities: vec![RoleAbility {
+                identifier: AbilityIdentifier {
+                    name: AbilityName::FabricateLounge,
+                    variant: 0,
+                },
+                transferrable: false,
+            }],
+            passives: vec![],
+            notebooks: vec![RoleNotebook { fake: true }],
+        },
+    );
+
+    map.insert(
+        Role::WantedCivilian,
+        RoleConfig {
+            abilities: vec![
+                RoleAbility {
+                    identifier: AbilityIdentifier {
+                        name: AbilityName::Bug,
+                        variant: 0,
+                    },
+                    transferrable: true,
+                },
+                RoleAbility {
+                    identifier: AbilityIdentifier {
+                        name: AbilityName::TapIn,
+                        variant: 1,
+                    },
+                    transferrable: true,
+                },
+            ],
+            passives: vec![RolePassive {
+                passive_type: PassiveType::Wanted,
+                transferrable: false,
+            }],
+            notebooks: vec![],
+        },
+    );
+
+    map.insert(
+        Role::Near,
+        RoleConfig {
+            abilities: vec![RoleAbility {
+                identifier: AbilityIdentifier {
+                    name: AbilityName::AnonymousAnnouncement,
+                    variant: 0,
+                },
+                transferrable: false,
+            }],
+            passives: vec![RolePassive {
+                passive_type: PassiveType::ContactLogs(ContactLogType::Even),
+                transferrable: true,
+            }],
+            notebooks: vec![RoleNotebook { fake: true }],
+        },
+    );
+
+    map.insert(
+        Role::Mello,
+        RoleConfig {
+            abilities: vec![RoleAbility {
+                identifier: AbilityIdentifier {
+                    name: AbilityName::AnonymousAnnouncement,
+                    variant: 0,
+                },
+                transferrable: false,
+            }],
+            passives: vec![RolePassive {
+                passive_type: PassiveType::ContactLogs(ContactLogType::Odd),
+                transferrable: true,
+            }],
+            notebooks: vec![],
         },
     );
 
