@@ -10,8 +10,7 @@ pub type StateRestrictionMap = BTreeMap<State, Restrictions>;
 pub fn default_state_restrictions() -> StateRestrictionMap {
     let mut map = BTreeMap::new();
 
-    map.insert(State::Dead, Restrictions::from_flag(Restriction::Alive)); // should
-    // probably remove the alive restriction and improve granularity
+    map.insert(State::Dead, Restrictions::all());
     map.insert(
         State::Incarcerated,
         Restriction::AbilitiesPhysical

@@ -29,7 +29,7 @@ use crate::{
         use_ability::{UseAbility, UseAbilityResponse},
         write_name::{WriteName, WriteNameResponse},
     },
-    actor::{Actor, ActorLinkType, ActorType, Player, state::State},
+    actor::{Actor, ActorLinkType, ActorType, Player, restriction::Restriction, state::State},
     command::Command,
     common::Version,
     config::{
@@ -332,12 +332,14 @@ pub fn actor_has_effective_passive(eng: &Engine, actor_id: ID, passive_type: Pas
             return true;
         }
     }
-    dbg!(&actor_data.actor_links);
     for link in &actor_data.actor_links {
-        if link.link_type == ActorLinkType::Passive
-            && actor_has_effective_passive(eng, link.link_dest, passive_type)
-        {
-            return true;
+        if link.link_type == ActorLinkType::Passive {
+            let other_actor = get_actor(eng, link.link_dest).unwrap();
+            if !other_actor.has_restriction(Restriction::PassiveLinks)
+                && actor_has_effective_passive(eng, link.link_dest, passive_type)
+            {
+                return true;
+            }
         }
     }
     false

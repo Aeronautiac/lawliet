@@ -7,8 +7,12 @@ use crate::{
     ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
-        add_state::state_addition, get_actor, get_actor_mut, give_ability::GiveAbility,
-        give_notebook::GiveNotebook, give_passive::GivePassive, require_alive,
+        add_state::{AddState, state_addition},
+        get_actor, get_actor_mut,
+        give_ability::GiveAbility,
+        give_notebook::GiveNotebook,
+        give_passive::GivePassive,
+        require_alive,
         sever_links::SeverLinks,
     },
     actor::{ActorType, state::State},
@@ -26,7 +30,8 @@ pub struct Kill {
     pub killer_id: Option<ID>,
     pub death_message: Option<String>,
     pub silent: bool,
-    pub ignore_links: bool,
+    pub allow_link_chaining: bool,
+    pub sever_links: bool,
 }
 
 impl ActionInterface for Kill {
@@ -47,9 +52,15 @@ impl ActionInterface for Kill {
         };
         let true_name = target_data.true_name.clone();
         let role = target_data.role;
+
+        Action::AddState(AddState {
+            actor_id: self.target_id,
+            state: State::Dead,
+        })
+        .handle(eng, ctx, actor, version, mutate)?;
+
         let mut notebook_transferred = false;
         let mut ability_transferred = false;
-
         let mut next_actions = vec![state_addition(self.target_id, State::Dead)];
         if let Some(killer_id) = self.killer_id {
             let killer = get_actor_mut(eng, killer_id)?;
@@ -109,29 +120,36 @@ impl ActionInterface for Kill {
             }
         }
 
-        if !self.ignore_links {
+        for mut action in next_actions {
+            action.handle(eng, ctx, actor, version, mutate)?;
+        }
+
+        if self.allow_link_chaining {
             let target = get_actor(eng, self.target_id)?;
 
             // life links
             let links = target.actor_links.clone();
             for link in links {
-                next_actions.push(Action::Kill(Kill {
-                    target_id: link.link_dest,
-                    silent: self.silent,
-                    death_message: Some(eng.config.defaults.life_link_death_message.clone()),
-                    ignore_links: false,
-                    killer_id: self.killer_id,
-                }));
+                let linked_actor = get_actor(eng, link.link_dest).unwrap();
+                if !linked_actor.states.contains(State::Dead) {
+                    Action::Kill(Kill {
+                        target_id: link.link_dest,
+                        silent: self.silent,
+                        death_message: Some(eng.config.defaults.life_link_death_message.clone()),
+                        allow_link_chaining: true,
+                        sever_links: false,
+                        killer_id: self.killer_id,
+                    })
+                    .handle(eng, ctx, actor, version, mutate)?;
+                }
             }
-
-            // sever all links pointing to this actor
-            next_actions.push(Action::SeverLinks(SeverLinks {
-                actor_id: self.target_id,
-            }));
         }
 
-        for mut action in next_actions {
-            action.handle(eng, ctx, actor, version, mutate)?;
+        if self.sever_links {
+            Action::SeverLinks(SeverLinks {
+                actor_id: self.target_id,
+            })
+            .handle(eng, ctx, actor, version, mutate)?;
         }
 
         if !self.silent {

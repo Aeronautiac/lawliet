@@ -30,7 +30,8 @@ impl AbilityInterface for Gun {
         let id = actor_id(actor);
 
         Action::Kill(Kill {
-            ignore_links: false,
+            allow_link_chaining: true,
+            sever_links: true,
             silent: false,
             death_message: Some("They were found dead with 3 gunshot wounds to the back of the head. Their death was ruled a suicide.".into()),
             killer_id: id,

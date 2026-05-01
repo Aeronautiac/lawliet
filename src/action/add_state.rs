@@ -33,7 +33,7 @@ impl ActionInterface for AddState {
         eng: &mut Engine,
         ctx: &mut ActionContext,
         actor: &ActionActor,
-        _: Version,
+        version: Version,
         mutate: bool,
     ) -> ActionResult {
         actor.require_system()?;

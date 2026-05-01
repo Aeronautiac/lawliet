@@ -77,14 +77,10 @@ mod tests {
     use crate::{
         ID, Timestamp,
         action::{
-            Action, ActionActor, ActionContext, ActionError, ActionRequest, ActionResponse,
-            ActionResult, actor_has_effective_passive,
-            add_player::{AddPlayer, AddPlayerResponse},
-            get_actor,
-            kill::Kill,
-            revive::Revive,
+            Action, ActionActor, ActionRequest, ActionResponse, actor_has_effective_passive,
+            add_player::AddPlayer, get_actor, kill::Kill, revive::Revive, sever_links,
         },
-        actor::{Player, state::State},
+        actor::state::State,
         config::role::Role,
         engine::Engine,
         passive::{ContactLogType, PassiveType},
@@ -113,7 +109,13 @@ mod tests {
         response.id
     }
 
-    fn quick_kill(eng: &mut Engine, timestamp: Timestamp, ignore_links: bool, target: ID) {
+    fn quick_kill(
+        eng: &mut Engine,
+        timestamp: Timestamp,
+        allow_link_chaining: bool,
+        sever_links: bool,
+        target: ID,
+    ) {
         eng.execute(ActionRequest {
             timestamp,
             actor: ActionActor::System,
@@ -122,7 +124,8 @@ mod tests {
                 killer_id: None,
                 death_message: None,
                 silent: true,
-                ignore_links,
+                allow_link_chaining,
+                sever_links,
             }),
         })
         .unwrap();
@@ -140,13 +143,17 @@ mod tests {
         .unwrap();
     }
 
+    // Link behaviour:
+    // Links are not severed if the death was caused by a link
+    // If the death was not caused by a link, they are typically severed, though this can be
+    // disabled as well
     #[test]
     fn test_actor_links() {
         let mut eng = Engine::new();
 
-        let w_id_1 = add_player(&mut eng, 0, Role::Watari, "Watari One");
+        let w_id_1 = add_player(&mut eng, 0, Role::Watari, "John Candlewick");
         let l_id = add_player(&mut eng, 3, Role::L, "John Pork");
-        let w_id_2 = add_player(&mut eng, 5, Role::Watari, "Watari Two");
+        let w_id_2 = add_player(&mut eng, 5, Role::Watari, "Oima Haumzaundwich");
 
         assert!(actor_has_effective_passive(
             &eng,
@@ -154,43 +161,56 @@ mod tests {
             PassiveType::ContactLogs(ContactLogType::Full)
         ));
 
-        quick_kill(&mut eng, 5, false, w_id_1);
+        // link to this one should be severed now
+        quick_kill(&mut eng, 5, false, true, w_id_1);
 
+        // L should still be linked to watari 1
         assert!(actor_has_effective_passive(
             &eng,
             l_id,
             PassiveType::ContactLogs(ContactLogType::Full)
         ));
 
-        quick_kill(&mut eng, 6, false, l_id);
+        // this one should only kill watari 2 and L
+        // links should remain intact
+        quick_kill(&mut eng, 6, true, true, l_id);
 
         let watari1 = get_actor(&eng, w_id_1).unwrap();
         let watari2 = get_actor(&eng, w_id_2).unwrap();
         assert!(watari1.states.contains(State::Dead) && watari2.states.contains(State::Dead));
 
+        // this one should only revive L
         quick_revive(&mut eng, 6, true, l_id);
 
+        // the passive link to watari 2 should still be intact although disabled due to the passive
+        // link restriction on watari 2
         assert!(!actor_has_effective_passive(
             &eng,
             l_id,
             PassiveType::ContactLogs(ContactLogType::Full)
         ));
 
+        // links were ignored, so only L should have been revived
         let watari1 = get_actor(&eng, w_id_1).unwrap();
         let watari2 = get_actor(&eng, w_id_2).unwrap();
         assert!(watari1.states.contains(State::Dead) && watari2.states.contains(State::Dead));
 
-        quick_kill(&mut eng, 6, false, l_id);
+        // kill L again, do not sever links, and do not allow chaining
+        quick_kill(&mut eng, 6, false, false, l_id);
+
+        // this should revive watari 2 along with L
         quick_revive(&mut eng, 6, false, l_id);
 
+        // the passive link should be enabled again because there is no passive link restriction
         assert!(actor_has_effective_passive(
             &eng,
             l_id,
             PassiveType::ContactLogs(ContactLogType::Full)
         ));
 
+        // only watari 2 and L should be revived as watari 1 died alone
         let watari1 = get_actor(&eng, w_id_1).unwrap();
         let watari2 = get_actor(&eng, w_id_2).unwrap();
-        assert!(!(watari1.states.contains(State::Dead) && watari2.states.contains(State::Dead)));
+        assert!(watari1.states.contains(State::Dead) && !watari2.states.contains(State::Dead));
     }
 }

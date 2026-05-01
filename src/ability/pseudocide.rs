@@ -36,7 +36,8 @@ impl AbilityInterface for Pseudocide {
         mutate: bool,
     ) -> super::AbilityResult {
         Action::Kill(Kill {
-            ignore_links: true,
+            allow_link_chaining: false,
+            sever_links: false,
             silent: true,
             death_message: None,
             killer_id: None,
