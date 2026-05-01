@@ -33,7 +33,7 @@ impl ActionInterface for GivePassive {
         actor.require_system()?;
         get_actor(eng, self.actor_id)?;
 
-        let passive = get_passive(eng, self.actor_id)?;
+        let passive = get_passive(eng, self.passive_id)?;
         if let Some(owner) = passive.ownership_struct.owner {
             if owner == self.actor_id {
                 return Err(ActionError::ItemAlreadyOwned);

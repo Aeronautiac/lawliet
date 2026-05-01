@@ -77,126 +77,120 @@ mod tests {
     use crate::{
         ID, Timestamp,
         action::{
-            Action, ActionActor, ActionRequest, ActionResult,
+            Action, ActionActor, ActionContext, ActionError, ActionRequest, ActionResponse,
+            ActionResult, actor_has_effective_passive,
             add_player::{AddPlayer, AddPlayerResponse},
+            get_actor,
             kill::Kill,
+            revive::Revive,
         },
-        actor::{ActorType, state::State},
+        actor::{Player, state::State},
         config::role::Role,
         engine::Engine,
+        passive::{ContactLogType, PassiveType},
     };
 
-    // fn add_player(
-    //     eng: &mut Engine,
-    //     timestamp: Timestamp,
-    //     true_name: &str,
-    //     starting_role: Role,
-    // ) -> ActionResult {
-    //     eng.execute(ActionRequest {
-    //         timestamp,
-    //         actor: ActionActor::System,
-    //         payload: Action::AddPlayer(AddPlayer {
-    //             true_name: String::from(true_name),
-    //             starting_role,
-    //         }),
-    //     })
-    // }
-    //
-    // fn player_response_data(data: ResponseData) -> AddPlayerResponse {
-    //     let ResponseData::AddPlayer(player_data) = data else {
-    //         unreachable!()
-    //     };
-    //     player_data
-    // }
-    //
-    // fn kill(
-    //     eng: &mut Engine,
-    //     timestamp: Timestamp,
-    //     player_id: ID,
-    //     killer_id: Option<ID>,
-    //     death_message: Option<String>,
-    // ) -> ActionResult {
-    //     eng.execute(ActionRequest {
-    //         timestamp,
-    //         actor: ActionActor::System,
-    //         payload: Action::Kill(Kill {
-    //             target_id: player_id,
-    //             death_message,
-    //             killer_id,
-    //             silent: false,
-    //         }),
-    //     })
-    // }
+    fn add_player(
+        eng: &mut Engine,
+        timestamp: Timestamp,
+        starting_role: Role,
+        true_name: &str,
+    ) -> ID {
+        let data = eng
+            .execute(ActionRequest {
+                timestamp,
+                actor: ActionActor::System,
+                payload: Action::AddPlayer(AddPlayer {
+                    true_name: String::from(true_name),
+                    starting_role,
+                }),
+            })
+            .unwrap()
+            .0;
+        let ActionResponse::AddPlayer(response) = data else {
+            unreachable!()
+        };
+        response.id
+    }
 
-    // #[test]
-    // fn test_add_single_player() {
-    //     let mut eng = Engine::new();
-    //
-    //     let john_result = add_player(&mut eng, 0, "John Pork", Role::NewsAnchor).unwrap();
-    //     let response_data = player_response_data(john_result.data);
-    //     assert!(eng.world.actors.contains_key(&response_data.id));
-    //
-    //     let ActorType::Player(player) =
-    //         &eng.world.actors.get(&response_data.id).unwrap().actor_type
-    //     else {
-    //         unreachable!();
-    //     };
-    //     assert!(&*player.true_name == "john pork");
-    //     assert!(player.role == Role::NewsAnchor);
-    // }
-    //
-    // #[test]
-    // fn add_duplicate_player() {
-    //     let mut eng = Engine::new();
-    //
-    //     let john_result = add_player(&mut eng, 0, "John Pork", Role::NewsAnchor).unwrap();
-    //     let response_data = player_response_data(john_result.data);
-    //
-    //     // adding another player with the same true name should error
-    //     let second_result = add_player(&mut eng, 0, "John Pork", Role::Poser);
-    //     assert!(second_result.is_err());
-    //
-    //     // ensure that the data didn't change
-    //     let ActorType::Player(player) =
-    //         &eng.world.actors.get(&response_data.id).unwrap().actor_type
-    //     else {
-    //         unreachable!();
-    //     };
-    //     assert!(&*player.true_name == "john pork");
-    //     assert!(player.role == Role::NewsAnchor);
-    // }
-    //
-    // // later test command output
-    // #[test]
-    // fn kill_player() {
-    //     let mut eng = Engine::new();
-    //
-    //     let john_result = add_player(&mut eng, 0, "John Pork", Role::NewsAnchor).unwrap();
-    //     let response_data = player_response_data(john_result.data);
-    //     assert!(
-    //         !eng.world
-    //             .actors
-    //             .get(&response_data.id)
-    //             .unwrap()
-    //             .states
-    //             .contains(State::Dead)
-    //     );
-    //
-    //     let _ = kill(
-    //         &mut eng,
-    //         0,
-    //         response_data.id,
-    //         None,
-    //         Some("Heart attack...".to_string()),
-    //     )
-    //     .unwrap();
-    //     assert!(
-    //         eng.world
-    //             .actors
-    //             .get(&response_data.id)
-    //             .unwrap()
-    //             .states
-    //             .contains(State::Dead)
-    //     );
-    // }
+    fn quick_kill(eng: &mut Engine, timestamp: Timestamp, ignore_links: bool, target: ID) {
+        eng.execute(ActionRequest {
+            timestamp,
+            actor: ActionActor::System,
+            payload: Action::Kill(Kill {
+                target_id: target,
+                killer_id: None,
+                death_message: None,
+                silent: true,
+                ignore_links,
+            }),
+        })
+        .unwrap();
+    }
+
+    fn quick_revive(eng: &mut Engine, timestamp: Timestamp, ignore_links: bool, target: ID) {
+        eng.execute(ActionRequest {
+            timestamp,
+            actor: ActionActor::System,
+            payload: Action::Revive(Revive {
+                target_id: target,
+                ignore_links,
+            }),
+        })
+        .unwrap();
+    }
+
+    #[test]
+    fn test_actor_links() {
+        let mut eng = Engine::new();
+
+        let w_id_1 = add_player(&mut eng, 0, Role::Watari, "Watari One");
+        let l_id = add_player(&mut eng, 3, Role::L, "John Pork");
+        let w_id_2 = add_player(&mut eng, 5, Role::Watari, "Watari Two");
+
+        assert!(actor_has_effective_passive(
+            &eng,
+            l_id,
+            PassiveType::ContactLogs(ContactLogType::Full)
+        ));
+
+        quick_kill(&mut eng, 5, false, w_id_1);
+
+        assert!(actor_has_effective_passive(
+            &eng,
+            l_id,
+            PassiveType::ContactLogs(ContactLogType::Full)
+        ));
+
+        quick_kill(&mut eng, 6, false, l_id);
+
+        let watari1 = get_actor(&eng, w_id_1).unwrap();
+        let watari2 = get_actor(&eng, w_id_2).unwrap();
+        assert!(watari1.states.contains(State::Dead) && watari2.states.contains(State::Dead));
+
+        quick_revive(&mut eng, 6, true, l_id);
+
+        assert!(!actor_has_effective_passive(
+            &eng,
+            l_id,
+            PassiveType::ContactLogs(ContactLogType::Full)
+        ));
+
+        let watari1 = get_actor(&eng, w_id_1).unwrap();
+        let watari2 = get_actor(&eng, w_id_2).unwrap();
+        assert!(watari1.states.contains(State::Dead) && watari2.states.contains(State::Dead));
+
+        quick_kill(&mut eng, 6, false, l_id);
+        quick_revive(&mut eng, 6, false, l_id);
+
+        assert!(actor_has_effective_passive(
+            &eng,
+            l_id,
+            PassiveType::ContactLogs(ContactLogType::Full)
+        ));
+
+        let watari1 = get_actor(&eng, w_id_1).unwrap();
+        let watari2 = get_actor(&eng, w_id_2).unwrap();
+        assert!(!(watari1.states.contains(State::Dead) && watari2.states.contains(State::Dead)));
+    }
 }

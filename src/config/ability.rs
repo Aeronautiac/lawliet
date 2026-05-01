@@ -1,7 +1,7 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, process::id};
 
 use crate::{
-    ability::AbilityLinkType,
+    ability::{Ability, AbilityLinkType},
     common::{IterationCount, LinkWeight, Variant},
 };
 
@@ -14,11 +14,11 @@ pub enum AbilityCategory {
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 pub enum AbilityName {
     Contact,
-    Pseudocide,
     AnonymousContact,
     FalseAnonymousContact,
     AnonymousAnnouncement,
     FabricateLounge,
+    Pseudocide,
     Bug,
     TapIn,
     Blackout,
@@ -172,9 +172,129 @@ pub fn default_ability_config() -> AbilityConfigMap {
         },
     );
 
-    // 12 hr variant (wanted civ)
+    // nerfed variant
     map.insert(
         identifier(AbilityName::TapIn, 1),
+        AbilityConfig {
+            category: AbilityCategory::Physical,
+            base_charges: 1,
+            reset_time: 1,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::ShinigamiSacrifice, 0),
+        AbilityConfig {
+            category: AbilityCategory::Supernatural,
+            base_charges: 1,
+            reset_time: 1,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::BackgroundCheck, 0),
+        AbilityConfig {
+            category: AbilityCategory::Supernatural,
+            base_charges: 1,
+            reset_time: 1,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::CivilianArrest, 0),
+        AbilityConfig {
+            category: AbilityCategory::Physical,
+            base_charges: 1,
+            reset_time: 1,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::UnlawfulArrest, 0),
+        AbilityConfig {
+            category: AbilityCategory::Physical,
+            base_charges: 1,
+            reset_time: 1,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::UnderTheRadar, 0),
+        AbilityConfig {
+            category: AbilityCategory::Supernatural,
+            base_charges: 1,
+            reset_time: IterationCount::MAX,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::KiraConnection, 0),
+        AbilityConfig {
+            category: AbilityCategory::Supernatural,
+            base_charges: 1,
+            reset_time: 1,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::AnonymousProsecution, 0),
+        AbilityConfig {
+            category: AbilityCategory::Physical,
+            base_charges: 1,
+            reset_time: IterationCount::MAX,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::Autopsy, 0),
+        AbilityConfig {
+            category: AbilityCategory::Physical,
+            base_charges: 1,
+            reset_time: 1,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::Ipp, 0),
+        AbilityConfig {
+            category: AbilityCategory::Physical,
+            base_charges: 1,
+            reset_time: 1,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::TrueNameReroll, 0),
+        AbilityConfig {
+            category: AbilityCategory::Physical,
+            base_charges: 1,
+            reset_time: IterationCount::MAX,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::PublicKidnap, 0),
+        AbilityConfig {
+            category: AbilityCategory::Physical,
+            base_charges: 1,
+            reset_time: 1,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::AnonymousKidnap, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
             base_charges: 1,

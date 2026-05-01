@@ -1,20 +1,18 @@
 /*
 * SYSTEM ACTION
 * Change a player's role and grant them abilities, notebooks, passives, and links associated with that role
-* If a player already has the requested role, return an error
+* This operation will reset a player's role state regardless of if they already have the role
 * Changing a player's role destroys any of their volatile resources
 */
 
 use crate::{
     ID,
     action::{
-        Action, ActionContext, ActionError, ActionInterface, ActionResponse,
-        add_ability::AddAbility, add_notebook::AddNotebook, add_passive::AddPassive,
-        create_and_give_ability::CreateAndGiveAbility,
+        Action, ActionContext, ActionInterface, ActionResponse,
+        create_actor_links::CreateActorLinks, create_and_give_ability::CreateAndGiveAbility,
         create_and_give_notebook::CreateAndGiveNotebook,
         create_and_give_passive::CreateAndGivePassive, get_player_mut, get_role_config,
-        give_ability::GiveAbility, give_notebook::GiveNotebook, give_passive::GivePassive,
-        purge_volatiles::PurgeVolatiles,
+        purge_volatiles::PurgeVolatiles, sever_links::SeverLinks,
     },
     config::role::Role,
 };
@@ -40,19 +38,21 @@ impl ActionInterface for GiveRole {
         actor.require_system()?;
 
         let player = get_player_mut(eng, self.target_id)?;
-        if player.role == self.role {
-            return Err(ActionError::AlreadyHasRole);
-        }
         if mutate {
             player.role = self.role;
         }
+
         Action::PurgeVolatiles(PurgeVolatiles {
             actor_id: self.target_id,
         })
         .handle(eng, ctx, actor, version, mutate)?;
 
-        let role_config = get_role_config(eng, self.role)?.clone();
+        Action::SeverLinks(SeverLinks {
+            actor_id: self.target_id,
+        })
+        .handle(eng, ctx, actor, version, mutate)?;
 
+        let role_config = get_role_config(eng, self.role)?.clone();
         for ability in &role_config.abilities {
             Action::CreateAndGiveAbility(CreateAndGiveAbility {
                 ability_name: ability.identifier.name,
@@ -82,6 +82,8 @@ impl ActionInterface for GiveRole {
             })
             .handle(eng, ctx, actor, version, mutate)?;
         }
+
+        Action::CreateActorLinks(CreateActorLinks {}).handle(eng, ctx, actor, version, mutate)?;
 
         Ok(ActionResponse::GiveRole(GiveRoleResponse {}))
     }

@@ -63,9 +63,6 @@ pub mod revive;
 pub mod schedule_kill;
 pub mod schedule_revive;
 pub mod sever_links;
-pub mod transfer_abilities;
-pub mod transfer_notebooks;
-pub mod transfer_passives;
 pub mod use_ability;
 pub mod write_name;
 
@@ -84,7 +81,7 @@ pub enum ActionError {
     NotebookOnCooldown,
     TimeAlreadyPassed,
     AbilityCategoryBlocked,
-    AlreadyHasRole,
+    PassiveNotFound,
     AbilityConfigNotFound,
     AbilityNotFound,
     ActorIsSystem,
@@ -285,19 +282,19 @@ pub fn get_ability(eng: &Engine, ability_id: ID) -> Result<&Ability, ActionError
     Ok(target)
 }
 
-pub fn get_passive_mut(eng: &mut Engine, ability_id: ID) -> Result<&mut Passive, ActionError> {
+pub fn get_passive_mut(eng: &mut Engine, passive_id: ID) -> Result<&mut Passive, ActionError> {
     let target = eng
         .world
-        .get_passive_mut(ability_id)
-        .ok_or(ActionError::AbilityNotFound)?;
+        .get_passive_mut(passive_id)
+        .ok_or(ActionError::PassiveNotFound)?;
     Ok(target)
 }
 
-pub fn get_passive(eng: &Engine, ability_id: ID) -> Result<&Passive, ActionError> {
+pub fn get_passive(eng: &Engine, passive_id: ID) -> Result<&Passive, ActionError> {
     let target = eng
         .world
-        .get_passive(ability_id)
-        .ok_or(ActionError::AbilityNotFound)?;
+        .get_passive(passive_id)
+        .ok_or(ActionError::PassiveNotFound)?;
     Ok(target)
 }
 
@@ -335,6 +332,7 @@ pub fn actor_has_effective_passive(eng: &Engine, actor_id: ID, passive_type: Pas
             return true;
         }
     }
+    dbg!(&actor_data.actor_links);
     for link in &actor_data.actor_links {
         if link.link_type == ActorLinkType::Passive
             && actor_has_effective_passive(eng, link.link_dest, passive_type)

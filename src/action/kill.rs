@@ -3,9 +3,6 @@
 * Kill a player and handle side effects
 */
 
-// TODO:
-// Potentially split all transfer loops into individual actions as well as link loops
-
 use crate::{
     ID,
     action::{

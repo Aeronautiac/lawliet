@@ -3,19 +3,21 @@
 * Create links from an actor to other actors based on the role config struct
 */
 
+// TODO:
+// Fix the bug where links are not created if a linkable is added AFTER the link target has already
+// been created (it must be a global loop for every actor)
+// Skip actors that already have links to them
+
 use crate::{
-    ID,
-    action::{ActionInterface, ActionResponse, get_actor, get_actor_mut, get_role_config},
-    actor::{ActorLink, ActorType, Organization},
+    action::{ActionInterface, ActionResponse, get_actor_mut, get_role_config},
+    actor::{ActorLink, ActorType},
 };
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct CreateActorLinksResponse {}
 
 #[derive(PartialEq, Eq, Clone)]
-pub struct CreateActorLinks {
-    pub actor_id: ID,
-}
+pub struct CreateActorLinks {}
 
 // for every link defined in config, go through every actor and create the link if possible
 
@@ -29,7 +31,6 @@ impl ActionInterface for CreateActorLinks {
         mutate: bool,
     ) -> super::ActionResult {
         actor.require_system()?;
-        get_actor(eng, self.actor_id)?;
 
         let mut links_to_create: Vec<ActorLink> = vec![];
 
@@ -60,6 +61,7 @@ impl ActionInterface for CreateActorLinks {
         let target = get_actor_mut(eng, self.actor_id)?;
         if mutate {
             for link in links_to_create {
+                dbg!(&link);
                 target.add_link(link);
             }
         }

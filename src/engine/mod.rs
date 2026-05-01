@@ -98,6 +98,10 @@ impl Engine {
         &mut self,
         action: ActionRequest,
     ) -> Result<(ActionResponse, ActionContext), ActionError> {
+        if action.timestamp < self.time {
+            return Err(ActionError::TimeAlreadyPassed);
+        }
+
         let mut ctx = ActionContext { commands: vec![] };
 
         // first execute pending jobs
@@ -115,7 +119,9 @@ impl Engine {
             let _ = self.execute_atomic(&mut ctx, pending_action);
         }
 
-        // also need to return command buffer
+        // the command sequence matters because the frontend is also event based
+        ctx.commands.reverse();
+
         let main_response = self.execute_atomic(&mut ctx, action)?;
         Ok((main_response, ctx))
     }

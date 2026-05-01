@@ -7,7 +7,8 @@ use crate::{
     ID,
     action::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
-        ActionResult, add_ability::AddAbility, give_ability::GiveAbility, give_role::GiveRole,
+        ActionResult, add_ability::AddAbility, create_and_give_ability::CreateAndGiveAbility,
+        give_ability::GiveAbility, give_role::GiveRole,
     },
     common::Version,
     config::role::Role,
@@ -49,34 +50,20 @@ impl ActionInterface for AddPlayer {
             0
         };
 
-        let mut ability_ids = vec![];
-        let default_abilities = eng.config.defaults.universal_abilities.clone();
-        for default_ability in default_abilities {
-            let response = Action::AddAbility(AddAbility {
-                ability_name: default_ability.name,
-                transferrable: false,
-                variant: default_ability.variant,
-            })
-            .handle(eng, ctx, actor, version, mutate)?;
-            let ActionResponse::AddAbility(response_data) = response else {
-                unreachable!()
-            };
-            let ability_id = response_data.id;
-            ability_ids.push(ability_id);
-        }
-
+        // player will only be physically created in the mutation path
         if mutate {
-            // abilities will only be physically created in the mutation path
-            for ability in ability_ids {
-                Action::GiveAbility(GiveAbility {
-                    volatile: false,
-                    ability_id: ability,
+            let default_abilities = eng.config.defaults.universal_abilities.clone();
+            for default_ability in default_abilities {
+                Action::CreateAndGiveAbility(CreateAndGiveAbility {
+                    ability_name: default_ability.name,
+                    transferrable: false,
+                    variant: default_ability.variant,
                     actor_id: player_id,
+                    volatile: false,
                 })
                 .handle(eng, ctx, actor, version, mutate)?;
             }
 
-            // giving a role only works if the player exists which only happens in the mutation path
             Action::GiveRole(GiveRole {
                 target_id: player_id,
                 role: self.starting_role,

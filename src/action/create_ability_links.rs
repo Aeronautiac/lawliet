@@ -3,6 +3,11 @@
 * Go through every ability owned by a certain actor and apply any links that config dictates
 */
 
+// TODO:
+// There is a bug here where adding stuff AFTER the initial linking has already been done leads to
+// missing links. A global loop is necessary.
+// Skip abilities that already have links to them
+
 use crate::{
     ID,
     action::{

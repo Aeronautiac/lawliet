@@ -138,7 +138,7 @@ impl World {
     }
 
     pub fn add_passive(&mut self, passive: Passive) -> ID {
-        let id = self.next_ability_id;
+        let id = self.next_passive_id;
         self.next_passive_id += 1;
         self.passives.insert(id, passive);
         id
