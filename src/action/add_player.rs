@@ -53,7 +53,6 @@ impl ActionInterface for AddPlayer {
         let default_abilities = eng.config.defaults.universal_abilities.clone();
         for default_ability in default_abilities {
             let response = Action::AddAbility(AddAbility {
-                volatile: false,
                 ability_name: default_ability.name,
                 transferrable: false,
                 variant: default_ability.variant,
@@ -70,6 +69,7 @@ impl ActionInterface for AddPlayer {
             // abilities will only be physically created in the mutation path
             for ability in ability_ids {
                 Action::GiveAbility(GiveAbility {
+                    volatile: false,
                     ability_id: ability,
                     actor_id: player_id,
                 })

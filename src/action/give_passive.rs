@@ -6,7 +6,8 @@
 use crate::{
     ID,
     action::{
-        ActionContext, ActionInterface, ActionResponse, get_actor, get_actor_mut, get_passive_mut,
+        ActionContext, ActionError, ActionInterface, ActionResponse, get_actor, get_actor_mut,
+        get_passive, get_passive_mut,
     },
 };
 
@@ -17,6 +18,7 @@ pub struct GivePassiveResponse {}
 pub struct GivePassive {
     pub passive_id: ID,
     pub actor_id: ID,
+    pub volatile: bool,
 }
 
 impl ActionInterface for GivePassive {
@@ -31,9 +33,23 @@ impl ActionInterface for GivePassive {
         actor.require_system()?;
         get_actor(eng, self.actor_id)?;
 
+        let passive = get_passive(eng, self.actor_id)?;
+        if let Some(owner) = passive.ownership_struct.owner {
+            if owner == self.actor_id {
+                return Err(ActionError::ItemAlreadyOwned);
+            }
+            if mutate {
+                let other_actor = get_actor_mut(eng, owner).unwrap(); // should
+                // crash if the owner is an actor that doesnt exist (the state is invalid)
+                other_actor.remove_passive(self.passive_id);
+            }
+        }
+
         let passive = get_passive_mut(eng, self.passive_id)?;
         if mutate {
-            passive.ownership_struct.set_owner(self.actor_id);
+            passive
+                .ownership_struct
+                .set_owner(self.actor_id, self.volatile);
             let actor_data = get_actor_mut(eng, self.actor_id)?;
             actor_data.add_passive(self.passive_id);
         }

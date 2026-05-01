@@ -226,7 +226,10 @@ pub fn default_role_config() -> RoleConfigMap {
                     transferrable: false,
                 },
             ],
-            passives: vec![],
+            passives: vec![RolePassive {
+                passive_type: PassiveType::VolatileEyes,
+                transferrable: false,
+            }],
             notebooks: vec![],
             actor_links: vec![],
         },

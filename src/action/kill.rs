@@ -3,6 +3,9 @@
 * Kill a player and handle side effects
 */
 
+// TODO:
+// Potentially split all transfer loops into individual actions as well as link loops
+
 use crate::{
     ID,
     action::{
@@ -58,6 +61,9 @@ impl ActionInterface for Kill {
                 killer.kills.push(self.target_id);
             }
 
+            // TODO:
+            // Add notebook transfer policy to config
+
             // notebook transfers
             // transfer any currently held notebook to the person who killed them regardless of if
             // the person holding the notebook actually owned the notebook
@@ -70,6 +76,7 @@ impl ActionInterface for Kill {
                     next_actions.push(Action::GiveNotebook(GiveNotebook {
                         notebook_id: *id,
                         actor_id: killer_id,
+                        volatile: false,
                     }));
                 };
             }
@@ -82,6 +89,7 @@ impl ActionInterface for Kill {
                 {
                     ability_transferred = true;
                     next_actions.push(Action::GiveAbility(GiveAbility {
+                        volatile: false,
                         ability_id: *id,
                         actor_id: killer_id,
                     }));
@@ -96,6 +104,7 @@ impl ActionInterface for Kill {
                 {
                     ability_transferred = true;
                     next_actions.push(Action::GivePassive(GivePassive {
+                        volatile: false,
                         passive_id: *id,
                         actor_id: killer_id,
                     }));

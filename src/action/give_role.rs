@@ -1,17 +1,25 @@
 /*
 * SYSTEM ACTION
-* Change a player's role and grant them abilities associated with that role
+* Change a player's role and grant them abilities, notebooks, passives, and links associated with that role
 * If a player already has the requested role, return an error
-* Changing a player's role deletes any of their old "volatile" abilities
-* A volatile ability is one which disappears on role change
+* Changing a player's role destroys any of their volatile resources
 */
 
 use crate::{
     ID,
-    action::{ActionContext, ActionInterface},
+    action::{
+        Action, ActionContext, ActionError, ActionInterface, ActionResponse,
+        add_ability::AddAbility, add_notebook::AddNotebook, add_passive::AddPassive,
+        create_and_give_ability::CreateAndGiveAbility,
+        create_and_give_notebook::CreateAndGiveNotebook,
+        create_and_give_passive::CreateAndGivePassive, get_player_mut, get_role_config,
+        give_ability::GiveAbility, give_notebook::GiveNotebook, give_passive::GivePassive,
+        purge_volatiles::PurgeVolatiles,
+    },
     config::role::Role,
 };
 
+#[derive(PartialEq, Eq, Clone)]
 pub struct GiveRoleResponse {}
 
 #[derive(PartialEq, Eq, Clone)]
@@ -30,6 +38,51 @@ impl ActionInterface for GiveRole {
         mutate: bool,
     ) -> super::ActionResult {
         actor.require_system()?;
-        unimplemented!()
+
+        let player = get_player_mut(eng, self.target_id)?;
+        if player.role == self.role {
+            return Err(ActionError::AlreadyHasRole);
+        }
+        if mutate {
+            player.role = self.role;
+        }
+        Action::PurgeVolatiles(PurgeVolatiles {
+            actor_id: self.target_id,
+        })
+        .handle(eng, ctx, actor, version, mutate)?;
+
+        let role_config = get_role_config(eng, self.role)?.clone();
+
+        for ability in &role_config.abilities {
+            Action::CreateAndGiveAbility(CreateAndGiveAbility {
+                ability_name: ability.identifier.name,
+                variant: ability.identifier.variant,
+                transferrable: ability.transferrable,
+                actor_id: self.target_id,
+                volatile: true,
+            })
+            .handle(eng, ctx, actor, version, mutate)?;
+        }
+
+        for passive in &role_config.passives {
+            Action::CreateAndGivePassive(CreateAndGivePassive {
+                actor_id: self.target_id,
+                passive_type: passive.passive_type,
+                transferrable: passive.transferrable,
+                volatile: true,
+            })
+            .handle(eng, ctx, actor, version, mutate)?;
+        }
+
+        for notebook in &role_config.notebooks {
+            Action::CreateAndGiveNotebook(CreateAndGiveNotebook {
+                fake: notebook.fake,
+                volatile: true,
+                actor_id: self.target_id,
+            })
+            .handle(eng, ctx, actor, version, mutate)?;
+        }
+
+        Ok(ActionResponse::GiveRole(GiveRoleResponse {}))
     }
 }

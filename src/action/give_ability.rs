@@ -6,8 +6,9 @@
 use crate::{
     ID,
     action::{
-        Action, ActionContext, ActionInterface, ActionResponse,
-        create_ability_links::CreateAbilityLinks, get_ability_mut, get_actor, get_actor_mut,
+        Action, ActionContext, ActionError, ActionInterface, ActionResponse,
+        create_ability_links::CreateAbilityLinks, get_ability, get_ability_mut, get_actor,
+        get_actor_mut,
     },
 };
 
@@ -18,6 +19,7 @@ pub struct GiveAbilityResponse {}
 pub struct GiveAbility {
     pub ability_id: ID,
     pub actor_id: ID,
+    pub volatile: bool,
 }
 
 impl ActionInterface for GiveAbility {
@@ -32,10 +34,25 @@ impl ActionInterface for GiveAbility {
         actor.require_system()?;
         get_actor(eng, self.actor_id)?;
 
+        let ability = get_ability(eng, self.ability_id)?;
+        if let Some(owner) = ability.ownership_struct.owner {
+            if owner == self.actor_id {
+                return Err(ActionError::ItemAlreadyOwned);
+            }
+            if mutate {
+                let other_actor = get_actor_mut(eng, owner).unwrap(); // if
+                // the ability is storing the id of an actor that doesn't exist, there is something
+                // wrong with the engine.
+                other_actor.remove_ability(self.ability_id);
+            }
+        }
+
         let ability = get_ability_mut(eng, self.ability_id)?;
         if mutate {
             ability.clear_links();
-            ability.ownership_struct.set_owner(self.actor_id);
+            ability
+                .ownership_struct
+                .set_owner(self.actor_id, self.volatile);
             let actor_data = get_actor_mut(eng, self.actor_id)?;
             actor_data.add_ability(self.ability_id);
         }

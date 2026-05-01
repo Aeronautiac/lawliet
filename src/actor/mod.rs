@@ -45,9 +45,11 @@ pub enum ActorType {
 #[derive(PartialEq, Eq, Debug)]
 pub struct Actor {
     pub kills: Vec<ID>,
-    pub abilities: BTreeSet<ID>, // true ability ownership is represented by the OwnershipStruct for both
-    // passives and abilities. this only exists for performance. it must be correctly maintained.
+    pub abilities: BTreeSet<ID>, // true ownership is in the structs themselves, these sets are here
+    // for performance and utility
+    // they must be synced to game state
     pub passives: BTreeSet<ID>,
+    pub notebooks: BTreeSet<ID>,
     pub restrictions: BTreeMap<Source, Restrictions>,
     pub states: States,
     pub actor_type: ActorType,
@@ -60,6 +62,7 @@ impl Actor {
             kills: vec![],
             abilities: BTreeSet::new(),
             passives: BTreeSet::new(),
+            notebooks: BTreeSet::new(),
             restrictions: BTreeMap::new(),
             states: States::empty(),
             actor_links: BTreeSet::new(),
@@ -72,6 +75,7 @@ impl Actor {
             kills: vec![],
             abilities: BTreeSet::new(),
             passives: BTreeSet::new(),
+            notebooks: BTreeSet::new(),
             restrictions: BTreeMap::new(),
             actor_links: BTreeSet::new(),
             states: States::empty(),
@@ -131,5 +135,13 @@ impl Actor {
 
     pub fn add_passive(&mut self, id: ID) {
         self.passives.insert(id);
+    }
+
+    pub fn add_notebook(&mut self, id: ID) {
+        self.notebooks.insert(id);
+    }
+
+    pub fn remove_notebook(&mut self, id: ID) {
+        self.notebooks.remove(&id);
     }
 }

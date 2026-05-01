@@ -19,7 +19,6 @@ pub struct AddAbilityResponse {
 #[derive(PartialEq, Eq, Clone)]
 pub struct AddAbility {
     pub ability_name: AbilityName,
-    pub volatile: bool,
     pub transferrable: bool,
     pub variant: Variant,
 }
@@ -47,7 +46,6 @@ impl ActionInterface for AddAbility {
                 self.ability_name,
                 self.variant,
                 config.base_charges,
-                self.volatile,
                 self.transferrable,
             );
             eng.world.add_ability(ability)

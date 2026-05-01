@@ -11,12 +11,16 @@ use crate::{
         add_state::*,
         create_ability_links::{CreateAbilityLinks, CreateAbilityLinksResponse},
         create_actor_links::{CreateActorLinks, CreateActorLinksResponse},
+        create_and_give_ability::{CreateAndGiveAbility, CreateAndGiveAbilityResponse},
+        create_and_give_notebook::{CreateAndGiveNotebook, CreateAndGiveNotebookResponse},
+        create_and_give_passive::{CreateAndGivePassive, CreateAndGivePassiveResponse},
         give_ability::{GiveAbility, GiveAbilityResponse},
         give_notebook::{GiveNotebook, GiveNotebookResponse},
         give_passive::{GivePassive, GivePassiveResponse},
         give_role::{GiveRole, GiveRoleResponse},
         kill::*,
         lend_notebook::{LendNotebook, LendNotebookResponse},
+        purge_volatiles::{PurgeVolatiles, PurgeVolatilesResponse},
         remove_state::{RemoveState, RemoveStateResponse},
         revive::*,
         schedule_kill::{ScheduleKill, ScheduleKillResponse},
@@ -25,7 +29,7 @@ use crate::{
         use_ability::{UseAbility, UseAbilityResponse},
         write_name::{WriteName, WriteNameResponse},
     },
-    actor::{Actor, ActorType, state::State},
+    actor::{Actor, ActorLinkType, ActorType, Player, state::State},
     command::Command,
     common::Version,
     config::{
@@ -33,6 +37,7 @@ use crate::{
         role::{Role, RoleConfig},
     },
     engine::Engine,
+    notebook::Notebook,
     passive::{Passive, PassiveType},
 };
 
@@ -43,17 +48,24 @@ pub mod add_player;
 pub mod add_state;
 pub mod create_ability_links;
 pub mod create_actor_links;
+pub mod create_and_give_ability;
+pub mod create_and_give_notebook;
+pub mod create_and_give_passive;
 pub mod give_ability;
 pub mod give_notebook;
 pub mod give_passive;
 pub mod give_role;
 pub mod kill;
 pub mod lend_notebook;
+pub mod purge_volatiles;
 pub mod remove_state;
 pub mod revive;
 pub mod schedule_kill;
 pub mod schedule_revive;
 pub mod sever_links;
+pub mod transfer_abilities;
+pub mod transfer_notebooks;
+pub mod transfer_passives;
 pub mod use_ability;
 pub mod write_name;
 
@@ -72,7 +84,7 @@ pub enum ActionError {
     NotebookOnCooldown,
     TimeAlreadyPassed,
     AbilityCategoryBlocked,
-    AlreadyHadRole,
+    AlreadyHasRole,
     AbilityConfigNotFound,
     AbilityNotFound,
     ActorIsSystem,
@@ -80,6 +92,7 @@ pub enum ActionError {
     AbilityMismatch,
     AbilityNotEnoughCharges,
     RoleNotImplemented,
+    ItemAlreadyOwned,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -124,6 +137,10 @@ pub enum Action {
     GivePassive(GivePassive),
     SeverLinks(SeverLinks),
     CreateActorLinks(CreateActorLinks),
+    PurgeVolatiles(PurgeVolatiles),
+    CreateAndGiveAbility(CreateAndGiveAbility),
+    CreateAndGiveNotebook(CreateAndGiveNotebook),
+    CreateAndGivePassive(CreateAndGivePassive),
 }
 
 pub enum ActionResponse {
@@ -147,6 +164,10 @@ pub enum ActionResponse {
     GivePassive(GivePassiveResponse),
     SeverLinks(SeverLinksResponse),
     CreateActorLinks(CreateActorLinksResponse),
+    PurgeVolatiles(PurgeVolatilesResponse),
+    CreateAndGiveAbility(CreateAndGiveAbilityResponse),
+    CreateAndGiveNotebook(CreateAndGiveNotebookResponse),
+    CreateAndGivePassive(CreateAndGivePassiveResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -301,8 +322,6 @@ pub fn get_role_config(eng: &Engine, role: Role) -> Result<&RoleConfig, ActionEr
     }
 }
 
-/// true if a matching passive is found with the actor id as the owner
-/// O(n) - can likely be improved upon later
 pub fn actor_has_effective_passive(eng: &Engine, actor_id: ID, passive_type: PassiveType) -> bool {
     let Some(actor_data) = eng.world.get_actor(actor_id) else {
         return false;
@@ -316,5 +335,48 @@ pub fn actor_has_effective_passive(eng: &Engine, actor_id: ID, passive_type: Pas
             return true;
         }
     }
+    for link in &actor_data.actor_links {
+        if link.link_type == ActorLinkType::Passive
+            && actor_has_effective_passive(eng, link.link_dest, passive_type)
+        {
+            return true;
+        }
+    }
     false
+}
+
+pub fn get_player(eng: &Engine, id: ID) -> Result<&Player, ActionError> {
+    let actor = get_actor(eng, id)?;
+    if let ActorType::Player(player) = &actor.actor_type {
+        Ok(player)
+    } else {
+        Err(ActionError::ActorIsNotPlayer)
+    }
+}
+
+pub fn get_player_mut(eng: &mut Engine, id: ID) -> Result<&mut Player, ActionError> {
+    let actor = get_actor_mut(eng, id)?;
+    if let ActorType::Player(player) = &mut actor.actor_type {
+        Ok(player)
+    } else {
+        Err(ActionError::ActorIsNotPlayer)
+    }
+}
+
+pub fn get_notebook(eng: &Engine, id: ID) -> Result<&Notebook, ActionError> {
+    let notebook = eng.world.get_notebook(id);
+    if let Some(notebook_data) = notebook {
+        Ok(notebook_data)
+    } else {
+        Err(ActionError::NotebookNotFound)
+    }
+}
+
+pub fn get_notebook_mut(eng: &mut Engine, id: ID) -> Result<&mut Notebook, ActionError> {
+    let notebook = eng.world.get_notebook_mut(id);
+    if let Some(notebook_data) = notebook {
+        Ok(notebook_data)
+    } else {
+        Err(ActionError::NotebookNotFound)
+    }
 }

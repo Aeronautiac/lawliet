@@ -34,12 +34,15 @@ impl Notebook {
         }
     }
 
-    pub fn set_original_owner(&mut self, id: ID, volatile: bool) {
+    pub fn set_original_owner(&mut self, id: ID) {
         self.original_owner = Some(id);
-        self.volatile = volatile;
     }
 
-    pub fn set_true_owner(&mut self, id: ID) {
+    pub fn set_true_owner(&mut self, id: ID, volatile: bool) {
+        self.volatile = volatile;
+        if self.original_owner.is_none() {
+            self.set_original_owner(id);
+        }
         self.borrowed = None;
         self.owner = Some(id);
     }
@@ -72,7 +75,7 @@ impl Notebook {
         self.iteration_successes = BTreeMap::new();
         self.iteration_failures = BTreeMap::new();
         if let Some(true_owner) = self.borrowed {
-            self.set_true_owner(true_owner);
+            self.set_true_owner(true_owner, self.volatile);
         }
     }
 

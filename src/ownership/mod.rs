@@ -10,26 +10,16 @@ pub struct OwnershipStruct {
 }
 
 impl OwnershipStruct {
-    pub fn new(volatile: bool, transferrable: bool) -> Self {
+    pub fn new(transferrable: bool) -> Self {
         OwnershipStruct {
             owner: None,
-            volatile,
+            volatile: false,
             transferrable,
         }
     }
 
-    pub fn set_owner(&mut self, id: ID) {
+    pub fn set_owner(&mut self, id: ID, volatile: bool) {
         self.owner = Some(id);
-    }
-
-    /// true if transferrable and the transfer was a success, false otherwise
-    pub fn try_transfer(&mut self, id: ID) -> bool {
-        if !self.transferrable {
-            false
-        } else {
-            self.volatile = false;
-            self.owner = Some(id);
-            true
-        }
+        self.volatile = volatile;
     }
 }

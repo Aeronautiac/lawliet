@@ -125,7 +125,7 @@ impl World {
     }
 
     /// be careful that there are no dangling ids
-    pub fn remove_abiliy(&mut self, id: ID) {
+    pub fn remove_ability(&mut self, id: ID) {
         self.abilities.remove(&id);
     }
 
@@ -155,5 +155,9 @@ impl World {
 
     pub fn get_passive_mut(&mut self, id: ID) -> Option<&mut Passive> {
         self.passives.get_mut(&id)
+    }
+
+    pub fn remove_notebook(&mut self, id: ID) {
+        self.notebooks.remove(&id);
     }
 }

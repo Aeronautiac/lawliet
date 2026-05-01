@@ -93,7 +93,6 @@ impl Ability {
         ability_name: AbilityName,
         variant: Variant,
         charges: ChargeCount,
-        volatile: bool,
         transferrable: bool,
     ) -> Self {
         Ability {
@@ -102,7 +101,7 @@ impl Ability {
             charges,
             variant,
             ability_name,
-            ownership_struct: OwnershipStruct::new(volatile, transferrable),
+            ownership_struct: OwnershipStruct::new(transferrable),
         }
     }
 

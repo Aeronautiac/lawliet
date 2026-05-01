@@ -21,7 +21,6 @@ pub struct AddPassiveResponse {
 #[derive(PartialEq, Eq, Clone)]
 pub struct AddPassive {
     pub passive_type: PassiveType,
-    pub volatile: bool,
     pub transferrable: bool,
 }
 
@@ -41,7 +40,7 @@ impl ActionInterface for AddPassive {
                 ownership_struct: OwnershipStruct {
                     owner: None,
                     transferrable: self.transferrable,
-                    volatile: self.volatile,
+                    volatile: false,
                 },
                 passive_type: self.passive_type,
             };
