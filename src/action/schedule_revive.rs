@@ -7,10 +7,11 @@ use crate::{
     Timestamp,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionRequest, ActionResponse,
-        ActionResult, require_time_not_passed, revive::Revive,
+        ActionResult, revive::Revive,
     },
     common::Version,
     engine::Engine,
+    helpers::require_time_not_passed,
 };
 
 #[derive(PartialEq, Eq, Clone)]

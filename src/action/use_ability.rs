@@ -6,12 +6,10 @@
 use crate::{
     ID,
     ability::{AbilityBehaviour, AbilityInterface, AbilityLinkType, AbilityResponse},
-    action::{
-        ActionError, ActionInterface, ActionResponse, actor_id, get_ability_config,
-        get_ability_mut, get_actor,
-    },
+    action::{ActionError, ActionInterface, ActionResponse},
     actor::restriction::Restriction,
     config::ability::AbilityCategory,
+    helpers::{actor_id, get_ability_config, get_ability_mut, get_actor},
 };
 
 #[derive(PartialEq, Eq, Clone)]

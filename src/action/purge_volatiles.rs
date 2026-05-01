@@ -5,10 +5,8 @@
 
 use crate::{
     ID,
-    action::{
-        ActionInterface, ActionResponse, actor_id, get_ability, get_actor, get_notebook,
-        get_passive,
-    },
+    action::{ActionInterface, ActionResponse},
+    helpers::{get_ability, get_actor, get_notebook, get_passive},
 };
 
 #[derive(PartialEq, Eq, Clone)]

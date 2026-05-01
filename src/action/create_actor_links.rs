@@ -5,8 +5,9 @@
 
 use crate::{
     ID,
-    action::{ActionInterface, ActionResponse, get_actor_mut, get_role_config},
+    action::{ActionInterface, ActionResponse},
     actor::{ActorLink, ActorLinkType, ActorType},
+    helpers::{get_actor_mut, get_role_config},
 };
 
 #[derive(PartialEq, Eq, Clone)]

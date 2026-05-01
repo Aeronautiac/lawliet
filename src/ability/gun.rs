@@ -1,8 +1,9 @@
 use crate::{
     ID,
     ability::{AbilityInterface, AbilityResponse},
-    action::{Action, ActionContext, ActionInterface, actor_id, kill::Kill},
+    action::{Action, ActionContext, ActionInterface, kill::Kill},
     config::ability::AbilityName,
+    helpers::actor_id,
 };
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]

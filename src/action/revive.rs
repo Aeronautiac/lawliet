@@ -7,11 +7,12 @@ use crate::{
     ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
-        get_actor, remove_state::RemoveState, require_dead,
+        remove_state::RemoveState,
     },
     actor::{ActorLinkType, state::State},
     common::Version,
     engine::Engine,
+    helpers::{get_actor, require_dead},
 };
 
 #[derive(PartialEq, Eq, Clone)]

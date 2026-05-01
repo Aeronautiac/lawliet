@@ -8,17 +8,16 @@ use crate::{
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         add_state::{AddState, state_addition},
-        get_actor, get_actor_mut,
         give_ability::GiveAbility,
         give_notebook::GiveNotebook,
         give_passive::GivePassive,
-        require_alive,
         sever_links::SeverLinks,
     },
     actor::{ActorType, state::State},
     command::Command,
     common::Version,
     engine::Engine,
+    helpers::{get_actor, get_actor_mut, require_alive},
 };
 
 #[derive(PartialEq, Eq, Clone)]

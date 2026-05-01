@@ -8,11 +8,12 @@ use crate::{
     ID, Timestamp,
     action::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
-        ActionResult, actor_id, kill::Kill, schedule_kill::ScheduleKill,
+        ActionResult, kill::Kill, schedule_kill::ScheduleKill,
     },
     actor::restriction::Restriction,
     common::Version,
     engine::Engine,
+    helpers::actor_id,
     notebook::NotebookError,
 };
 

@@ -7,11 +7,11 @@ use crate::{
     ID,
     action::{
         ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse, ActionResult,
-        actor_id,
     },
     actor::restriction::Restriction,
     common::Version,
     engine::Engine,
+    helpers::actor_id,
 };
 
 #[derive(Debug)]

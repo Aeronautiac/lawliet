@@ -65,6 +65,7 @@ mod command;
 mod common;
 mod config;
 mod engine;
+mod helpers;
 mod notebook;
 mod ownership;
 mod passive;
@@ -77,12 +78,13 @@ mod tests {
     use crate::{
         ID, Timestamp,
         action::{
-            Action, ActionActor, ActionRequest, ActionResponse, actor_has_effective_passive,
-            add_player::AddPlayer, get_actor, kill::Kill, revive::Revive, sever_links,
+            Action, ActionActor, ActionRequest, ActionResponse, add_player::AddPlayer, kill::Kill,
+            revive::Revive,
         },
         actor::state::State,
         config::role::Role,
         engine::Engine,
+        helpers::{actor_has_effective_passive, get_actor},
         passive::{ContactLogType, PassiveType},
     };
 
@@ -213,4 +215,7 @@ mod tests {
         let watari2 = get_actor(&eng, w_id_2).unwrap();
         assert!(watari1.states.contains(State::Dead) && !watari2.states.contains(State::Dead));
     }
+
+    #[test]
+    fn test_ability_links() {}
 }

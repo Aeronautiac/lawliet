@@ -7,9 +7,9 @@ use crate::{
     ID,
     action::{
         Action, ActionContext, ActionError, ActionInterface, ActionResponse,
-        create_ability_links::CreateAbilityLinks, get_ability, get_ability_mut, get_actor,
-        get_actor_mut,
+        create_ability_links::CreateAbilityLinks,
     },
+    helpers::{get_ability, get_ability_mut, get_actor, get_actor_mut},
 };
 
 #[derive(PartialEq, Eq, Clone)]

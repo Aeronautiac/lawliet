@@ -5,13 +5,11 @@
 
 use crate::{
     ID,
-    action::{
-        Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
-        get_actor_mut,
-    },
+    action::{Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
     actor::state::State,
     common::Version,
     engine::Engine,
+    helpers::get_actor_mut,
 };
 
 #[derive(PartialEq, Eq, Clone)]
