@@ -3,11 +3,6 @@
 * Go through every ability owned by a certain actor and apply any links that config dictates
 */
 
-// TODO:
-// There is a bug here where adding stuff AFTER the initial linking has already been done leads to
-// missing links. A global loop is necessary.
-// Skip abilities that already have links to them
-
 use crate::{
     ID,
     action::{
@@ -42,6 +37,9 @@ impl ActionInterface for CreateAbilityLinks {
             let links = config.default_links.clone();
             for link in links {
                 for other_ability_id in &owned_abilities {
+                    if other_ability_id == ability_id {
+                        continue;
+                    }
                     let other_ability = get_ability(eng, *other_ability_id)?;
                     let variant = other_ability.variant;
                     let name = other_ability.ability_name;

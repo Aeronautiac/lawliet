@@ -1,16 +1,12 @@
 /*
 * SYSTEM ACTION
-* Create links from an actor to other actors based on the role config struct
+* Create links between all actors
 */
 
-// TODO:
-// Fix the bug where links are not created if a linkable is added AFTER the link target has already
-// been created (it must be a global loop for every actor)
-// Skip actors that already have links to them
-
 use crate::{
+    ID,
     action::{ActionInterface, ActionResponse, get_actor_mut, get_role_config},
-    actor::{ActorLink, ActorType},
+    actor::{ActorLink, ActorLinkType, ActorType},
 };
 
 #[derive(PartialEq, Eq, Clone)]
@@ -19,7 +15,11 @@ pub struct CreateActorLinksResponse {}
 #[derive(PartialEq, Eq, Clone)]
 pub struct CreateActorLinks {}
 
-// for every link defined in config, go through every actor and create the link if possible
+struct LinkDescriptor {
+    pub from_dest: ID,
+    pub to_dest: ID,
+    pub link_type: ActorLinkType,
+}
 
 impl ActionInterface for CreateActorLinks {
     fn handle(
@@ -32,37 +32,44 @@ impl ActionInterface for CreateActorLinks {
     ) -> super::ActionResult {
         actor.require_system()?;
 
-        let mut links_to_create: Vec<ActorLink> = vec![];
-
-        // player (role based) links
-        let mut found_role = None;
-        if let Some(player) = eng.world.get_player(self.actor_id) {
-            found_role = Some(player.role);
-        }
-        if let Some(role) = found_role {
-            let role_config = get_role_config(eng, role)?;
-            let role_links = role_config.actor_links.clone();
-            for link in role_links {
-                for (id, actor) in eng.world.actors.iter() {
-                    if let ActorType::Player(other_player) = &actor.actor_type
-                        && other_player.role == link.role
-                    {
-                        links_to_create.push(ActorLink {
-                            link_type: link.link_type,
-                            link_dest: *id,
-                        });
+        let mut links_to_create: Vec<LinkDescriptor> = vec![];
+        for (id, _) in eng.world.actors.iter() {
+            // player (role based) links
+            let mut found_role = None;
+            if let Some(player) = eng.world.get_player(*id) {
+                found_role = Some(player.role);
+            }
+            if let Some(role) = found_role {
+                let role_config = get_role_config(eng, role)?;
+                let role_links = role_config.actor_links.clone();
+                for link in role_links {
+                    for (id_other, other_actor) in eng.world.actors.iter() {
+                        if *id == *id_other {
+                            continue;
+                        }
+                        if let ActorType::Player(other_player) = &other_actor.actor_type
+                            && other_player.role == link.role
+                        {
+                            links_to_create.push(LinkDescriptor {
+                                from_dest: *id,
+                                to_dest: *id_other,
+                                link_type: link.link_type,
+                            });
+                        }
                     }
                 }
             }
+            // TODO:
+            // Org links (if added in the future)
         }
 
-        // TODO: Organization links (if added in the future)
-
-        let target = get_actor_mut(eng, self.actor_id)?;
         if mutate {
             for link in links_to_create {
-                dbg!(&link);
-                target.add_link(link);
+                let target = get_actor_mut(eng, link.from_dest)?;
+                target.add_link(ActorLink {
+                    link_type: link.link_type,
+                    link_dest: link.to_dest,
+                });
             }
         }
 
