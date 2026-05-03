@@ -1,4 +1,4 @@
-use crate::Timestamp;
+use crate::Time;
 use crate::action::{
     ActionContext, ActionError, ActionInterface, ActionRequest, ActionResponse, ActionResult,
 };
@@ -33,7 +33,7 @@ impl PartialOrd for Job {
 pub struct Engine {
     pub world: World,
     pub config: Config,
-    pub time: Timestamp,
+    pub time: Time,
     jobs: BinaryHeap<Job>,
     job_seq_num: SequenceNumber,
 }
@@ -58,7 +58,7 @@ impl Engine {
         self.job_seq_num += 1;
     }
 
-    pub fn is_future_timestamp(&self, timestamp: Timestamp) -> bool {
+    pub fn is_future_timestamp(&self, timestamp: Time) -> bool {
         timestamp >= self.time
     }
 

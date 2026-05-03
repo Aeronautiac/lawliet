@@ -1,11 +1,13 @@
-use crate::{Timestamp, config::ability::AbilityIdentifier};
+use crate::{Time, config::ability::AbilityIdentifier};
 
 pub struct DefaultConfig {
     pub death_message: String,
     pub life_link_death_message: String,
-    pub pseudocide_duration: Timestamp, // milliseconds
+    pub pseudocide_duration: Time, // milliseconds
     pub universal_abilities: Vec<AbilityIdentifier>, // the abilities that everyone gets regardless
-                                        // of role
+    // of role
+    pub notebook_successes_per_day: u16,
+    pub notebook_failures_per_day: u16,
 }
 
 pub fn default_defaults() -> DefaultConfig {
@@ -17,5 +19,7 @@ pub fn default_defaults() -> DefaultConfig {
             name: crate::config::ability::AbilityName::Contact,
             variant: 0,
         }],
+        notebook_successes_per_day: 1,
+        notebook_failures_per_day: 3,
     }
 }

@@ -9,8 +9,8 @@ pub enum ContactLogType {
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum PassiveType {
-    Wanted,
-    JuryDuty,
+    Wanted,       // you can be silently prosecuted regardless of your affiliations
+    JuryDuty,     // all votes are multiplied by some factor stated in config
     VolatileEyes, // certain abilities will cause the player to lose eyes when certain conditions
     // are met. if the player loses both their eyes, they cannot use certain abilities anymore.
     ContactLogs(ContactLogType),

@@ -8,7 +8,7 @@
 */
 
 use crate::{
-    Timestamp,
+    Time,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionRequest, ActionResponse,
         ActionResult, kill::Kill,
@@ -23,7 +23,7 @@ pub struct ScheduleKillResponse {}
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct ScheduleKill {
-    pub timestamp: Timestamp,
+    pub timestamp: Time,
     pub kill: Kill,
 }
 

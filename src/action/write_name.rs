@@ -5,7 +5,7 @@
 */
 
 use crate::{
-    ID, Timestamp,
+    ID, Time,
     action::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
         ActionResult, kill::Kill, schedule_kill::ScheduleKill,
@@ -25,7 +25,7 @@ pub struct WriteName {
     pub true_name: String,
     pub death_message: Option<String>,
     pub notebook_id: ID,
-    pub delay: Option<Timestamp>, // the time (in seconds) after the current time to kill the player
+    pub delay: Time, // the time (in seconds) after the current time to kill the player
 }
 
 impl ActionInterface for WriteName {
@@ -66,9 +66,9 @@ impl ActionInterface for WriteName {
             if mutate {
                 book.on_write_success(player_id);
             }
-            if let Some(delay) = self.delay {
+            if self.delay > 0 {
                 Action::ScheduleKill(ScheduleKill {
-                    timestamp: eng.time + delay,
+                    timestamp: eng.time + self.delay,
                     kill: Kill {
                         allow_link_chaining: true,
                         sever_links: true,
@@ -78,7 +78,7 @@ impl ActionInterface for WriteName {
                         silent: false,
                     },
                 })
-                .handle(eng, ctx, actor, version, mutate)?;
+                .handle(eng, ctx, &ActionActor::System, version, mutate)?;
             } else {
                 Action::Kill(Kill {
                     allow_link_chaining: true,
@@ -88,7 +88,7 @@ impl ActionInterface for WriteName {
                     death_message: self.death_message.clone(),
                     silent: false,
                 })
-                .handle(eng, ctx, actor, version, mutate)?;
+                .handle(eng, ctx, &ActionActor::System, version, mutate)?;
             }
             Ok(ActionResponse::WriteName(WriteNameResponse {}))
         } else {

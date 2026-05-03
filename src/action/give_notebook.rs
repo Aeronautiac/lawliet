@@ -35,15 +35,24 @@ impl ActionInterface for GiveNotebook {
         actor.require_system()?;
         require_player(eng, self.actor_id)?;
 
+        // Semantics:
+        // - If the notebook is currently held by the actor, and the actor is already the true owner
+        // of the notebook, then this action will do nothing and an error should be returned.
+        // - If the notebook is currently held by someone, but the true owner is NOT the actor,
+        // then true ownership should transfer to the actor.
+        // - If the actor is the true owner, but the notebook is held by someone else, then the
+        // notebook should be sent back to the actor.
+
         let notebook = get_notebook(eng, self.notebook_id)?;
-        if let Some(curr_owner) = notebook.owner {
-            if curr_owner == self.actor_id {
+        if let Some(owner) = notebook.owner {
+            let true_owner = notebook.get_true_owner().unwrap();
+            if true_owner == self.actor_id && owner == self.actor_id {
                 return Err(ActionError::ItemAlreadyOwned);
             }
-            if mutate {
-                let other_actor = get_actor_mut(eng, curr_owner).unwrap(); // if
+            if mutate && owner != self.actor_id {
+                let other_actor = get_actor_mut(eng, owner).unwrap(); // if
                 // the owner doesn't exist, there's something wrong with the engine
-                other_actor.remove_notebook(self.notebook_id);
+                other_actor.remove_notebook(self.notebook_id); // removes from the actor's cache
             }
         }
 

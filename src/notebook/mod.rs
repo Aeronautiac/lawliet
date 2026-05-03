@@ -38,6 +38,7 @@ impl Notebook {
         self.original_owner = Some(id);
     }
 
+    /// gives the notebook to the person AND sets them as a the true owner
     pub fn set_true_owner(&mut self, id: ID, volatile: bool) {
         self.volatile = volatile;
         if self.original_owner.is_none() {
@@ -45,6 +46,20 @@ impl Notebook {
         }
         self.borrowed = None;
         self.owner = Some(id);
+    }
+
+    pub fn strip_ownership(&mut self) {
+        self.volatile = false;
+        self.borrowed = None;
+        self.owner = None;
+    }
+
+    pub fn get_true_owner(&self) -> Option<ID> {
+        if let Some(borrowed) = self.borrowed {
+            Some(borrowed)
+        } else {
+            self.owner
+        }
     }
 
     pub fn can_lend(&self, id: ID) -> Result<(), NotebookError> {

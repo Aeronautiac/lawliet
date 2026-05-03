@@ -12,12 +12,14 @@ use crate::{
         give_notebook::GiveNotebook,
         give_passive::GivePassive,
         sever_links::SeverLinks,
+        take_notebook::TakeNotebook,
     },
     actor::{ActorType, state::State},
     command::Command,
     common::Version,
     engine::Engine,
-    helpers::{get_actor, get_actor_mut, require_alive},
+    helpers::{get_actor, get_actor_mut, get_notebook, require_alive},
+    notebook,
 };
 
 #[derive(PartialEq, Eq, Clone)]
@@ -68,55 +70,68 @@ impl ActionInterface for Kill {
                 killer.kills.push(self.target_id);
             }
 
-            // TODO:
-            // Add notebook transfer policy to config
+            if killer_id != self.target_id {
+                // ability transfers
+                for (id, ability) in eng.world.abilities.iter() {
+                    if let Some(owner) = ability.ownership_struct.owner
+                        && owner == self.target_id
+                        && ability.ownership_struct.transferrable
+                    {
+                        ability_transferred = true;
+                        next_actions.push(Action::GiveAbility(GiveAbility {
+                            volatile: false,
+                            ability_id: *id,
+                            actor_id: killer_id,
+                        }));
+                    }
+                }
 
-            // notebook transfers
-            // transfer any currently held notebook to the person who killed them regardless of if
-            // the person holding the notebook actually owned the notebook
-            for (id, notebook) in eng.world.notebooks.iter() {
-                if let Some(owner) = notebook.owner
-                    && owner == self.target_id
-                // && !notebook.is_owner_borrowing()
-                {
-                    notebook_transferred = true;
-                    next_actions.push(Action::GiveNotebook(GiveNotebook {
-                        notebook_id: *id,
-                        actor_id: killer_id,
-                        volatile: false,
-                    }));
-                };
-            }
-
-            // ability transfers
-            for (id, ability) in eng.world.abilities.iter() {
-                if let Some(owner) = ability.ownership_struct.owner
-                    && owner == self.target_id
-                    && ability.ownership_struct.transferrable
-                {
-                    ability_transferred = true;
-                    next_actions.push(Action::GiveAbility(GiveAbility {
-                        volatile: false,
-                        ability_id: *id,
-                        actor_id: killer_id,
-                    }));
+                // passive transfers
+                for (id, passive) in eng.world.passives.iter() {
+                    if let Some(owner) = passive.ownership_struct.owner
+                        && owner == self.target_id
+                        && passive.ownership_struct.transferrable
+                    {
+                        ability_transferred = true;
+                        next_actions.push(Action::GivePassive(GivePassive {
+                            volatile: false,
+                            passive_id: *id,
+                            actor_id: killer_id,
+                        }));
+                    }
                 }
             }
+        }
 
-            // passive transfers
-            for (id, passive) in eng.world.passives.iter() {
-                if let Some(owner) = passive.ownership_struct.owner
-                    && owner == self.target_id
-                    && passive.ownership_struct.transferrable
-                {
-                    ability_transferred = true;
-                    next_actions.push(Action::GivePassive(GivePassive {
-                        volatile: false,
-                        passive_id: *id,
-                        actor_id: killer_id,
-                    }));
+        // A notebook changes ownership if the true owner is not the killer
+        // the notebook should still be given back if its not being held by the true owner.
+        // A notebook is transferred if the person holding the notebook changes
+        // If a person who is borrowing a notebook dies without a killer, the notebook loses its owner
+        let target = get_actor(eng, self.target_id)?;
+        for id in target.notebooks.iter() {
+            let notebook = get_notebook(eng, *id)?;
+            if let Some(owner) = notebook.owner
+                && owner == self.target_id
+            {
+                // it should be impossible
+                // for a notebook to have a current owner and no true owner
+                let true_owner = notebook.get_true_owner().unwrap();
+                if let Some(killer_id) = self.killer_id {
+                    if (true_owner != killer_id) || (owner != true_owner) {
+                        next_actions.push(Action::GiveNotebook(GiveNotebook {
+                            notebook_id: *id,
+                            actor_id: killer_id,
+                            volatile: false,
+                        }));
+
+                        if owner != killer_id {
+                            notebook_transferred = true;
+                        }
+                    }
+                } else if notebook.get_true_owner().unwrap() != self.target_id {
+                    next_actions.push(Action::TakeNotebook(TakeNotebook { notebook_id: *id }));
                 }
-            }
+            };
         }
 
         for mut action in next_actions {

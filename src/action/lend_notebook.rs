@@ -11,7 +11,7 @@ use crate::{
     actor::restriction::Restriction,
     common::Version,
     engine::Engine,
-    helpers::actor_id,
+    helpers::{actor_id, get_actor, get_actor_mut, get_notebook, get_notebook_mut, require_alive},
 };
 
 #[derive(Debug)]
@@ -33,23 +33,34 @@ impl ActionInterface for LendNotebook {
         mutate: bool,
     ) -> ActionResult {
         actor.player_only()?;
-        let player_id = actor_id(actor).unwrap();
 
-        let player_actor = eng.world.get_actor(player_id).unwrap();
+        let user_id = actor_id(actor).unwrap();
+        if user_id == self.target_id {
+            return Err(ActionError::CannotLendToYourself);
+        }
+
+        let notebook = get_notebook_mut(eng, self.notebook_id)?;
+        if notebook.can_lend(user_id).is_err() {
+            return Err(ActionError::NotebookNotOwned);
+        }
+        if mutate {
+            notebook.lend(self.target_id).unwrap();
+        }
+
+        let player_actor = get_actor_mut(eng, user_id)?;
         if player_actor.has_restriction(Restriction::NotebookPassage) {
             return Err(ActionError::NotebookPassageBlocked);
         }
-
-        let Some(book) = eng.world.get_notebook_mut(self.notebook_id) else {
-            return Err(ActionError::NotebookNotFound);
-        };
-
-        if book.can_lend(player_id).is_err() {
-            return Err(ActionError::NotebookNotOwned);
+        if mutate {
+            player_actor.remove_notebook(self.notebook_id);
         }
 
+        let target_actor = get_actor_mut(eng, self.target_id)?;
+        if target_actor.has_restriction(Restriction::NotebookReceive) {
+            return Err(ActionError::ActorHasNotebookReceiveRestriction);
+        }
         if mutate {
-            book.lend(self.target_id).unwrap();
+            target_actor.add_notebook(self.notebook_id);
         }
 
         Ok(ActionResponse::LendNotebook(LendNotebookResponse {}))

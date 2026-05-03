@@ -1,4 +1,5 @@
-pub enum OrganizationType {
+#[derive(PartialEq, Eq, Debug)]
+pub enum OrganizationName {
     KK,
     TF,
     SPK,

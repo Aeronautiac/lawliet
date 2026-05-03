@@ -1,7 +1,7 @@
 use crate::{
-    ID, Timestamp,
+    ID, Time,
     ability::Ability,
-    action::{Action, ActionActor, ActionError},
+    action::{ActionActor, ActionError},
     actor::{Actor, ActorLinkType, ActorType, Player, restriction::Restriction, state::State},
     config::{
         ability::{AbilityConfig, AbilityIdentifier},
@@ -41,7 +41,7 @@ pub fn actor_id(actor: &ActionActor) -> Option<ID> {
         ActionActor::Organization(id) => Some(*id),
     }
 }
-pub fn require_time_not_passed(eng: &Engine, t: Timestamp) -> Result<(), ActionError> {
+pub fn require_time_not_passed(eng: &Engine, t: Time) -> Result<(), ActionError> {
     if eng.is_future_timestamp(t) {
         Ok(())
     } else {

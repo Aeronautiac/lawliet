@@ -1,6 +1,6 @@
 pub type ID = usize;
 pub type Version = u8;
-pub type Timestamp = u128; // intended to be used as unix time in milliseconds
+pub type Time = u128; // intended to be used as unix time in milliseconds
 pub type SequenceNumber = usize;
 pub type Variant = u8;
 pub type LinkWeight = u16;

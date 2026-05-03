@@ -14,7 +14,7 @@ use crate::{
         restriction::Restrictions,
         state::{State, States},
     },
-    config::role::Role,
+    config::{organization::OrganizationName, role::Role},
 };
 use restriction::{Restriction, Source};
 
@@ -49,7 +49,7 @@ pub struct Actor {
     // for performance and utility
     // they must be synced to game state
     pub passives: BTreeSet<ID>,
-    pub notebooks: BTreeSet<ID>,
+    pub notebooks: BTreeSet<ID>, // any notebook currently HELD (not owned) by this actor
     pub restrictions: BTreeMap<Source, Restrictions>,
     pub states: States,
     pub actor_type: ActorType,
@@ -70,7 +70,7 @@ impl Actor {
         }
     }
 
-    pub fn new_org() -> Self {
+    pub fn new_org(name: OrganizationName) -> Self {
         Actor {
             kills: vec![],
             abilities: BTreeSet::new(),
@@ -79,7 +79,7 @@ impl Actor {
             restrictions: BTreeMap::new(),
             actor_links: BTreeSet::new(),
             states: States::empty(),
-            actor_type: ActorType::Org(Organization::new()),
+            actor_type: ActorType::Org(Organization::new(name)),
         }
     }
 
@@ -97,6 +97,10 @@ impl Actor {
             restrictions |= *restrict;
         }
         restrictions.contains(restriction)
+    }
+
+    pub fn has_state(&self, state: State) -> bool {
+        self.states.contains(state)
     }
 
     // adds a state
@@ -144,4 +148,11 @@ impl Actor {
     pub fn remove_notebook(&mut self, id: ID) {
         self.notebooks.remove(&id);
     }
+
+    pub fn has_notebook(&self, id: ID) -> bool {
+        self.notebooks.contains(&id)
+    }
 }
+
+#[cfg(test)]
+mod actor_tests {}

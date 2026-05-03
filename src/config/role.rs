@@ -7,8 +7,10 @@ use crate::{
 };
 
 // TODO:
-// Add organization configurations. Certain roles spawn in organizations with a certain rank.
-// For example, Near spawns as the leader of the SPK.
+// - Add organization configurations. Certain roles spawn in organizations with certain permissions.
+// - Possibly change roles being hardcoded enums and instead make them strings or identifiers. This
+// would allow dynamic role creation on the host's end and wouldn't require much refactoring because
+// the engine doesn't hardcode anything.
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy)]
 pub enum Role {

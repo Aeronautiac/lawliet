@@ -12,6 +12,7 @@ pub enum Restriction {
     NotebookUsage = 1 << 3,
     NotebookPassage = 1 << 4,
     PassiveLinks = 1 << 5,
+    NotebookReceive = 1 << 6,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]

@@ -54,9 +54,12 @@
 // yagami is a multithreaded process
 //
 // a frontend sends action requests to yagami, and yagami sends back the result. if the action
-// succeeded, a command buffer (filtered for the particular frontend it is being sent to by yagami) is
-// sent back along with action specific metadata. a proper frontend uses these commands to render
+// succeeded, a command buffer is sent back. a proper frontend uses these commands to render
 // the game state meant for that specific player.
+// - Frontend clients are dumb and respond only to commands and errors
+// - Frontend servers handle routing and similar tasks
+// - Response data structs are used internally (tests, sub-action return values, yagami)
+// - Frontends must have host controls and game views
 
 mod ability;
 mod action;
@@ -71,15 +74,30 @@ mod ownership;
 mod passive;
 mod world;
 
-pub use common::{ID, Timestamp};
+pub use common::{ID, Time};
+
+// TODO:
+// - Touch up the ability category enum (physical vs supernatural doesnt make sense)
+// - Begin implementing every ability
+// - Implement polls/votes
+// - Implement channels
+// - Implement lounges
+// - Implement group chats
+// - Implement bugs
+// - Implement news
+// - Implement organizations
+// - Implement any necessary actions
+// - Go through everything and implement frontend commands
+// - Write extensive integration tests
 
 #[cfg(test)]
 mod tests {
     use crate::{
-        ID, Timestamp,
+        ID, Time,
         action::{
-            Action, ActionActor, ActionRequest, ActionResponse, add_player::AddPlayer, kill::Kill,
-            revive::Revive,
+            Action, ActionActor, ActionRequest, ActionResponse, ActionResult,
+            add_player::AddPlayer, create_and_give_notebook::CreateAndGiveNotebook, kill::Kill,
+            lend_notebook::LendNotebook, null::Null, revive::Revive, write_name::WriteName,
         },
         actor::state::State,
         config::role::Role,
@@ -88,12 +106,7 @@ mod tests {
         passive::{ContactLogType, PassiveType},
     };
 
-    fn add_player(
-        eng: &mut Engine,
-        timestamp: Timestamp,
-        starting_role: Role,
-        true_name: &str,
-    ) -> ID {
+    fn add_player(eng: &mut Engine, timestamp: Time, starting_role: Role, true_name: &str) -> ID {
         let data = eng
             .execute(ActionRequest {
                 timestamp,
@@ -113,7 +126,7 @@ mod tests {
 
     fn quick_kill(
         eng: &mut Engine,
-        timestamp: Timestamp,
+        timestamp: Time,
         allow_link_chaining: bool,
         sever_links: bool,
         target: ID,
@@ -133,7 +146,7 @@ mod tests {
         .unwrap();
     }
 
-    fn quick_revive(eng: &mut Engine, timestamp: Timestamp, ignore_links: bool, target: ID) {
+    fn quick_revive(eng: &mut Engine, timestamp: Time, ignore_links: bool, target: ID) {
         eng.execute(ActionRequest {
             timestamp,
             actor: ActionActor::System,
@@ -145,12 +158,76 @@ mod tests {
         .unwrap();
     }
 
+    fn quick_write(
+        eng: &mut Engine,
+        writer: ID,
+        timestamp: Time,
+        notebook_id: ID,
+        true_name: &str,
+        delay: Time, // should just refactor this to a mandatory value. 0 for no delay.
+    ) -> ActionResult {
+        let result = eng.execute(ActionRequest {
+            actor: ActionActor::Player(writer),
+            timestamp,
+            payload: Action::WriteName(WriteName {
+                true_name: true_name.into(),
+                death_message: None,
+                notebook_id,
+                delay,
+            }),
+        });
+        match result {
+            Ok(response) => Ok(response.0),
+            Err(err) => Err(err),
+        }
+    }
+
+    fn null_action(eng: &mut Engine, time: Time) {
+        eng.execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: time,
+            payload: Action::Null(Null {}),
+        })
+        .unwrap();
+    }
+
+    fn quick_lend(eng: &mut Engine, time: Time, notebook_id: ID, player_lending: ID, lend_to: ID) {
+        eng.execute(ActionRequest {
+            actor: ActionActor::Player(player_lending),
+            timestamp: time,
+            payload: Action::LendNotebook(LendNotebook {
+                notebook_id,
+                target_id: lend_to,
+            }),
+        })
+        .unwrap();
+    }
+
+    fn quick_notebook(eng: &mut Engine, time: Time, player: ID, fake: bool) -> ID {
+        let data = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: time,
+                payload: Action::CreateAndGiveNotebook(CreateAndGiveNotebook {
+                    fake,
+                    actor_id: player,
+                    volatile: false,
+                }),
+            })
+            .unwrap()
+            .0;
+        let ActionResponse::CreateAndGiveNotebook(response) = data else {
+            unreachable!()
+        };
+        response.id
+    }
+
     // Link behaviour:
     // Links are not severed if the death was caused by a link
     // If the death was not caused by a link, they are typically severed, though this can be
     // disabled as well
     #[test]
-    fn test_actor_links() {
+    fn actor_links() {
         let mut eng = Engine::new();
 
         let w_id_1 = add_player(&mut eng, 0, Role::Watari, "John Candlewick");
@@ -179,7 +256,7 @@ mod tests {
 
         let watari1 = get_actor(&eng, w_id_1).unwrap();
         let watari2 = get_actor(&eng, w_id_2).unwrap();
-        assert!(watari1.states.contains(State::Dead) && watari2.states.contains(State::Dead));
+        assert!(watari1.has_state(State::Dead) && watari2.has_state(State::Dead));
 
         // this one should only revive L
         quick_revive(&mut eng, 6, true, l_id);
@@ -195,7 +272,7 @@ mod tests {
         // links were ignored, so only L should have been revived
         let watari1 = get_actor(&eng, w_id_1).unwrap();
         let watari2 = get_actor(&eng, w_id_2).unwrap();
-        assert!(watari1.states.contains(State::Dead) && watari2.states.contains(State::Dead));
+        assert!(watari1.has_state(State::Dead) && watari2.has_state(State::Dead));
 
         // kill L again, do not sever links, and do not allow chaining
         quick_kill(&mut eng, 6, false, false, l_id);
@@ -213,9 +290,209 @@ mod tests {
         // only watari 2 and L should be revived as watari 1 died alone
         let watari1 = get_actor(&eng, w_id_1).unwrap();
         let watari2 = get_actor(&eng, w_id_2).unwrap();
-        assert!(watari1.states.contains(State::Dead) && !watari2.states.contains(State::Dead));
+        assert!(watari1.has_state(State::Dead) && !watari2.has_state(State::Dead));
     }
 
     #[test]
-    fn test_ability_links() {}
+    fn basic_ability_usage() {}
+
+    #[test]
+    fn ability_links() {}
+
+    #[test]
+    fn ability_transfers() {}
+
+    #[test]
+    fn passive_transfers() {}
+
+    // a fake notebook should not kill someone
+    #[test]
+    fn fake_notebook_write_delayed() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "Light Yagami");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "Quillsh Wammy");
+        let notebook_id = quick_notebook(&mut eng, 0, p1, true);
+
+        quick_write(&mut eng, p1, 0, notebook_id, "quillsh wammy", 40).unwrap();
+        null_action(&mut eng, 39);
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        let p2_actor = get_actor(&eng, p2).unwrap();
+        assert!(!p1_actor.has_state(State::Dead));
+        assert!(!p2_actor.has_state(State::Dead));
+
+        null_action(&mut eng, 40);
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        let p2_actor = get_actor(&eng, p2).unwrap();
+        assert!(!p1_actor.has_state(State::Dead));
+        assert!(!p2_actor.has_state(State::Dead));
+    }
+
+    #[test]
+    fn fake_notebook_write_instant() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "Light Yagami");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "Quillsh Wammy");
+        let notebook_id = quick_notebook(&mut eng, 0, p1, true);
+
+        quick_write(&mut eng, p1, 0, notebook_id, "quillsh wammy", 0).unwrap();
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        let p2_actor = get_actor(&eng, p2).unwrap();
+        assert!(!p1_actor.has_state(State::Dead));
+        assert!(!p2_actor.has_state(State::Dead));
+    }
+
+    #[test]
+    fn notebook_write_delayed() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "Light Yagami");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "Quillsh Wammy");
+        let notebook_id = quick_notebook(&mut eng, 0, p1, false);
+
+        quick_write(&mut eng, p1, 0, notebook_id, "quillsh wammy", 40).unwrap();
+        null_action(&mut eng, 39);
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        let p2_actor = get_actor(&eng, p2).unwrap();
+        assert!(!p1_actor.has_state(State::Dead));
+        assert!(!p2_actor.has_state(State::Dead));
+
+        null_action(&mut eng, 40);
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        let p2_actor = get_actor(&eng, p2).unwrap();
+        assert!(!p1_actor.has_state(State::Dead));
+        assert!(p2_actor.has_state(State::Dead));
+    }
+
+    #[test]
+    fn notebook_write_instant() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "Light Yagami");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "Quillsh Wammy");
+        let notebook_id = quick_notebook(&mut eng, 0, p1, false);
+
+        quick_write(&mut eng, p1, 0, notebook_id, "quillSh wammy", 0).unwrap();
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        let p2_actor = get_actor(&eng, p2).unwrap();
+        assert!(!p1_actor.has_state(State::Dead));
+        assert!(p2_actor.has_state(State::Dead));
+    }
+
+    // if you kill someone who is holding a notebook, you should get that notebook
+    #[test]
+    fn notebook_kill_wielder() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+        let p1_notebook_id = quick_notebook(&mut eng, 0, p1, false);
+        let p2_notebook_id = quick_notebook(&mut eng, 0, p2, false);
+
+        quick_write(&mut eng, p1, 0, p1_notebook_id, "p2", 0).unwrap();
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        let p2_actor = get_actor(&eng, p2).unwrap();
+        assert!(p1_actor.has_notebook(p2_notebook_id));
+        assert!(!p2_actor.has_notebook(p2_notebook_id));
+    }
+
+    // what happens if you kill yourself while you are the true owner of a notebook?
+    // - you should remain as the true owner, but the notebook should be unusable because you're dead
+    // - the game should not announce a notebook transfer
+    #[test]
+    fn notebook_suicide() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "Light Yagami");
+        let notebook_id = quick_notebook(&mut eng, 0, p1, false);
+
+        quick_write(&mut eng, p1, 0, notebook_id, "light yagami", 121).unwrap();
+        null_action(&mut eng, 122);
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        assert!(p1_actor.has_notebook(notebook_id));
+        assert!(p1_actor.has_state(State::Dead));
+    }
+
+    #[test]
+    fn notebook_lend() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+        let p1_notebook_id_1 = quick_notebook(&mut eng, 0, p1, false);
+
+        quick_lend(&mut eng, 0, p1_notebook_id_1, p1, p2);
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        let p2_actor = get_actor(&eng, p2).unwrap();
+        assert!(!p1_actor.has_notebook(p1_notebook_id_1));
+        assert!(p2_actor.has_notebook(p1_notebook_id_1));
+    }
+
+    // General rules:
+    // - If you kill a notebook wielder, and you are not the true owner of that notebook, then the
+    // notebook should be given to you. It doesn't matter if you killed yourself or not.
+    // - Notebook transfers are only announced if a death resulted in the CURRENT owner of a death
+    // note changing, not the true owner.
+
+    // what happens if you kill someone you're lending to?
+    // - should get back early
+    #[test]
+    fn notebook_kill_lent_to() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+        let p1_notebook_id_1 = quick_notebook(&mut eng, 0, p1, false);
+        let p1_notebook_id_2 = quick_notebook(&mut eng, 0, p1, false);
+
+        quick_lend(&mut eng, 0, p1_notebook_id_2, p1, p2);
+        quick_write(&mut eng, p1, 0, p1_notebook_id_1, "p2", 0).unwrap();
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        let p2_actor = get_actor(&eng, p2).unwrap();
+        assert!(p1_actor.has_notebook(p1_notebook_id_2));
+        assert!(!p2_actor.has_notebook(p1_notebook_id_2));
+    }
+
+    // what happens if you kill yourself while being lended to?
+    // - the notebook should become yours, but should become unusable because you are dead
+    // - do not announce notebook transfer
+    #[test]
+    fn borrowed_notebook_suicide() {}
+
+    // what happens if you kill someone who is lending to you?
+    // what happens if the owner dies while the notebook is being lent out to someone?
+    // - the person who is currently holding the notebook becomes the true owner
+    // - do not announce a transfer
+    #[test]
+    fn borrowed_notebook_true_owner_died() {}
+
+    // what happens if the person borrowing your book dies before it returns and isnt killed by anyone?
+    // - the notebook is lost (it no longer has an owner)
+    // - do not announce a transfer
+    #[test]
+    fn borrowed_notebook_die_no_killer() {}
+
+    // it is possible to die before your scheduled notebook death through things like being executed
+    // - the scheduled death should fail with no side effects
+    #[test]
+    fn notebook_die_before_scheduled() {}
+
+    // what happens if a dead player kills a living player who owns a notebook through a scheduled
+    // kill?
+    // - the notebook goes to the dead player, but the dead player cannot use the notebook due to
+    // restrictions
+    #[test]
+    fn notebook_dead_kill_living() {}
+
+    // what happens when someone writes a name that has already been scheduled in a notebook?
+    // - the actions cancel each other out (scheduled death is removed, actor does not die)
+    #[test]
+    fn notebook_collisions() {}
+
+    // test the consistency of actor caches (things like owned ability sets)
+    #[test]
+    fn actor_caches() {}
 }

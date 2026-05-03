@@ -18,12 +18,14 @@ use crate::{
         give_role::{GiveRole, GiveRoleResponse},
         kill::*,
         lend_notebook::{LendNotebook, LendNotebookResponse},
+        null::{Null, NullResponse},
         purge_volatiles::{PurgeVolatiles, PurgeVolatilesResponse},
         remove_state::{RemoveState, RemoveStateResponse},
         revive::*,
         schedule_kill::{ScheduleKill, ScheduleKillResponse},
         schedule_revive::{ScheduleRevive, ScheduleReviveResponse},
         sever_links::{SeverLinks, SeverLinksResponse},
+        take_notebook::{TakeNotebook, TakeNotebookResponse},
         use_ability::{UseAbility, UseAbilityResponse},
         write_name::{WriteName, WriteNameResponse},
     },
@@ -48,12 +50,14 @@ pub mod give_passive;
 pub mod give_role;
 pub mod kill;
 pub mod lend_notebook;
+pub mod null;
 pub mod purge_volatiles;
 pub mod remove_state;
 pub mod revive;
 pub mod schedule_kill;
 pub mod schedule_revive;
 pub mod sever_links;
+pub mod take_notebook;
 pub mod use_ability;
 pub mod write_name;
 
@@ -62,6 +66,7 @@ pub enum ActionError {
     ActorNotFound,
     ActorIsDead,
     ActorIsAlive,
+    ActorHasNotebookReceiveRestriction,
     InsufficientPermissions,
     ActorIsNotPlayer,
     NameNotUnique,
@@ -70,6 +75,7 @@ pub enum ActionError {
     NotebookUsageBlocked, // later have it hold a vector of reasons/states
     NotebookPassageBlocked,
     NotebookOnCooldown,
+    CannotLendToYourself,
     TimeAlreadyPassed,
     AbilityCategoryBlocked,
     PassiveNotFound,
@@ -81,6 +87,7 @@ pub enum ActionError {
     AbilityNotEnoughCharges,
     RoleNotImplemented,
     ItemAlreadyOwned,
+    ItemAlreadyUnowned,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -91,7 +98,6 @@ pub struct ActionContext {
 
 #[enum_dispatch]
 pub trait ActionInterface {
-    /// next_actions must not depend on state mutations performed by the action itself.
     fn handle(
         &mut self,
         eng: &mut Engine,
@@ -129,6 +135,8 @@ pub enum Action {
     CreateAndGiveAbility(CreateAndGiveAbility),
     CreateAndGiveNotebook(CreateAndGiveNotebook),
     CreateAndGivePassive(CreateAndGivePassive),
+    TakeNotebook(TakeNotebook),
+    Null(Null),
 }
 
 pub enum ActionResponse {
@@ -156,6 +164,8 @@ pub enum ActionResponse {
     CreateAndGiveAbility(CreateAndGiveAbilityResponse),
     CreateAndGiveNotebook(CreateAndGiveNotebookResponse),
     CreateAndGivePassive(CreateAndGivePassiveResponse),
+    TakeNotebook(TakeNotebookResponse),
+    Null(NullResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -168,7 +178,7 @@ pub enum ActionActor {
 #[derive(PartialEq, Eq, Clone)]
 pub struct ActionRequest {
     pub actor: ActionActor,
-    pub timestamp: crate::Timestamp,
+    pub timestamp: crate::Time,
     pub payload: Action,
 }
 
@@ -196,4 +206,9 @@ impl ActionActor {
             Err(ActionError::ActorIsSystem)
         }
     }
+}
+
+#[cfg(test)]
+mod action_tests {
+    use super::*;
 }
