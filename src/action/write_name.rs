@@ -4,6 +4,8 @@
 * IPP blocks this
 */
 
+use std::cell::RefCell;
+
 use crate::{
     ID, Time,
     action::{
@@ -50,7 +52,7 @@ impl ActionInterface for WriteName {
             return Err(ActionError::NotebookNotFound);
         };
 
-        // still need to implement game rule blockage
+        // need to implement blockage by the notebook restrict passive
 
         // temporarily hardcoded as config is not fully implemented yet
         if let Err(error) = book.can_write(
@@ -67,13 +69,47 @@ impl ActionInterface for WriteName {
         if let Some(target_id) = target
             && !book.fake
         {
+            let mut cancelled = false;
+            // TODO: Add a differentiatior for notebook scheduled deaths and system scheduled deaths (not too important yet, and also pretty easy to do. just create a new action which wraps kill with metadata.)
+            for job in eng.jobs.iter() {
+                if *job.cancelled.borrow_mut() {
+                    continue;
+                }
+                if let Action::Kill(data) = &job.request.payload
+                    && data.target_id == target_id
+                {
+                    cancelled = true;
+                    if mutate {
+                        *job.cancelled.borrow_mut() = true;
+                    }
+                }
+            }
             if mutate {
                 book.on_write_success(player_id);
             }
-            if self.delay > 0 {
-                Action::ScheduleKill(ScheduleKill {
-                    timestamp: eng.time + self.delay,
-                    kill: Kill {
+            if !cancelled {
+                if self.delay > 0 {
+                    Action::ScheduleKill(ScheduleKill {
+                        timestamp: eng.time + self.delay,
+                        kill: Kill {
+                            allow_link_chaining: true,
+                            sever_links: true,
+                            set_books_dormant: false,
+                            target_id,
+                            killer_id: Some(player_id),
+                            death_message: self.death_message.clone(),
+                            silent: false,
+                        },
+                    })
+                    .handle(
+                        eng,
+                        ctx,
+                        &ActionActor::System,
+                        version,
+                        mutate,
+                    )?;
+                } else {
+                    Action::Kill(Kill {
                         allow_link_chaining: true,
                         sever_links: true,
                         set_books_dormant: false,
@@ -81,22 +117,19 @@ impl ActionInterface for WriteName {
                         killer_id: Some(player_id),
                         death_message: self.death_message.clone(),
                         silent: false,
-                    },
-                })
-                .handle(eng, ctx, &ActionActor::System, version, mutate)?;
+                    })
+                    .handle(
+                        eng,
+                        ctx,
+                        &ActionActor::System,
+                        version,
+                        mutate,
+                    )?;
+                }
+                Ok(ActionResponse::WriteName(WriteNameResponse {}))
             } else {
-                Action::Kill(Kill {
-                    allow_link_chaining: true,
-                    sever_links: true,
-                    set_books_dormant: false,
-                    target_id,
-                    killer_id: Some(player_id),
-                    death_message: self.death_message.clone(),
-                    silent: false,
-                })
-                .handle(eng, ctx, &ActionActor::System, version, mutate)?;
+                Ok(ActionResponse::WriteName(WriteNameResponse {}))
             }
-            Ok(ActionResponse::WriteName(WriteNameResponse {}))
         } else {
             if mutate {
                 book.on_write_failure(player_id);

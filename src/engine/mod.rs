@@ -5,13 +5,15 @@ use crate::action::{
 use crate::common::SequenceNumber;
 use crate::config::Config;
 use crate::world::World;
+use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
 #[derive(PartialEq, Eq)]
-struct Job {
-    pub seq_num: SequenceNumber,
+pub struct Job {
+    pub id: SequenceNumber,
     pub request: ActionRequest,
+    pub cancelled: RefCell<bool>,
 }
 
 impl Ord for Job {
@@ -20,7 +22,7 @@ impl Ord for Job {
             .request
             .timestamp
             .cmp(&self.request.timestamp)
-            .then_with(|| other.seq_num.cmp(&self.seq_num))
+            .then_with(|| other.id.cmp(&self.id))
     }
 }
 
@@ -34,8 +36,8 @@ pub struct Engine {
     pub world: World,
     pub config: Config,
     pub time: Time,
-    jobs: BinaryHeap<Job>,
-    job_seq_num: SequenceNumber,
+    pub jobs: BinaryHeap<Job>,
+    next_job_id: SequenceNumber,
 }
 
 impl Engine {
@@ -45,17 +47,18 @@ impl Engine {
             config: Config::new(),
             jobs: BinaryHeap::new(),
             time: 0,
-            job_seq_num: 0,
+            next_job_id: 0,
         }
     }
 
     pub fn schedule(&mut self, request: ActionRequest) {
         let job = Job {
-            seq_num: self.job_seq_num,
+            id: self.next_job_id,
             request,
+            cancelled: RefCell::new(false),
         };
         self.jobs.push(job);
-        self.job_seq_num += 1;
+        self.next_job_id += 1;
     }
 
     pub fn is_future_timestamp(&self, timestamp: Time) -> bool {
@@ -68,7 +71,7 @@ impl Engine {
     // (although this should never happen in practice due to the validation pass).
     // overflows are a non-issue. no action creates large enough of a chain to naturally overflow
     // the stack. if a stack overflow occurs it is due to an infinite recursion bug, and in this
-    // case, a crash is necessary regardless.
+    // case, a crash is necessary.
     fn execute_atomic(
         &mut self,
         ctx: &mut ActionContext,
@@ -114,9 +117,12 @@ impl Engine {
                 break;
             }
 
+            let job = self.jobs.pop().unwrap();
+            if *job.cancelled.borrow() {
+                continue;
+            }
             // ignore the errors of scheduled jobs.
-            let pending_action = self.jobs.pop().unwrap().request;
-            let _ = self.execute_atomic(&mut ctx, pending_action);
+            let _ = self.execute_atomic(&mut ctx, job.request);
         }
 
         // the command sequence matters because the frontend is also event based

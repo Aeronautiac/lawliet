@@ -358,7 +358,7 @@ pub fn default_role_config() -> RoleConfigMap {
                         name: AbilityName::TapIn,
                         variant: 1,
                     },
-                    transferrable: true,
+                    transferrable: false,
                 },
             ],
             passives: vec![RolePassive {

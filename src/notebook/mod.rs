@@ -64,7 +64,7 @@ impl Notebook {
         self.dormant_true_owner = None;
     }
 
-    pub fn get_dormant_owner(&mut self) -> Option<ID> {
+    pub fn get_dormant_owner(&self) -> Option<ID> {
         self.dormant_true_owner
     }
 
