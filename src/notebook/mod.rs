@@ -15,10 +15,13 @@ pub struct Notebook {
     // role changes
     pub fake: bool, // if a notebook is fake, it cannot actually kill people
     pub original_owner: Option<ID>,
+    pub dormant_true_owner: Option<ID>, // the person who the notebook should return to if it was
+    // discovered that they never actually died (this should be None most of the time, but
+    // pseudocide will set it to the target's ID if applicable)
     pub owner: Option<ID>,    // the person this notebook currently belongs to
     pub borrowed: Option<ID>, // the person the notebook is being borrowed from (if any)
-    pub iteration_successes: BTreeMap<ID, u8>, // success counts (correct names)
-    pub iteration_failures: BTreeMap<ID, u8>, // failed counts (wrong names)
+    pub iteration_successes: BTreeMap<ID, u16>, // success counts (correct names)
+    pub iteration_failures: BTreeMap<ID, u16>, // failed counts (wrong names)
 }
 
 impl Notebook {
@@ -26,6 +29,7 @@ impl Notebook {
         Notebook {
             fake,
             volatile: false,
+            dormant_true_owner: None,
             original_owner: None,
             owner: None,
             borrowed: None,
@@ -46,6 +50,22 @@ impl Notebook {
         }
         self.borrowed = None;
         self.owner = Some(id);
+    }
+
+    /// set the dormant true owner to the current true owner
+    pub fn set_dormant(&mut self) {
+        self.dormant_true_owner = self.get_true_owner()
+    }
+
+    pub fn awaken_dormant_owner(&mut self) {
+        if let Some(dormant_owner) = self.dormant_true_owner {
+            self.set_true_owner(dormant_owner, self.volatile);
+        }
+        self.dormant_true_owner = None;
+    }
+
+    pub fn get_dormant_owner(&mut self) -> Option<ID> {
+        self.dormant_true_owner
     }
 
     pub fn strip_ownership(&mut self) {
@@ -111,17 +131,17 @@ impl Notebook {
     pub fn can_write(
         &self,
         id: ID,
-        fail_limit: u8,
-        success_limit: u8,
+        fail_limit: u16,
+        success_limit: u16,
     ) -> Result<(), NotebookError> {
         if self.owner != Some(id) {
             return Err(NotebookError::NotOwned);
         }
 
-        if self.iteration_failures.get(&id).copied().unwrap_or(0u8) >= fail_limit {
+        if self.iteration_failures.get(&id).copied().unwrap_or(0) >= fail_limit {
             return Err(NotebookError::OnCooldown);
         }
-        if self.iteration_successes.get(&id).copied().unwrap_or(0u8) >= success_limit {
+        if self.iteration_successes.get(&id).copied().unwrap_or(0) >= success_limit {
             return Err(NotebookError::OnCooldown);
         }
 

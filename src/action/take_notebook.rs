@@ -6,7 +6,7 @@
 use crate::{
     ID,
     action::{ActionError, ActionInterface, ActionResponse},
-    helpers::{get_notebook, get_notebook_mut},
+    helpers::{get_actor_mut, get_notebook, get_notebook_mut},
 };
 
 #[derive(PartialEq, Eq, Clone)]
@@ -28,11 +28,16 @@ impl ActionInterface for TakeNotebook {
     ) -> super::ActionResult {
         actor.require_system()?;
 
-        let notebook = get_notebook_mut(eng, self.notebook_id)?;
+        let notebook = get_notebook(eng, self.notebook_id)?;
         if notebook.get_true_owner().is_none() {
             return Err(ActionError::ItemAlreadyUnowned);
         }
         if mutate {
+            if let Some(owner) = notebook.owner {
+                let owner_actor = get_actor_mut(eng, owner).unwrap();
+                owner_actor.remove_notebook(self.notebook_id);
+            }
+            let notebook = get_notebook_mut(eng, self.notebook_id)?;
             notebook.strip_ownership();
         }
 

@@ -7,7 +7,7 @@ use crate::{
     ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
-        remove_state::RemoveState,
+        remove_state::RemoveState, return_dormant_books::ReturnDormantBooks,
     },
     actor::{ActorLinkType, state::State},
     common::Version,
@@ -39,6 +39,11 @@ impl ActionInterface for Revive {
         Action::RemoveState(RemoveState {
             actor_id: self.target_id,
             state: State::Dead,
+        })
+        .handle(eng, ctx, actor, version, mutate)?;
+
+        Action::ReturnDormantBooks(ReturnDormantBooks {
+            actor_id: self.target_id,
         })
         .handle(eng, ctx, actor, version, mutate)?;
 

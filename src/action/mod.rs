@@ -21,9 +21,12 @@ use crate::{
         null::{Null, NullResponse},
         purge_volatiles::{PurgeVolatiles, PurgeVolatilesResponse},
         remove_state::{RemoveState, RemoveStateResponse},
+        return_dormant_books::{ReturnDormantBooks, ReturnDormantBooksResponse},
         revive::*,
         schedule_kill::{ScheduleKill, ScheduleKillResponse},
         schedule_revive::{ScheduleRevive, ScheduleReviveResponse},
+        set_books_dormant::{SetBooksDormant, SetBooksDormantResponse},
+        set_borrowers_to_owners::{SetBorrowersToOwners, SetBorrowersToOwnersResponse},
         sever_links::{SeverLinks, SeverLinksResponse},
         take_notebook::{TakeNotebook, TakeNotebookResponse},
         use_ability::{UseAbility, UseAbilityResponse},
@@ -53,9 +56,12 @@ pub mod lend_notebook;
 pub mod null;
 pub mod purge_volatiles;
 pub mod remove_state;
+pub mod return_dormant_books;
 pub mod revive;
 pub mod schedule_kill;
 pub mod schedule_revive;
+pub mod set_books_dormant;
+pub mod set_borrowers_to_owners;
 pub mod sever_links;
 pub mod take_notebook;
 pub mod use_ability;
@@ -137,6 +143,9 @@ pub enum Action {
     CreateAndGivePassive(CreateAndGivePassive),
     TakeNotebook(TakeNotebook),
     Null(Null),
+    SetBorrowersToOwners(SetBorrowersToOwners),
+    SetBooksDormant(SetBooksDormant),
+    ReturnDormantBooks(ReturnDormantBooks),
 }
 
 pub enum ActionResponse {
@@ -166,6 +175,9 @@ pub enum ActionResponse {
     CreateAndGivePassive(CreateAndGivePassiveResponse),
     TakeNotebook(TakeNotebookResponse),
     Null(NullResponse),
+    SetBorrowersToOwners(SetBorrowersToOwnersResponse),
+    SetBooksDormant(SetBooksDormantResponse),
+    ReturnDormantBooks(ReturnDormantBooksResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]

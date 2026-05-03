@@ -81,11 +81,12 @@ pub use common::{ID, Time};
 // - Begin implementing every ability
 // - Implement polls/votes
 // - Implement channels
-// - Implement lounges
-// - Implement group chats
-// - Implement bugs
-// - Implement news
-// - Implement organizations
+//    * Implement lounges
+//    * Implement group chats
+// - Implement bugs (simple message relayers with channel context filtering)
+// - Implement news (likely just a special channel)
+// - Implement organizations. Idea: organizations hold passives, and every member gets a passive link to
+// the orgs they are in. if they leave the org, the link is severed.
 // - Implement any necessary actions
 // - Go through everything and implement frontend commands
 // - Write extensive integration tests
@@ -102,7 +103,7 @@ mod tests {
         actor::state::State,
         config::role::Role,
         engine::Engine,
-        helpers::{actor_has_effective_passive, get_actor},
+        helpers::{actor_has_effective_passive, get_actor, get_notebook},
         passive::{ContactLogType, PassiveType},
     };
 
@@ -139,6 +140,7 @@ mod tests {
                 killer_id: None,
                 death_message: None,
                 silent: true,
+                set_books_dormant: false,
                 allow_link_chaining,
                 sever_links,
             }),
@@ -164,7 +166,7 @@ mod tests {
         timestamp: Time,
         notebook_id: ID,
         true_name: &str,
-        delay: Time, // should just refactor this to a mandatory value. 0 for no delay.
+        delay: Time,
     ) -> ActionResult {
         let result = eng.execute(ActionRequest {
             actor: ActionActor::Player(writer),
@@ -457,28 +459,83 @@ mod tests {
     }
 
     // what happens if you kill yourself while being lended to?
-    // - the notebook should become yours, but should become unusable because you are dead
+    // - the notebook should become yours but should become unusable because you are dead
     // - do not announce notebook transfer
     #[test]
-    fn borrowed_notebook_suicide() {}
+    fn borrowed_notebook_suicide() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+        let notebook_id = quick_notebook(&mut eng, 0, p1, false);
+
+        quick_lend(&mut eng, 0, notebook_id, p1, p2);
+        quick_write(&mut eng, p2, 0, notebook_id, "p2", 0).unwrap();
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        let p2_actor = get_actor(&eng, p2).unwrap();
+        let notebook = get_notebook(&eng, notebook_id).unwrap();
+        assert!(!p1_actor.has_notebook(notebook_id));
+        assert!(p2_actor.has_notebook(notebook_id));
+        assert!(notebook.get_true_owner().unwrap() == p2);
+    }
 
     // what happens if you kill someone who is lending to you?
     // what happens if the owner dies while the notebook is being lent out to someone?
     // - the person who is currently holding the notebook becomes the true owner
     // - do not announce a transfer
     #[test]
-    fn borrowed_notebook_true_owner_died() {}
+    fn borrowed_notebook_true_owner_died() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+        let notebook_id = quick_notebook(&mut eng, 0, p1, false);
+
+        quick_lend(&mut eng, 0, notebook_id, p1, p2);
+        quick_kill(&mut eng, 0, true, true, p1);
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        let p2_actor = get_actor(&eng, p2).unwrap();
+        let notebook = get_notebook(&eng, notebook_id).unwrap();
+        assert!(!p1_actor.has_notebook(notebook_id));
+        assert!(p2_actor.has_notebook(notebook_id));
+        assert!(notebook.get_true_owner().unwrap() == p2); // TODO: Add a new action that goes
+        // through all notebooks, checks if they are being borrowed from an id, and then sets the
+        // true owner to the current wielder if it is.
+    }
 
     // what happens if the person borrowing your book dies before it returns and isnt killed by anyone?
     // - the notebook is lost (it no longer has an owner)
     // - do not announce a transfer
     #[test]
-    fn borrowed_notebook_die_no_killer() {}
+    fn borrowed_notebook_die_no_killer() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+        let notebook_id = quick_notebook(&mut eng, 0, p1, false);
+
+        quick_lend(&mut eng, 0, notebook_id, p1, p2);
+        quick_kill(&mut eng, 0, true, true, p2);
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        let p2_actor = get_actor(&eng, p2).unwrap();
+        let notebook = get_notebook(&eng, notebook_id).unwrap();
+        assert!(!p1_actor.has_notebook(notebook_id));
+        assert!(!p2_actor.has_notebook(notebook_id));
+        assert!(notebook.get_true_owner().is_none());
+    }
 
     // it is possible to die before your scheduled notebook death through things like being executed
     // - the scheduled death should fail with no side effects
     #[test]
-    fn notebook_die_before_scheduled() {}
+    fn notebook_die_before_scheduled() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let notebook_id = quick_notebook(&mut eng, 0, p1, false);
+
+        quick_write(&mut eng, p1, 0, notebook_id, "p1", 10).unwrap();
+        quick_kill(&mut eng, 1, true, true, p1);
+        null_action(&mut eng, 11);
+    }
 
     // what happens if a dead player kills a living player who owns a notebook through a scheduled
     // kill?

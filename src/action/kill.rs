@@ -11,6 +11,8 @@ use crate::{
         give_ability::GiveAbility,
         give_notebook::GiveNotebook,
         give_passive::GivePassive,
+        set_books_dormant::SetBooksDormant,
+        set_borrowers_to_owners::SetBorrowersToOwners,
         sever_links::SeverLinks,
         take_notebook::TakeNotebook,
     },
@@ -19,7 +21,6 @@ use crate::{
     common::Version,
     engine::Engine,
     helpers::{get_actor, get_actor_mut, get_notebook, require_alive},
-    notebook,
 };
 
 #[derive(PartialEq, Eq, Clone)]
@@ -33,6 +34,7 @@ pub struct Kill {
     pub silent: bool,
     pub allow_link_chaining: bool,
     pub sever_links: bool,
+    pub set_books_dormant: bool,
 }
 
 impl ActionInterface for Kill {
@@ -152,6 +154,7 @@ impl ActionInterface for Kill {
                         death_message: Some(eng.config.defaults.life_link_death_message.clone()),
                         allow_link_chaining: true,
                         sever_links: false,
+                        set_books_dormant: false,
                         killer_id: self.killer_id,
                     })
                     .handle(eng, ctx, actor, version, mutate)?;
@@ -165,6 +168,18 @@ impl ActionInterface for Kill {
             })
             .handle(eng, ctx, actor, version, mutate)?;
         }
+
+        if self.set_books_dormant {
+            Action::SetBooksDormant(SetBooksDormant {
+                actor_id: self.target_id,
+            })
+            .handle(eng, ctx, actor, version, mutate)?;
+        }
+
+        Action::SetBorrowersToOwners(SetBorrowersToOwners {
+            actor_id: self.target_id,
+        })
+        .handle(eng, ctx, actor, version, mutate)?;
 
         if !self.silent {
             ctx.commands.push(Command::AnnounceDeath {

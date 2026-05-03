@@ -34,6 +34,7 @@ impl AbilityInterface for Gun {
             allow_link_chaining: true,
             sever_links: true,
             silent: false,
+            set_books_dormant: false,
             death_message: Some("They were found dead with 3 gunshot wounds to the back of the head. Their death was ruled a suicide.".into()),
             killer_id: id,
             target_id: self.target_id,

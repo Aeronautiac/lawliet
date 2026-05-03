@@ -53,7 +53,11 @@ impl ActionInterface for WriteName {
         // still need to implement game rule blockage
 
         // temporarily hardcoded as config is not fully implemented yet
-        if let Err(error) = book.can_write(player_id, 3, 1) {
+        if let Err(error) = book.can_write(
+            player_id,
+            eng.config.defaults.notebook_failures_per_day,
+            eng.config.defaults.notebook_successes_per_day,
+        ) {
             return Err(match error {
                 NotebookError::NoOwner | NotebookError::NotOwned => ActionError::NotebookNotOwned,
                 NotebookError::OnCooldown => ActionError::NotebookOnCooldown,
@@ -72,6 +76,7 @@ impl ActionInterface for WriteName {
                     kill: Kill {
                         allow_link_chaining: true,
                         sever_links: true,
+                        set_books_dormant: false,
                         target_id,
                         killer_id: Some(player_id),
                         death_message: self.death_message.clone(),
@@ -83,6 +88,7 @@ impl ActionInterface for WriteName {
                 Action::Kill(Kill {
                     allow_link_chaining: true,
                     sever_links: true,
+                    set_books_dormant: false,
                     target_id,
                     killer_id: Some(player_id),
                     death_message: self.death_message.clone(),

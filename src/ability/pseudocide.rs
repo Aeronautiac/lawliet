@@ -39,6 +39,7 @@ impl AbilityInterface for Pseudocide {
             allow_link_chaining: false,
             sever_links: false,
             silent: true,
+            set_books_dormant: true,
             death_message: None,
             killer_id: None,
             target_id: self.target_id,
