@@ -1,6 +1,5 @@
-use enumflags2::{BitFlags, bitflags};
-
 use crate::{ID, actor::state::State};
+use enumflags2::{BitFlags, bitflags};
 
 #[bitflags]
 #[repr(u8)]
@@ -14,11 +13,10 @@ pub enum Restriction {
     PassiveLinks = 1 << 5,
     NotebookReceive = 1 << 6,
 }
+pub type Restrictions = BitFlags<Restriction>;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Source {
     State(State),
     Manual(ID), // frontend maps strings to internal ids
 }
-
-pub type Restrictions = BitFlags<Restriction>;

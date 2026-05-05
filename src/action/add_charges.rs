@@ -1,4 +1,4 @@
 /*
 * SYSTEM ACTION
-* Add charges to an ability
+* Add charges to a pool
 */

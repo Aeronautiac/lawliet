@@ -8,11 +8,14 @@ pub enum WorldError {
     DuplicateName,
 }
 
+use indexmap::IndexMap;
+
 use crate::{
     ID,
     ability::Ability,
     actor::{Actor, ActorType, Player},
-    config::role::Role,
+    chargepool::ChargePool,
+    config::{role::Role, world::WorldChargePoolName},
     notebook::Notebook,
     passive::Passive,
 };
@@ -25,6 +28,9 @@ pub struct World {
     pub abilities: BTreeMap<ID, Ability>,
     pub notebooks: BTreeMap<ID, Notebook>,
     pub passives: BTreeMap<ID, Passive>,
+    pub charge_pools: BTreeMap<ID, ChargePool>,
+    pub pool_map: IndexMap<WorldChargePoolName, ID>, // things like the world prosecution pool
+    next_charge_pool_id: ID,
     next_actor_id: ID,
     next_notebook_id: ID,
     next_ability_id: ID,
@@ -40,6 +46,9 @@ impl World {
             notebooks: BTreeMap::new(),
             player_names: BTreeMap::new(),
             passives: BTreeMap::new(),
+            charge_pools: BTreeMap::new(),
+            pool_map: IndexMap::new(),
+            next_charge_pool_id: 0,
             next_actor_id: 0,
             next_notebook_id: 0,
             next_ability_id: 0,
@@ -159,5 +168,24 @@ impl World {
 
     pub fn remove_notebook(&mut self, id: ID) {
         self.notebooks.remove(&id);
+    }
+
+    pub fn add_charge_pool(&mut self, charge_pool: ChargePool) -> ID {
+        let id = self.next_charge_pool_id;
+        self.next_charge_pool_id += 1;
+        self.charge_pools.insert(id, charge_pool);
+        id
+    }
+
+    pub fn remove_charge_pool(&mut self, id: ID) {
+        self.charge_pools.remove(&id);
+    }
+
+    pub fn get_charge_pool(&self, id: ID) -> Option<&ChargePool> {
+        self.charge_pools.get(&id)
+    }
+
+    pub fn get_charge_pool_mut(&mut self, id: ID) -> Option<&mut ChargePool> {
+        self.charge_pools.get_mut(&id)
     }
 }

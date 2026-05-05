@@ -1,8 +1,9 @@
-use std::{collections::BTreeMap, process::id};
+use indexmap::IndexMap;
 
 use crate::{
-    ability::{Ability, AbilityLinkType},
+    chargepool::{PoolLinkType, PoolSpecifier},
     common::{IterationCount, LinkWeight, Variant},
+    config::{actor::ActorChargePoolName, world::WorldChargePoolName},
 };
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
@@ -11,7 +12,7 @@ pub enum AbilityCategory {
     Physical,
 }
 
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
+#[derive(Hash, Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 pub enum AbilityName {
     Contact,
     AnonymousContact,
@@ -39,57 +40,57 @@ pub enum AbilityName {
     Gun,
 }
 
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
+#[derive(Hash, Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
 pub struct AbilityIdentifier {
     pub name: AbilityName,
     pub variant: Variant,
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
-pub struct ConfigAbilityLink {
-    pub link_type: AbilityLinkType,
-    pub identifier: AbilityIdentifier,
+pub enum ConfigPoolLinkDetails {
+    Individual(PoolSpecifier),  // the ability creates its own charge pool
+    Actor(ActorChargePoolName), // actors and the world have a map of pool names to charge pools
+    World(WorldChargePoolName),
+}
+
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
+pub struct ConfigPoolLink {
     pub weight: LinkWeight,
+    pub link_type: PoolLinkType,
+    pub details: ConfigPoolLinkDetails,
 }
 
 fn identifier(name: AbilityName, variant: Variant) -> AbilityIdentifier {
     AbilityIdentifier { name, variant }
 }
 
-pub type AbilityConfigMap = BTreeMap<AbilityIdentifier, AbilityConfig>;
-
-// Ability objects will themselves have an "require roles" vector in the case of an organization
-// ability which is locked behind the presence of certain roles within an org. Ability config will
-// have nothing to do with this. Only org config will.
-//
-// Certain abilities may be transferred between players on kill. This is specific to individual
-// ability objects and as such will be specified in role config to be applied on creation. It is denoted with a boolean flag.
-//
-// If an ability with an existing link is transferred, all existing links are broken, and new links
-// are created after the transfer.
-//
-// Must add link weight to ability config to allow for things like group chat creation using up all
-// contact charges.
+pub type AbilityConfigMap = IndexMap<AbilityIdentifier, AbilityConfig>;
 
 #[derive(Debug)]
 pub struct AbilityConfig {
-    pub reset_time: IterationCount,
-    pub base_charges: u16,
-    pub default_links: Vec<ConfigAbilityLink>, // what this should ability link to if given the
-    // opportunity
+    pub default_links: Vec<ConfigPoolLink>, // the charge pools
     pub category: AbilityCategory,
 }
 
+// TODO:
+// - Instead of trying to match an ability's pool to config to figure out what the base values are,
+// just go loop through abilities and change their base value fields when config changes (take into
+// consideration that a new pool may have been added by the host. Consider only the pools that match
+// config entries.)
+
+// Ability must not have multiple individual links and must not have multiple links to the same pool
 pub fn default_ability_config() -> AbilityConfigMap {
-    let mut map: AbilityConfigMap = BTreeMap::new();
+    let mut map: AbilityConfigMap = IndexMap::new();
 
     map.insert(
         identifier(AbilityName::Contact, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 5,
-            reset_time: 1,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Actor(ActorChargePoolName::Contact),
+            }],
         },
     );
 
@@ -97,12 +98,10 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::AnonymousContact, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: 1,
-            default_links: vec![ConfigAbilityLink {
-                identifier: identifier(AbilityName::Contact, 0),
-                link_type: AbilityLinkType::Limit,
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
                 weight: 1,
+                details: ConfigPoolLinkDetails::Actor(ActorChargePoolName::Contact),
             }],
         },
     );
@@ -111,12 +110,10 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::FalseAnonymousContact, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: 1,
-            default_links: vec![ConfigAbilityLink {
-                identifier: identifier(AbilityName::Contact, 0),
-                link_type: AbilityLinkType::Limit,
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
                 weight: 1,
+                details: ConfigPoolLinkDetails::Actor(ActorChargePoolName::Contact),
             }],
         },
     );
@@ -125,9 +122,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::AnonymousAnnouncement, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 2,
-            reset_time: 1,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 2,
+                    reset_time: 1,
+                }),
+            }],
         },
     );
 
@@ -135,9 +137,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::FabricateLounge, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 2,
-            reset_time: 1,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 2,
+                    reset_time: 1,
+                }),
+            }],
         },
     );
 
@@ -145,9 +152,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::Pseudocide, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: 2,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: 2,
+                }),
+            }],
         },
     );
 
@@ -155,9 +167,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::Bug, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: 2,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: 2,
+                }),
+            }],
         },
     );
 
@@ -166,9 +183,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::TapIn, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: 1,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: 1,
+                }),
+            }],
         },
     );
 
@@ -177,9 +199,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::TapIn, 1),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: 1,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: 1,
+                }),
+            }],
         },
     );
 
@@ -187,9 +214,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::ShinigamiSacrifice, 0),
         AbilityConfig {
             category: AbilityCategory::Supernatural,
-            base_charges: 1,
-            reset_time: 1,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: 1,
+                }),
+            }],
         },
     );
 
@@ -197,9 +229,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::BackgroundCheck, 0),
         AbilityConfig {
             category: AbilityCategory::Supernatural,
-            base_charges: 1,
-            reset_time: 1,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: 1,
+                }),
+            }],
         },
     );
 
@@ -207,9 +244,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::CivilianArrest, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: 1,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: 1,
+                }),
+            }],
         },
     );
 
@@ -217,9 +259,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::UnlawfulArrest, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: 1,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: 1,
+                }),
+            }],
         },
     );
 
@@ -227,9 +274,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::UnderTheRadar, 0),
         AbilityConfig {
             category: AbilityCategory::Supernatural,
-            base_charges: 1,
-            reset_time: IterationCount::MAX,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: IterationCount::MAX,
+                }),
+            }],
         },
     );
 
@@ -237,9 +289,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::KiraConnection, 0),
         AbilityConfig {
             category: AbilityCategory::Supernatural,
-            base_charges: 1,
-            reset_time: 1,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: 1,
+                }),
+            }],
         },
     );
 
@@ -247,9 +304,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::AnonymousProsecution, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: IterationCount::MAX,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: IterationCount::MAX,
+                }),
+            }],
         },
     );
 
@@ -257,9 +319,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::Autopsy, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: 1,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: 1,
+                }),
+            }],
         },
     );
 
@@ -267,9 +334,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::Ipp, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: 1,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: 1,
+                }),
+            }],
         },
     );
 
@@ -277,9 +349,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::TrueNameReroll, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: IterationCount::MAX,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: IterationCount::MAX,
+                }),
+            }],
         },
     );
 
@@ -287,9 +364,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::PublicKidnap, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: 1,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: 1,
+                }),
+            }],
         },
     );
 
@@ -297,9 +379,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::AnonymousKidnap, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: 1,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: 1,
+                }),
+            }],
         },
     );
 
@@ -307,9 +394,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::Blackout, 0),
         AbilityConfig {
             category: AbilityCategory::Physical,
-            base_charges: 1,
-            reset_time: IterationCount::MAX,
-            default_links: vec![],
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: IterationCount::MAX,
+                }),
+            }],
         },
     );
 
@@ -317,15 +409,13 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::TrueNameReveal, 0),
         AbilityConfig {
             category: AbilityCategory::Supernatural,
-            base_charges: 2,
-            reset_time: 1,
-            default_links: vec![ConfigAbilityLink {
-                link_type: AbilityLinkType::Limit,
-                identifier: AbilityIdentifier {
-                    name: AbilityName::NotebookReveal,
-                    variant: 0,
-                },
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
                 weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 2,
+                    reset_time: 1,
+                }),
             }],
         },
     );
@@ -334,15 +424,13 @@ pub fn default_ability_config() -> AbilityConfigMap {
         identifier(AbilityName::NotebookReveal, 0),
         AbilityConfig {
             category: AbilityCategory::Supernatural,
-            base_charges: 2,
-            reset_time: 1,
-            default_links: vec![ConfigAbilityLink {
-                link_type: AbilityLinkType::Limit,
-                identifier: AbilityIdentifier {
-                    name: AbilityName::TrueNameReveal,
-                    variant: 0,
-                },
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
                 weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 2,
+                    reset_time: 1,
+                }),
             }],
         },
     );

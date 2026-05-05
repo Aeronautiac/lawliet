@@ -14,8 +14,12 @@ use crate::{
         restriction::Restrictions,
         state::{State, States},
     },
-    config::{organization::OrganizationName, role::Role},
+    config::{
+        actor::{ActorChargePoolName, organization::OrganizationName},
+        role::Role,
+    },
 };
+use indexmap::IndexMap;
 use restriction::{Restriction, Source};
 
 #[derive(PartialEq, Eq, Debug, Ord, PartialOrd, Clone, Copy)]
@@ -54,6 +58,7 @@ pub struct Actor {
     pub states: States,
     pub actor_type: ActorType,
     pub actor_links: BTreeSet<ActorLink>,
+    pub pool_map: IndexMap<ActorChargePoolName, ID>,
 }
 
 impl Actor {
@@ -67,6 +72,7 @@ impl Actor {
             states: States::empty(),
             actor_links: BTreeSet::new(),
             actor_type: ActorType::Player(Player::new(true_name, role)),
+            pool_map: IndexMap::new(),
         }
     }
 
@@ -80,6 +86,7 @@ impl Actor {
             actor_links: BTreeSet::new(),
             states: States::empty(),
             actor_type: ActorType::Org(Organization::new(name)),
+            pool_map: IndexMap::new(),
         }
     }
 

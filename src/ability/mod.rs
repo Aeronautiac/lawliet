@@ -9,8 +9,6 @@
 // 1. UseAbility called with a specialized struct in an ability usage enum/
 // 2. UseAbility calls the struct's functions and returns its results
 
-use std::collections::BTreeSet;
-
 use crate::{
     ID,
     ability::{
@@ -18,12 +16,14 @@ use crate::{
         pseudocide::{Pseudocide, PseudocideResponse},
     },
     action::{ActionActor, ActionContext, ActionError},
-    common::{ChargeCount, IterationCount, LinkWeight, Variant},
+    chargepool::{PoolLink, PoolLinkType},
+    common::{LinkWeight, Variant},
     config::ability::AbilityName,
     engine::Engine,
     ownership::OwnershipStruct,
 };
 use enum_dispatch::enum_dispatch;
+use indexmap::IndexSet;
 
 pub mod gun;
 pub mod pseudocide;
@@ -42,6 +42,13 @@ pub trait AbilityInterface {
     ) -> AbilityResult;
 }
 
+// a volatile link is destroyed when the owner changes
+#[derive(Hash, PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]
+pub struct AbilityPoolLink {
+    pub volatile: bool,
+    pub link: PoolLink,
+}
+
 #[enum_dispatch(AbilityInterface)]
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]
 pub enum AbilityBehaviour {
@@ -55,33 +62,13 @@ pub enum AbilityResponse {
     Gun(GunResponse),
 }
 
-#[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy)]
-pub enum AbilityLinkType {
-    Limit, // every linked ability loses charges with the amount depending on weight. if at least
-    // one ability cannot afford it, then usage fails.
-    Pool, // same subtraction policy, but only fails of none of the linked abilities can afford the
-          // cost.
-}
-
-#[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]
-pub struct AbilityLink {
-    pub link_type: AbilityLinkType,
-    pub link_dest: ID,
-    pub weight: LinkWeight,
-}
-
 type AbilityResult = Result<AbilityResponse, ActionError>;
 
+// if an ability has no pool links, then it has infinite usages
 #[derive(Debug)]
 pub struct Ability {
     pub ownership_struct: OwnershipStruct,
-    pub links: BTreeSet<AbilityLink>, // any ability in this set gates this ability (this ability's
-    // charges dont matter if the other ability has none). this ability will also decrement the
-    // charges of the linked ability on success, and the magnitude of the decrement is based on the link weight.
-    // links may be unidirectional (the presence of a link in one ability does not imply the presence config
-    // another link in the ability linked to although possible).
-    pub charges: ChargeCount, // how many times the ability can be used
-    pub iterations_to_reset: IterationCount, // the number of iterations until charges are reset
+    pub pool_links: IndexSet<AbilityPoolLink>, // charge pools
     pub ability_name: AbilityName, // the other stuff about the ability (like its category) is
     // determined by the config struct
     pub variant: Variant, // 0 by default. use associated constants to define meanings in different abilities.
@@ -89,59 +76,38 @@ pub struct Ability {
 }
 
 impl Ability {
-    pub fn new(
-        ability_name: AbilityName,
-        variant: Variant,
-        charges: ChargeCount,
-        transferrable: bool,
-    ) -> Self {
+    pub fn new(ability_name: AbilityName, variant: Variant, transferrable: bool) -> Self {
         Ability {
-            links: BTreeSet::new(),
-            iterations_to_reset: 0,
-            charges,
+            pool_links: IndexSet::new(),
             variant,
             ability_name,
             ownership_struct: OwnershipStruct::new(transferrable),
         }
     }
 
-    /// creates a new ability link
-    /// if there is already a link to an ability, it replaces it
-    /// return the old link to the ability (if any)
     pub fn add_link(
         &mut self,
         link_dest: ID,
-        link_type: AbilityLinkType,
+        link_type: PoolLinkType,
         weight: LinkWeight,
-    ) -> Option<AbilityLink> {
-        let removed: Option<AbilityLink> = self
-            .links
-            .extract_if(.., |l| l.link_dest == link_dest)
+        volatile: bool,
+    ) -> Option<AbilityPoolLink> {
+        let removed: Option<AbilityPoolLink> = self
+            .pool_links
+            .extract_if(.., |l| l.link.link_dest == link_dest)
             .next();
-        self.links.insert(AbilityLink {
-            link_type,
-            link_dest,
-            weight,
+        self.pool_links.insert(AbilityPoolLink {
+            volatile,
+            link: PoolLink {
+                link_type,
+                link_dest,
+                weight,
+            },
         });
         removed
     }
 
-    pub fn has_charges(&self) -> bool {
-        self.charges > 0
-    }
-
-    pub fn on_use(&mut self, reset_time: IterationCount) {
-        self.charges -= 1;
-        if self.iterations_to_reset == 0 {
-            self.iterations_to_reset = reset_time
-        }
-    }
-
     pub fn remove_link(&mut self, link_dest: ID) {
-        self.links.retain(|l| l.link_dest != link_dest)
-    }
-
-    pub fn clear_links(&mut self) {
-        self.links = BTreeSet::new();
+        self.pool_links.retain(|l| l.link.link_dest != link_dest)
     }
 }

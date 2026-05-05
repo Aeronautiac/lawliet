@@ -3,6 +3,7 @@ use crate::{
     ability::Ability,
     action::{ActionActor, ActionError},
     actor::{Actor, ActorLinkType, ActorType, Player, restriction::Restriction, state::State},
+    chargepool::ChargePool,
     config::{
         ability::{AbilityConfig, AbilityIdentifier},
         role::{Role, RoleConfig},
@@ -176,5 +177,22 @@ pub fn get_notebook_mut(eng: &mut Engine, id: ID) -> Result<&mut Notebook, Actio
         Ok(notebook_data)
     } else {
         Err(ActionError::NotebookNotFound)
+    }
+}
+
+pub fn get_charge_pool(eng: &Engine, id: ID) -> Result<&ChargePool, ActionError> {
+    let pool = eng.world.get_charge_pool(id);
+    if let Some(data) = pool {
+        Ok(data)
+    } else {
+        Err(ActionError::ChargePoolNotFound)
+    }
+}
+pub fn get_charge_pool_mut(eng: &mut Engine, id: ID) -> Result<&mut ChargePool, ActionError> {
+    let pool = eng.world.get_charge_pool_mut(id);
+    if let Some(data) = pool {
+        Ok(data)
+    } else {
+        Err(ActionError::ChargePoolNotFound)
     }
 }

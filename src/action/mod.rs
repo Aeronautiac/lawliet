@@ -3,11 +3,12 @@ use enum_dispatch::enum_dispatch;
 use crate::{
     action::{
         add_ability::{AddAbility, AddAbilityResponse},
+        add_charge_pool::{AddChargePool, AddChargePoolResponse},
         add_notebook::{AddNotebook, AddNotebookResponse},
         add_passive::{AddPassive, AddPassiveResponse},
         add_player::*,
         add_state::*,
-        create_ability_links::{CreateAbilityLinks, CreateAbilityLinksResponse},
+        clear_volatile_links::{ClearVolatileLinks, ClearVolatileLinksResponse},
         create_actor_links::{CreateActorLinks, CreateActorLinksResponse},
         create_and_give_ability::{CreateAndGiveAbility, CreateAndGiveAbilityResponse},
         create_and_give_notebook::{CreateAndGiveNotebook, CreateAndGiveNotebookResponse},
@@ -16,8 +17,10 @@ use crate::{
         give_notebook::{GiveNotebook, GiveNotebookResponse},
         give_passive::{GivePassive, GivePassiveResponse},
         give_role::{GiveRole, GiveRoleResponse},
+        initialize_world::{InitializeWorld, InitializeWorldResponse},
         kill::*,
         lend_notebook::{LendNotebook, LendNotebookResponse},
+        notebook_scheduled_kill::{NotebookScheduledKill, NotebookScheduledKillResponse},
         null::{Null, NullResponse},
         purge_volatiles::{PurgeVolatiles, PurgeVolatilesResponse},
         remove_state::{RemoveState, RemoveStateResponse},
@@ -29,6 +32,7 @@ use crate::{
         set_borrowers_to_owners::{SetBorrowersToOwners, SetBorrowersToOwnersResponse},
         sever_links::{SeverLinks, SeverLinksResponse},
         take_notebook::{TakeNotebook, TakeNotebookResponse},
+        try_delete_charge_pool::{TryDeleteChargePool, TryDeleteChargePoolResponse},
         use_ability::{UseAbility, UseAbilityResponse},
         write_name::{WriteName, WriteNameResponse},
     },
@@ -38,11 +42,12 @@ use crate::{
 };
 
 pub mod add_ability;
+pub mod add_charge_pool;
 pub mod add_notebook;
 pub mod add_passive;
 pub mod add_player;
 pub mod add_state;
-pub mod create_ability_links;
+pub mod clear_volatile_links;
 pub mod create_actor_links;
 pub mod create_and_give_ability;
 pub mod create_and_give_notebook;
@@ -51,8 +56,10 @@ pub mod give_ability;
 pub mod give_notebook;
 pub mod give_passive;
 pub mod give_role;
+pub mod initialize_world;
 pub mod kill;
 pub mod lend_notebook;
+pub mod notebook_scheduled_kill;
 pub mod null;
 pub mod purge_volatiles;
 pub mod remove_state;
@@ -64,6 +71,7 @@ pub mod set_books_dormant;
 pub mod set_borrowers_to_owners;
 pub mod sever_links;
 pub mod take_notebook;
+pub mod try_delete_charge_pool;
 pub mod use_ability;
 pub mod write_name;
 
@@ -94,6 +102,7 @@ pub enum ActionError {
     RoleNotImplemented,
     ItemAlreadyOwned,
     ItemAlreadyUnowned,
+    ChargePoolNotFound,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -128,7 +137,6 @@ pub enum Action {
     ScheduleKill(ScheduleKill),
     RemoveState(RemoveState),
     GiveRole(GiveRole),
-    CreateAbilityLinks(CreateAbilityLinks),
     AddAbility(AddAbility),
     UseAbility(UseAbility),
     ScheduleRevive(ScheduleRevive),
@@ -146,6 +154,11 @@ pub enum Action {
     SetBorrowersToOwners(SetBorrowersToOwners),
     SetBooksDormant(SetBooksDormant),
     ReturnDormantBooks(ReturnDormantBooks),
+    NotebookScheduledKill(NotebookScheduledKill),
+    TryDeleteChargePool(TryDeleteChargePool),
+    InitializeWorld(InitializeWorld),
+    AddChargePool(AddChargePool),
+    ClearVolatileLinks(ClearVolatileLinks),
 }
 
 pub enum ActionResponse {
@@ -160,7 +173,6 @@ pub enum ActionResponse {
     Revive(ReviveResponse),
     ScheduleKill(ScheduleKillResponse),
     GiveRole(GiveRoleResponse),
-    CreateAbilityLinks(CreateAbilityLinksResponse),
     AddAbility(AddAbilityResponse),
     GiveAbility(GiveAbilityResponse),
     UseAbility(UseAbilityResponse),
@@ -178,6 +190,11 @@ pub enum ActionResponse {
     SetBorrowersToOwners(SetBorrowersToOwnersResponse),
     SetBooksDormant(SetBooksDormantResponse),
     ReturnDormantBooks(ReturnDormantBooksResponse),
+    NotebookScheduledKill(NotebookScheduledKillResponse),
+    DeleteChargePool(TryDeleteChargePoolResponse),
+    InitializeWorld(InitializeWorldResponse),
+    AddChargePool(AddChargePoolResponse),
+    ClearVolatileLinks(ClearVolatileLinksResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]

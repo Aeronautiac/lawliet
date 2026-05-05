@@ -1,4 +1,4 @@
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Hash, PartialEq, Eq, Debug)]
 pub enum OrganizationName {
     KK,
     TF,

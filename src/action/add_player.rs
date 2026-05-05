@@ -7,12 +7,14 @@ use crate::{
     ID,
     action::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
-        ActionResult, add_ability::AddAbility, create_and_give_ability::CreateAndGiveAbility,
-        give_ability::GiveAbility, give_role::GiveRole,
+        ActionResult, add_ability::AddAbility, add_charge_pool::AddChargePool,
+        create_and_give_ability::CreateAndGiveAbility, give_ability::GiveAbility,
+        give_role::GiveRole,
     },
     common::Version,
     config::role::Role,
     engine::Engine,
+    helpers::{get_actor, get_actor_mut, get_charge_pool_mut},
 };
 
 #[derive(PartialEq, Eq, Clone)]
@@ -52,6 +54,23 @@ impl ActionInterface for AddPlayer {
 
         // player will only be physically created in the mutation path
         if mutate {
+            // add pools BEFORE giving abilities (the pools must exist beforehand)
+            let pools = eng.config.player_config.charge_pools.clone();
+            for (name, specifier) in pools {
+                let pool_response = Action::AddChargePool(AddChargePool {
+                    base_charges: specifier.charges,
+                    base_reset_time: specifier.reset_time,
+                })
+                .handle(eng, ctx, actor, version, mutate)?;
+                let ActionResponse::AddChargePool(data) = pool_response else {
+                    unreachable!()
+                };
+                let pool = get_charge_pool_mut(eng, data.id)?;
+                pool.on_link();
+                let player_actor = get_actor_mut(eng, player_id)?;
+                player_actor.pool_map.insert(name, data.id);
+            }
+
             let default_abilities = eng.config.defaults.universal_abilities.clone();
             for default_ability in default_abilities {
                 Action::CreateAndGiveAbility(CreateAndGiveAbility {

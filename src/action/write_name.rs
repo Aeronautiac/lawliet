@@ -70,13 +70,12 @@ impl ActionInterface for WriteName {
             && !book.fake
         {
             let mut cancelled = false;
-            // TODO: Add a differentiatior for notebook scheduled deaths and system scheduled deaths (not too important yet, and also pretty easy to do. just create a new action which wraps kill with metadata.)
             for job in eng.jobs.iter() {
                 if *job.cancelled.borrow_mut() {
                     continue;
                 }
-                if let Action::Kill(data) = &job.request.payload
-                    && data.target_id == target_id
+                if let Action::NotebookScheduledKill(data) = &job.request.payload
+                    && data.kill.target_id == target_id
                 {
                     cancelled = true;
                     if mutate {
@@ -91,6 +90,7 @@ impl ActionInterface for WriteName {
                 if self.delay > 0 {
                     Action::ScheduleKill(ScheduleKill {
                         timestamp: eng.time + self.delay,
+                        notebook_scheduled: true,
                         kill: Kill {
                             allow_link_chaining: true,
                             sever_links: true,

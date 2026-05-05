@@ -7,9 +7,11 @@ use crate::{
     ID,
     action::{
         Action, ActionContext, ActionError, ActionInterface, ActionResponse,
-        create_ability_links::CreateAbilityLinks,
+        clear_volatile_links::ClearVolatileLinks,
     },
-    helpers::{get_ability, get_ability_mut, get_actor, get_actor_mut},
+    chargepool::PoolLink,
+    config::ability::{AbilityIdentifier, ConfigPoolLinkDetails},
+    helpers::{get_ability, get_ability_mut, get_actor, get_actor_mut, get_charge_pool_mut},
 };
 
 #[derive(PartialEq, Eq, Clone)]
@@ -35,6 +37,8 @@ impl ActionInterface for GiveAbility {
         get_actor(eng, self.actor_id)?;
 
         let ability = get_ability(eng, self.ability_id)?;
+        let name = ability.ability_name;
+        let variant = ability.variant;
         if let Some(owner) = ability.ownership_struct.owner {
             if owner == self.actor_id {
                 return Err(ActionError::ItemAlreadyOwned);
@@ -47,20 +51,50 @@ impl ActionInterface for GiveAbility {
             }
         }
 
+        Action::ClearVolatileLinks(ClearVolatileLinks {
+            ability_id: self.ability_id,
+        })
+        .handle(eng, ctx, actor, version, mutate)?;
+
+        let Some(config) = eng
+            .config
+            .abilities
+            .get(&AbilityIdentifier { name, variant })
+        else {
+            return Err(ActionError::AbilityConfigNotFound);
+        };
+
+        let actor_data = get_actor(eng, self.actor_id)?;
+        let conf_links = &config.default_links.clone();
+        let mut links_to_create: Vec<PoolLink> = vec![];
+        for link in conf_links {
+            if let ConfigPoolLinkDetails::Actor(pool_name) = &link.details {
+                links_to_create.push(PoolLink {
+                    link_type: link.link_type,
+                    weight: link.weight,
+                    link_dest: *actor_data.pool_map.get(pool_name).unwrap(), // crash on
+                                                                             // failure. it must have been created before any abilities.
+                });
+            }
+        }
+
         let ability = get_ability_mut(eng, self.ability_id)?;
         if mutate {
-            ability.clear_links();
             ability
                 .ownership_struct
                 .set_owner(self.actor_id, self.volatile);
+
+            for link in &links_to_create {
+                ability.add_link(link.link_dest, link.link_type, link.weight, true);
+            }
+            for link in &links_to_create {
+                let pool = get_charge_pool_mut(eng, link.link_dest)?;
+                pool.on_link();
+            }
+
             let actor_data = get_actor_mut(eng, self.actor_id)?;
             actor_data.add_ability(self.ability_id);
         }
-
-        Action::CreateAbilityLinks(CreateAbilityLinks {
-            target_id: self.actor_id,
-        })
-        .handle(eng, ctx, actor, version, mutate)?;
 
         Ok(ActionResponse::GiveAbility(GiveAbilityResponse {}))
     }

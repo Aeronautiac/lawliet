@@ -64,6 +64,7 @@
 mod ability;
 mod action;
 mod actor;
+mod chargepool;
 mod command;
 mod common;
 mod config;
@@ -77,6 +78,7 @@ mod world;
 pub use common::{ID, Time};
 
 // TODO:
+// - Implement organizations. Idea: organizations hold passives, and every member gets a passive link to
 // - Touch up the ability category enum (physical vs supernatural doesnt make sense)
 // - Begin implementing every ability
 // - Implement polls/votes
@@ -85,11 +87,17 @@ pub use common::{ID, Time};
 //    * Implement group chats
 // - Implement bugs (simple message relayers with channel context filtering)
 // - Implement news (likely just a special channel)
-// - Implement organizations. Idea: organizations hold passives, and every member gets a passive link to
 // the orgs they are in. if they leave the org, the link is severed.
 // - Implement any necessary actions
 // - Go through everything and implement frontend commands
 // - Write extensive integration tests
+
+// Organizations are not as generic as immediately thought
+// Many have different rank structures and specific invite, kick, etc... mechanics.
+// May need to do something similar to abilities where there is a generalized organization struct
+// wrapping specific organization behaviour structs.
+//
+// There is only some specific stuff (invite and leader mechanics).
 
 #[cfg(test)]
 mod tests {

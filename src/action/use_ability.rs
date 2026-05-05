@@ -5,11 +5,12 @@
 
 use crate::{
     ID,
-    ability::{AbilityBehaviour, AbilityInterface, AbilityLinkType, AbilityResponse},
+    ability::{AbilityBehaviour, AbilityInterface, AbilityResponse},
     action::{ActionError, ActionInterface, ActionResponse},
     actor::restriction::Restriction,
+    chargepool::PoolLinkType,
     config::ability::AbilityCategory,
-    helpers::{actor_id, get_ability_config, get_ability_mut, get_actor},
+    helpers::{actor_id, get_ability_config, get_ability_mut, get_actor, get_charge_pool_mut},
 };
 
 #[derive(PartialEq, Eq, Clone)]
@@ -34,7 +35,7 @@ impl ActionInterface for UseAbility {
 
         let config = get_ability_config(eng, self.ability_id)?;
         let category = config.category;
-        let reset_time = config.reset_time;
+
         let actor_data = get_actor(eng, actor_id(actor).unwrap())?;
         match category {
             AbilityCategory::Supernatural => {
@@ -61,31 +62,24 @@ impl ActionInterface for UseAbility {
         // base on code ordering because condition should only fail during a validation pass, never during a mutation
         // pass. if it does for some reason, then the engine crashes and there is no risk of invalid
         // state.
-        if !ability.has_charges() {
-            return Err(ActionError::AbilityNotEnoughCharges);
-        }
-        if mutate {
-            ability.on_use(reset_time);
-        }
-
-        let links = ability.links.clone();
+        let links = ability.pool_links.clone();
         let mut pool_condition = false;
         for link in &links {
-            let linked_ability = get_ability_mut(eng, link.link_dest)?;
-            match link.link_type {
-                AbilityLinkType::Limit => {
-                    if linked_ability.charges < link.weight {
+            let pool = get_charge_pool_mut(eng, link.link.link_dest)?;
+            match link.link.link_type {
+                PoolLinkType::Limit => {
+                    if !pool.can_use_charges(link.link.weight) {
                         return Err(ActionError::AbilityNotEnoughCharges);
                     }
                 }
-                AbilityLinkType::Pool => {
-                    if linked_ability.charges >= link.weight {
+                PoolLinkType::Pool => {
+                    if pool.can_use_charges(link.link.weight) {
                         pool_condition = true;
                     }
                 }
             }
-            if mutate && linked_ability.charges >= link.weight {
-                linked_ability.charges -= link.weight;
+            if mutate && pool.can_use_charges(link.link.weight) {
+                pool.use_charges(link.link.weight);
             }
         }
         if !pool_condition {
