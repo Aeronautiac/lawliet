@@ -5,13 +5,12 @@ use enumflags2::{BitFlags, bitflags};
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord)]
 pub enum Restriction {
-    AbilitiesPhysical = 1 << 0,
-    AbilitiesSupernatural = 1 << 1,
-    Contact = 1 << 2,
+    Presence = 1 << 0, // a general restriction for anything that requires "presence"
+    Contact = 1 << 1,
+    NotebookReceive = 1 << 2,
     NotebookUsage = 1 << 3,
     NotebookPassage = 1 << 4,
-    PassiveLinks = 1 << 5,
-    NotebookReceive = 1 << 6,
+    PassiveLinks = 1 << 5, // this restriction disables passive links
 }
 pub type Restrictions = BitFlags<Restriction>;
 

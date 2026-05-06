@@ -13,14 +13,14 @@ pub fn default_state_restrictions() -> StateRestrictionMap {
     map.insert(State::Dead, Restrictions::all());
     map.insert(
         State::Incarcerated,
-        Restriction::AbilitiesPhysical
+        Restriction::Presence
             | Restriction::Contact
             | Restriction::NotebookPassage
             | Restriction::NotebookUsage,
     );
     map.insert(
         State::Kidnapped,
-        Restriction::AbilitiesPhysical
+        Restriction::Presence
             | Restriction::Contact
             | Restriction::NotebookUsage
             | Restriction::NotebookPassage,

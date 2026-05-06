@@ -6,3 +6,4 @@ pub type Variant = u8;
 pub type LinkWeight = u16;
 pub type ChargeCount = u16;
 pub type IterationCount = u8;
+pub type PollWeight = u16;

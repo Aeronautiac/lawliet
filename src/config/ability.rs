@@ -69,7 +69,7 @@ pub type AbilityConfigMap = IndexMap<AbilityIdentifier, AbilityConfig>;
 #[derive(Debug)]
 pub struct AbilityConfig {
     pub default_links: Vec<ConfigPoolLink>, // the charge pools
-    pub category: AbilityCategory,
+    pub require_presence: bool,
 }
 
 // TODO:
@@ -85,7 +85,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::Contact, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -97,7 +97,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::AnonymousContact, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -109,7 +109,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::FalseAnonymousContact, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -121,7 +121,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::AnonymousAnnouncement, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -136,7 +136,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::FabricateLounge, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -151,7 +151,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::Pseudocide, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: false,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -166,7 +166,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::Bug, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -182,7 +182,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::TapIn, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -198,7 +198,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::TapIn, 1),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -213,7 +213,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::ShinigamiSacrifice, 0),
         AbilityConfig {
-            category: AbilityCategory::Supernatural,
+            require_presence: false,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -228,7 +228,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::BackgroundCheck, 0),
         AbilityConfig {
-            category: AbilityCategory::Supernatural,
+            require_presence: false,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -243,7 +243,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::CivilianArrest, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -258,7 +258,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::UnlawfulArrest, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -273,7 +273,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::UnderTheRadar, 0),
         AbilityConfig {
-            category: AbilityCategory::Supernatural,
+            require_presence: false,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -288,7 +288,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::KiraConnection, 0),
         AbilityConfig {
-            category: AbilityCategory::Supernatural,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -303,7 +303,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::AnonymousProsecution, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -318,7 +318,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::Autopsy, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -333,7 +333,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::Ipp, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: false,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -348,7 +348,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::TrueNameReroll, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: false,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -363,7 +363,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::PublicKidnap, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -378,7 +378,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::AnonymousKidnap, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -393,7 +393,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::Blackout, 0),
         AbilityConfig {
-            category: AbilityCategory::Physical,
+            require_presence: true,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -408,7 +408,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::TrueNameReveal, 0),
         AbilityConfig {
-            category: AbilityCategory::Supernatural,
+            require_presence: false,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
@@ -423,7 +423,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     map.insert(
         identifier(AbilityName::NotebookReveal, 0),
         AbilityConfig {
-            category: AbilityCategory::Supernatural,
+            require_presence: false,
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,

@@ -6,13 +6,11 @@
 use crate::{
     ID,
     ability::{AbilityBehaviour, AbilityInterface, AbilityResponse},
-    action::{ActionActor, ActionError, ActionInterface, ActionResponse},
-    actor::{organization::OrgAbilityPolicy, restriction::Restriction},
+    action::{ActionError, ActionInterface, ActionResponse},
+    actor::restriction::Restriction,
     chargepool::PoolLinkType,
-    config::ability::AbilityCategory,
     helpers::{
         actor_id, get_ability, get_ability_config, get_ability_mut, get_actor, get_charge_pool_mut,
-        get_org,
     },
 };
 
@@ -37,21 +35,12 @@ impl ActionInterface for UseAbility {
         actor.require_not_system()?;
         let actor_id = actor_id(actor).unwrap();
         let config = get_ability_config(eng, self.ability_id)?;
-        let category = config.category;
+        let req_presence = config.require_presence;
 
         let actor_data = get_actor(eng, actor_id)?;
-        match category {
-            AbilityCategory::Supernatural => {
-                if actor_data.has_restriction(Restriction::AbilitiesSupernatural) {
-                    return Err(ActionError::AbilityCategoryBlocked);
-                }
-            }
-            AbilityCategory::Physical => {
-                if actor_data.has_restriction(Restriction::AbilitiesPhysical) {
-                    return Err(ActionError::AbilityCategoryBlocked);
-                }
-            }
-        };
+        if req_presence && actor_data.has_restriction(Restriction::Presence) {
+            return Err(ActionError::AbilityCategoryBlocked);
+        }
 
         let ability = get_ability(eng, self.ability_id)?;
         if Some(self.ability_id) != ability.ownership_struct.owner {

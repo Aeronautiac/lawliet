@@ -271,7 +271,7 @@ impl Action {
         version: Version,
     ) -> ActionResult {
         let result = self.handle(eng, ctx, actor, version, true);
-        Action::Update(Update {}).handle(eng, ctx, actor, version, true);
+        let _ = Action::Update(Update {}).handle(eng, ctx, actor, version, true);
         result
     }
 

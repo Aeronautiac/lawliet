@@ -90,6 +90,7 @@
 mod ability;
 mod action;
 mod actor;
+mod channel;
 mod chargepool;
 mod command;
 mod common;
@@ -99,6 +100,7 @@ mod helpers;
 mod notebook;
 mod ownership;
 mod passive;
+mod poll;
 mod world;
 
 pub use common::{ID, Time};
