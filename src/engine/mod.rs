@@ -79,13 +79,13 @@ impl Engine {
     ) -> ActionResult {
         let old_time = self.time;
         self.time = action.timestamp;
-        let dry_result = action.payload.handle(self, ctx, &action.actor, 0, false);
+        let dry_result = action.payload.validate(self, ctx, &action.actor, 0);
         if dry_result.is_err() {
             self.time = old_time;
             return dry_result;
         }
         self.time = action.timestamp;
-        let result = action.payload.handle(self, ctx, &action.actor, 0, true);
+        let result = action.payload.execute(self, ctx, &action.actor, 0);
         result
             .as_ref()
             .expect("Validate and execute pass desync detected.");

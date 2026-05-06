@@ -2,7 +2,10 @@ use crate::{
     ID, Time,
     ability::Ability,
     action::{ActionActor, ActionError},
-    actor::{Actor, ActorLinkType, ActorType, Player, restriction::Restriction, state::State},
+    actor::{
+        Actor, ActorLinkType, ActorType, Organization, Player, restriction::Restriction,
+        state::State,
+    },
     chargepool::ChargePool,
     config::{
         ability::{AbilityConfig, AbilityIdentifier},
@@ -39,7 +42,7 @@ pub fn actor_id(actor: &ActionActor) -> Option<ID> {
     match actor {
         ActionActor::System => None,
         ActionActor::Player(id) => Some(*id),
-        ActionActor::Organization(id) => Some(*id),
+        ActionActor::Organization(org_info) => Some(org_info.org_id),
     }
 }
 pub fn require_time_not_passed(eng: &Engine, t: Time) -> Result<(), ActionError> {
@@ -157,6 +160,24 @@ pub fn get_player_mut(eng: &mut Engine, id: ID) -> Result<&mut Player, ActionErr
     let actor = get_actor_mut(eng, id)?;
     if let ActorType::Player(player) = &mut actor.actor_type {
         Ok(player)
+    } else {
+        Err(ActionError::ActorIsNotPlayer)
+    }
+}
+
+pub fn get_org_mut(eng: &mut Engine, id: ID) -> Result<&mut Organization, ActionError> {
+    let actor = get_actor_mut(eng, id)?;
+    if let ActorType::Org(org) = &mut actor.actor_type {
+        Ok(org)
+    } else {
+        Err(ActionError::ActorIsNotPlayer)
+    }
+}
+
+pub fn get_org(eng: &mut Engine, id: ID) -> Result<&Organization, ActionError> {
+    let actor = get_actor_mut(eng, id)?;
+    if let ActorType::Org(org) = &actor.actor_type {
+        Ok(org)
     } else {
         Err(ActionError::ActorIsNotPlayer)
     }

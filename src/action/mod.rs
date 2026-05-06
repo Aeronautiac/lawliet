@@ -1,6 +1,7 @@
 use enum_dispatch::enum_dispatch;
 
 use crate::{
+    ID,
     action::{
         add_ability::{AddAbility, AddAbilityResponse},
         add_charge_pool::{AddChargePool, AddChargePoolResponse},
@@ -33,7 +34,9 @@ use crate::{
         sever_links::{SeverLinks, SeverLinksResponse},
         take_notebook::{TakeNotebook, TakeNotebookResponse},
         try_delete_charge_pool::{TryDeleteChargePool, TryDeleteChargePoolResponse},
+        update::{Update, UpdateResponse},
         use_ability::{UseAbility, UseAbilityResponse},
+        use_org_ability::{UseOrgAbility, UseOrgAbilityResponse},
         write_name::{WriteName, WriteNameResponse},
     },
     command::Command,
@@ -72,7 +75,9 @@ pub mod set_borrowers_to_owners;
 pub mod sever_links;
 pub mod take_notebook;
 pub mod try_delete_charge_pool;
+pub mod update;
 pub mod use_ability;
+pub mod use_org_ability;
 pub mod write_name;
 
 #[derive(Debug)]
@@ -103,6 +108,8 @@ pub enum ActionError {
     ItemAlreadyOwned,
     ItemAlreadyUnowned,
     ChargePoolNotFound,
+    ActorIsNotOrg,
+    PlayerIsNotLeader,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -159,6 +166,8 @@ pub enum Action {
     InitializeWorld(InitializeWorld),
     AddChargePool(AddChargePool),
     ClearVolatileLinks(ClearVolatileLinks),
+    UseOrgAbility(UseOrgAbility),
+    Update(Update),
 }
 
 pub enum ActionResponse {
@@ -195,13 +204,21 @@ pub enum ActionResponse {
     InitializeWorld(InitializeWorldResponse),
     AddChargePool(AddChargePoolResponse),
     ClearVolatileLinks(ClearVolatileLinksResponse),
+    UseOrgAbility(UseOrgAbilityResponse),
+    Update(UpdateResponse),
+}
+
+#[derive(PartialEq, Eq, Clone)]
+pub struct OrgActorInfo {
+    pub org_id: ID,
+    pub player_id: ID,
 }
 
 #[derive(PartialEq, Eq, Clone)]
 pub enum ActionActor {
     System,
     Player(crate::ID),
-    Organization(crate::ID),
+    Organization(OrgActorInfo),
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -228,12 +245,44 @@ impl ActionActor {
         }
     }
 
+    pub fn org_only(&self) -> Result<(), ActionError> {
+        if matches!(self, ActionActor::Organization(_)) {
+            Ok(())
+        } else {
+            Err(ActionError::ActorIsNotOrg)
+        }
+    }
+
     pub fn require_not_system(&self) -> Result<(), ActionError> {
         if matches!(self, ActionActor::System) {
             Ok(())
         } else {
             Err(ActionError::ActorIsSystem)
         }
+    }
+}
+
+impl Action {
+    pub fn execute(
+        &mut self,
+        eng: &mut Engine,
+        ctx: &mut ActionContext,
+        actor: &ActionActor,
+        version: Version,
+    ) -> ActionResult {
+        let result = self.handle(eng, ctx, actor, version, true);
+        Action::Update(Update {}).handle(eng, ctx, actor, version, true);
+        result
+    }
+
+    pub fn validate(
+        &mut self,
+        eng: &mut Engine,
+        ctx: &mut ActionContext,
+        actor: &ActionActor,
+        version: Version,
+    ) -> ActionResult {
+        self.handle(eng, ctx, actor, version, false)
     }
 }
 

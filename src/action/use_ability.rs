@@ -6,11 +6,14 @@
 use crate::{
     ID,
     ability::{AbilityBehaviour, AbilityInterface, AbilityResponse},
-    action::{ActionError, ActionInterface, ActionResponse},
-    actor::restriction::Restriction,
+    action::{ActionActor, ActionError, ActionInterface, ActionResponse},
+    actor::{organization::OrgAbilityPolicy, restriction::Restriction},
     chargepool::PoolLinkType,
     config::ability::AbilityCategory,
-    helpers::{actor_id, get_ability_config, get_ability_mut, get_actor, get_charge_pool_mut},
+    helpers::{
+        actor_id, get_ability, get_ability_config, get_ability_mut, get_actor, get_charge_pool_mut,
+        get_org,
+    },
 };
 
 #[derive(PartialEq, Eq, Clone)]
@@ -32,11 +35,11 @@ impl ActionInterface for UseAbility {
         mutate: bool,
     ) -> super::ActionResult {
         actor.require_not_system()?;
-
+        let actor_id = actor_id(actor).unwrap();
         let config = get_ability_config(eng, self.ability_id)?;
         let category = config.category;
 
-        let actor_data = get_actor(eng, actor_id(actor).unwrap())?;
+        let actor_data = get_actor(eng, actor_id)?;
         match category {
             AbilityCategory::Supernatural => {
                 if actor_data.has_restriction(Restriction::AbilitiesSupernatural) {
@@ -50,7 +53,7 @@ impl ActionInterface for UseAbility {
             }
         };
 
-        let ability = get_ability_mut(eng, self.ability_id)?;
+        let ability = get_ability(eng, self.ability_id)?;
         if Some(self.ability_id) != ability.ownership_struct.owner {
             return Err(ActionError::AbilityNotOwned);
         }
@@ -62,6 +65,7 @@ impl ActionInterface for UseAbility {
         // base on code ordering because condition should only fail during a validation pass, never during a mutation
         // pass. if it does for some reason, then the engine crashes and there is no risk of invalid
         // state.
+        let ability = get_ability_mut(eng, self.ability_id)?;
         let links = ability.pool_links.clone();
         let mut pool_condition = false;
         for link in &links {
