@@ -1,7 +1,15 @@
-use indexmap::{IndexMap, IndexSet};
+use indexmap::IndexMap;
 
 use crate::{
-    ID, action::Action, common::PollWeight, engine::Engine, poll::policies::resolution::majority,
+    ID,
+    action::Action,
+    common::PollWeight,
+    engine::Engine,
+    helpers::get_voter_weight,
+    poll::policies::{
+        resolution::{majority, winning_vote},
+        voter::present,
+    },
 };
 mod policies;
 
@@ -31,7 +39,8 @@ mod policies;
 #[derive(Clone, Copy)]
 pub enum VoterPolicy {
     Present, // whether or not the voter is "present", i.e., they are not dead, imprisoned, or in
-             // any other way incapacitated
+             // any other way incapacitated. they must also be able to see the poll (their vote no
+             // longer counts if they leave an org after voting for example).
 }
 
 #[derive(Clone, Copy)]
@@ -56,7 +65,6 @@ pub enum PollVisibility {
 }
 
 pub struct Vote {
-    pub weight: PollWeight,
     pub accept: bool,
 }
 
@@ -64,6 +72,7 @@ pub struct VoteQuery {
     pub accept: PollWeight,
     pub reject: PollWeight,
     pub total: PollWeight,
+    pub potential_total: PollWeight,
 }
 
 pub struct Poll {
@@ -80,7 +89,13 @@ impl Poll {
         match pol {
             PollPolicy::AlwaysInconclusive => PolicyResult::Inconclusive,
             PollPolicy::Majority => majority(self, eng),
-            PollPolicy::WinningVote => PolicyResult::Accept,
+            PollPolicy::WinningVote => winning_vote(self, eng),
+        }
+    }
+
+    pub fn voter_policy(&self, eng: &Engine, voter_id: ID) -> bool {
+        match self.voter_policy {
+            VoterPolicy::Present => present(self, eng, voter_id),
         }
     }
 
@@ -92,29 +107,38 @@ impl Poll {
         self.policy(self.timeout_policy, eng)
     }
 
-    pub fn voter_policy(&self, eng: &Engine, voter_id: ID) -> bool {
-        match self.voter_policy {
-            _ => true,
-        }
-    }
-
     pub fn weights(&self, eng: &Engine) -> VoteQuery {
         let mut accept = 0;
         let mut reject = 0;
+        let mut potential = 0;
+
+        let mut weights = IndexMap::new();
+        for (id, _) in eng.world.actors.iter() {
+            if !self.voter_policy(eng, *id) {
+                continue;
+            }
+            let weight = get_voter_weight(eng, *id);
+            weights.insert(*id, weight);
+            potential += weight;
+        }
+
         for (id, vote) in &self.votes {
             if !self.voter_policy(eng, *id) {
                 continue;
             }
+            let weight = weights.get(id).unwrap();
             if vote.accept {
-                accept += vote.weight;
+                accept += weight;
             } else {
-                reject += vote.weight;
+                reject += weight;
             }
         }
+
         VoteQuery {
             accept,
             reject,
             total: accept + reject,
+            potential_total: potential,
         }
     }
 }

@@ -1,0 +1,31 @@
+use crate::{
+    ID,
+    engine::Engine,
+    helpers::{get_actor, get_org},
+    poll::{Poll, PollVisibility},
+};
+
+fn visibility_check(poll: &Poll, eng: &Engine, voter_id: ID) -> bool {
+    match poll.visibility {
+        PollVisibility::Org(org_id) => {
+            let org = get_org(eng, org_id).unwrap();
+            org.has_member(voter_id)
+        }
+        PollVisibility::Channel(channel_id) => {
+            // placeholder until channels are implemented into the world
+            true
+        }
+        PollVisibility::AllPresent => true,
+    }
+}
+
+// they must not have the present restriction
+// they must be able to see the vote
+pub fn present(poll: &Poll, eng: &Engine, voter_id: ID) -> bool {
+    let actor = get_actor(eng, voter_id).unwrap(); // the actor id must be valid,
+    // if it isnt, the engine is broken
+    if actor.has_restriction(crate::actor::restriction::Restriction::Presence) {
+        return false;
+    }
+    visibility_check(poll, eng, voter_id)
+}

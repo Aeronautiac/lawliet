@@ -57,13 +57,12 @@ pub struct LeadershipStruct {
 #[derive(Hash, PartialEq, Eq, Debug)]
 pub struct OrgMember {
     pub id: ID,
-    pub og: bool,
 }
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Organization {
     pub leadership_struct: Option<LeadershipStruct>,
-    pub members: IndexSet<OrgMember>,
+    pub members: IndexMap<ID, OrgMember>,
     pub blacklist: IndexSet<ID>,
     pub abilities: IndexMap<ID, OrgAbilityPolicies>,
     pub org_name: OrganizationName,
@@ -73,10 +72,14 @@ impl Organization {
     pub fn new(name: OrganizationName) -> Self {
         Organization {
             leadership_struct: None,
-            members: IndexSet::new(),
+            members: IndexMap::new(),
             abilities: IndexMap::new(),
             blacklist: IndexSet::new(),
             org_name: name,
         }
+    }
+
+    pub fn has_member(&self, id: ID) -> bool {
+        self.members.contains_key(&id)
     }
 }

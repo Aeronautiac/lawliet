@@ -7,6 +7,7 @@ use crate::{
         state::State,
     },
     chargepool::ChargePool,
+    common::PollWeight,
     config::{
         ability::{AbilityConfig, AbilityIdentifier},
         role::{Role, RoleConfig},
@@ -174,8 +175,8 @@ pub fn get_org_mut(eng: &mut Engine, id: ID) -> Result<&mut Organization, Action
     }
 }
 
-pub fn get_org(eng: &mut Engine, id: ID) -> Result<&Organization, ActionError> {
-    let actor = get_actor_mut(eng, id)?;
+pub fn get_org(eng: &Engine, id: ID) -> Result<&Organization, ActionError> {
+    let actor = get_actor(eng, id)?;
     if let ActorType::Org(org) = &actor.actor_type {
         Ok(org)
     } else {
@@ -209,6 +210,7 @@ pub fn get_charge_pool(eng: &Engine, id: ID) -> Result<&ChargePool, ActionError>
         Err(ActionError::ChargePoolNotFound)
     }
 }
+
 pub fn get_charge_pool_mut(eng: &mut Engine, id: ID) -> Result<&mut ChargePool, ActionError> {
     let pool = eng.world.get_charge_pool_mut(id);
     if let Some(data) = pool {
@@ -216,4 +218,10 @@ pub fn get_charge_pool_mut(eng: &mut Engine, id: ID) -> Result<&mut ChargePool, 
     } else {
         Err(ActionError::ChargePoolNotFound)
     }
+}
+
+// return 0 for organizations, return 1 for normal players, return some other number if they have
+// the vote amplification passive
+pub fn get_voter_weight(eng: &Engine, id: ID) -> PollWeight {
+    1
 }
