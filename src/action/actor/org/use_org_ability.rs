@@ -61,6 +61,7 @@ impl ActionInterface for UseOrgAbility {
                         ability_id: self.ability_id,
                         ability_args: self.ability_args.clone(),
                     })),
+                    duration: Some(eng.config.defaults.org_vote_time),
                 })
                 .handle(eng, ctx, actor, version, mutate)?;
             } else {

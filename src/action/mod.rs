@@ -30,7 +30,10 @@ use crate::{
             add_charge_pool::{AddChargePool, AddChargePoolResponse},
             try_delete_charge_pool::{TryDeleteChargePool, TryDeleteChargePoolResponse},
         },
-        engine::null::{Null, NullResponse},
+        engine::{
+            null::{Null, NullResponse},
+            schedule_job::{ScheduleJob, ScheduleJobResponse},
+        },
         notebook::{
             add_notebook::{AddNotebook, AddNotebookResponse},
             create_and_give_notebook::{CreateAndGiveNotebook, CreateAndGiveNotebookResponse},
@@ -166,6 +169,7 @@ pub enum Action {
     UpdatePolls(UpdatePolls),
     CreatePoll(CreatePoll),
     PollTimeout(PollTimeout),
+    ScheduleJob(ScheduleJob),
 }
 
 pub enum ActionResponse {
@@ -207,6 +211,7 @@ pub enum ActionResponse {
     UpdatePolls(UpdatePollsResponse),
     CreatePoll(CreatePollReponse),
     PollTimeout(PollTimeoutResponse),
+    ScheduleJob(ScheduleJobResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]

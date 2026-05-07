@@ -6,8 +6,11 @@
 */
 
 use crate::{
-    ID,
-    action::{Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    ID, Time,
+    action::{
+        Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
+        engine::schedule_job::ScheduleJob, poll::poll_timeout::PollTimeout,
+    },
     poll::{Poll, PollPolicy, PollVisibility, VoterPolicy},
 };
 
@@ -23,6 +26,7 @@ pub struct CreatePoll {
     pub update_policy: PollPolicy,
     pub timeout_policy: PollPolicy,
     pub payload: Box<Action>,
+    pub duration: Option<Time>,
 }
 
 impl ActionInterface for CreatePoll {
@@ -47,6 +51,17 @@ impl ActionInterface for CreatePoll {
         } else {
             0
         };
+
+        // poll only exists in the mutate path
+        if mutate {
+            if let Some(duration) = self.duration {
+                Action::ScheduleJob(ScheduleJob {
+                    timestamp: eng.time + duration,
+                    payload: Box::new(Action::PollTimeout(PollTimeout { poll_id: id })),
+                })
+                .handle(eng, ctx, actor, version, mutate)?;
+            }
+        }
 
         Ok(ActionResponse::CreatePoll(CreatePollReponse { id }))
     }

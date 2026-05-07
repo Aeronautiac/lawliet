@@ -1,10 +1,6 @@
 /*
 * SYSTEM ACTION
 * Schedule a kill action
-* The reason there isn't a generic schedule job action is because the compiler cannot know the size
-* of the action beforehand. It is technically possible (in the view of the compiler) for a scheduling
-* action to schedule another scheduling action. While something like a box could be used, it is better
-* for performance to simply create specific scheduling actions (avoids pointer chasing).
 */
 
 use crate::{
