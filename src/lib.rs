@@ -107,7 +107,6 @@ pub use common::{ID, Time};
 
 // TODO:
 // - Implement organizations. Idea: organizations hold passives, and every member gets a passive link to
-// - Touch up the ability category enum (physical vs supernatural doesnt make sense)
 // - Begin implementing every ability
 // - Implement polls/votes
 // - Implement channels
@@ -120,21 +119,18 @@ pub use common::{ID, Time};
 // - Go through everything and implement frontend commands
 // - Write extensive integration tests
 
-// Organizations are not as generic as immediately thought
-// Many have different rank structures and specific invite, kick, etc... mechanics.
-// May need to do something similar to abilities where there is a generalized organization struct
-// wrapping specific organization behaviour structs.
-//
-// There is only some specific stuff (invite and leader mechanics).
-
 #[cfg(test)]
 mod tests {
     use crate::{
         ID, Time,
         action::{
             Action, ActionActor, ActionRequest, ActionResponse, ActionResult,
-            add_player::AddPlayer, create_and_give_notebook::CreateAndGiveNotebook, kill::Kill,
-            lend_notebook::LendNotebook, null::Null, revive::Revive, write_name::WriteName,
+            actor::player::{add_player::AddPlayer, kill::Kill, revive::Revive},
+            engine::null::Null,
+            notebook::{
+                create_and_give_notebook::CreateAndGiveNotebook, lend_notebook::LendNotebook,
+                write_name::WriteName,
+            },
         },
         actor::state::State,
         config::role::Role,

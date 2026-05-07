@@ -15,6 +15,7 @@ use crate::{
     engine::Engine,
     notebook::Notebook,
     passive::{Passive, PassiveType},
+    poll::Poll,
 };
 
 pub fn get_actor(eng: &Engine, actor_id: ID) -> Result<&Actor, ActionError> {
@@ -217,6 +218,24 @@ pub fn get_charge_pool_mut(eng: &mut Engine, id: ID) -> Result<&mut ChargePool, 
         Ok(data)
     } else {
         Err(ActionError::ChargePoolNotFound)
+    }
+}
+
+pub fn get_poll(eng: &Engine, id: ID) -> Result<&Poll, ActionError> {
+    let poll = eng.world.get_poll(id);
+    if let Some(data) = poll {
+        Ok(data)
+    } else {
+        Err(ActionError::PollDoesntExist)
+    }
+}
+
+pub fn get_poll_mut(eng: &mut Engine, id: ID) -> Result<&mut Poll, ActionError> {
+    let poll = eng.world.get_poll_mut(id);
+    if let Some(data) = poll {
+        Ok(data)
+    } else {
+        Err(ActionError::PollDoesntExist)
     }
 }
 

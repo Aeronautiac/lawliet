@@ -36,21 +36,21 @@ mod policies;
 // - if an update policy returns reject or accept, the poll concludes
 // - a poll will always conclude with the return of a timeout policy
 
-#[derive(Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Debug, Copy)]
 pub enum VoterPolicy {
     Present, // whether or not the voter is "present", i.e., they are not dead, imprisoned, or in
              // any other way incapacitated. they must also be able to see the poll (their vote no
              // longer counts if they leave an org after voting for example).
 }
 
-#[derive(Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Debug, Copy)]
 pub enum PolicyResult {
     Accept,
     Reject,
     Inconclusive,
 }
 
-#[derive(Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Debug, Copy)]
 pub enum PollPolicy {
     AlwaysInconclusive,
     Majority,
@@ -58,16 +58,19 @@ pub enum PollPolicy {
                  // in update
 }
 
+#[derive(PartialEq, Eq, Clone, Debug, Copy)]
 pub enum PollVisibility {
     Org(ID),     // everyone present within an org
     Channel(ID), // everyone present within a channel
     AllPresent,  // everyone present in the game (not kidnapped, dead, etc...)
 }
 
+#[derive(Debug)]
 pub struct Vote {
     pub accept: bool,
 }
 
+#[derive(Debug)]
 pub struct VoteQuery {
     pub accept: PollWeight,
     pub reject: PollWeight,
@@ -75,6 +78,7 @@ pub struct VoteQuery {
     pub potential_total: PollWeight,
 }
 
+#[derive(Debug)]
 pub struct Poll {
     pub payload: Action,
     pub visibility: PollVisibility,
@@ -85,6 +89,23 @@ pub struct Poll {
 }
 
 impl Poll {
+    pub fn new(
+        payload: Action,
+        visibility: PollVisibility,
+        update_policy: PollPolicy,
+        timeout_policy: PollPolicy,
+        voter_policy: VoterPolicy,
+    ) -> Self {
+        Poll {
+            payload,
+            visibility,
+            update_policy,
+            timeout_policy,
+            voter_policy,
+            votes: IndexMap::new(),
+        }
+    }
+
     fn policy(&self, pol: PollPolicy, eng: &Engine) -> PolicyResult {
         match pol {
             PollPolicy::AlwaysInconclusive => PolicyResult::Inconclusive,

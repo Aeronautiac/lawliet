@@ -2,8 +2,8 @@ use crate::{
     ID,
     ability::{AbilityInterface, AbilityResponse},
     action::{
-        Action, ActionContext, ActionInterface, kill::Kill, revive::Revive,
-        schedule_revive::ScheduleRevive,
+        Action, ActionContext, ActionInterface,
+        actor::player::{kill::Kill, revive::Revive, schedule_revive::ScheduleRevive},
     },
     config::{ability::AbilityName, role::Role},
 };

@@ -3,82 +3,75 @@ use enum_dispatch::enum_dispatch;
 use crate::{
     ID,
     action::{
-        add_ability::{AddAbility, AddAbilityResponse},
-        add_charge_pool::{AddChargePool, AddChargePoolResponse},
-        add_notebook::{AddNotebook, AddNotebookResponse},
-        add_passive::{AddPassive, AddPassiveResponse},
-        add_player::*,
-        add_state::*,
-        clear_volatile_links::{ClearVolatileLinks, ClearVolatileLinksResponse},
-        create_actor_links::{CreateActorLinks, CreateActorLinksResponse},
-        create_and_give_ability::{CreateAndGiveAbility, CreateAndGiveAbilityResponse},
-        create_and_give_notebook::{CreateAndGiveNotebook, CreateAndGiveNotebookResponse},
-        create_and_give_passive::{CreateAndGivePassive, CreateAndGivePassiveResponse},
-        give_ability::{GiveAbility, GiveAbilityResponse},
-        give_notebook::{GiveNotebook, GiveNotebookResponse},
-        give_passive::{GivePassive, GivePassiveResponse},
-        give_role::{GiveRole, GiveRoleResponse},
-        initialize_world::{InitializeWorld, InitializeWorldResponse},
-        kill::*,
-        lend_notebook::{LendNotebook, LendNotebookResponse},
-        notebook_scheduled_kill::{NotebookScheduledKill, NotebookScheduledKillResponse},
-        null::{Null, NullResponse},
-        purge_volatiles::{PurgeVolatiles, PurgeVolatilesResponse},
-        remove_state::{RemoveState, RemoveStateResponse},
-        return_dormant_books::{ReturnDormantBooks, ReturnDormantBooksResponse},
-        revive::*,
-        schedule_kill::{ScheduleKill, ScheduleKillResponse},
-        schedule_revive::{ScheduleRevive, ScheduleReviveResponse},
-        set_books_dormant::{SetBooksDormant, SetBooksDormantResponse},
-        set_borrowers_to_owners::{SetBorrowersToOwners, SetBorrowersToOwnersResponse},
-        sever_links::{SeverLinks, SeverLinksResponse},
-        take_notebook::{TakeNotebook, TakeNotebookResponse},
-        try_delete_charge_pool::{TryDeleteChargePool, TryDeleteChargePoolResponse},
-        update::{Update, UpdateResponse},
-        use_ability::{UseAbility, UseAbilityResponse},
-        use_org_ability::{UseOrgAbility, UseOrgAbilityResponse},
-        write_name::{WriteName, WriteNameResponse},
+        ability::{
+            add_ability::{AddAbility, AddAbilityResponse},
+            clear_volatile_links::{ClearVolatileLinks, ClearVolatileLinksResponse},
+            create_and_give_ability::{CreateAndGiveAbility, CreateAndGiveAbilityResponse},
+            give_ability::{GiveAbility, GiveAbilityResponse},
+            use_ability::{UseAbility, UseAbilityResponse},
+        },
+        actor::{
+            add_state::{AddState, AddStateResponse},
+            create_actor_links::{CreateActorLinks, CreateActorLinksResponse},
+            org::use_org_ability::{UseOrgAbility, UseOrgAbilityResponse},
+            player::{
+                add_player::{AddPlayer, AddPlayerResponse},
+                give_role::{GiveRole, GiveRoleResponse},
+                kill::{Kill, KillResponse},
+                revive::{Revive, ReviveResponse},
+                schedule_kill::{ScheduleKill, ScheduleKillResponse},
+                schedule_revive::{ScheduleRevive, ScheduleReviveResponse},
+            },
+            purge_volatiles::{PurgeVolatiles, PurgeVolatilesResponse},
+            remove_state::{RemoveState, RemoveStateResponse},
+            sever_links::{SeverLinks, SeverLinksResponse},
+        },
+        chargepool::{
+            add_charge_pool::{AddChargePool, AddChargePoolResponse},
+            try_delete_charge_pool::{TryDeleteChargePool, TryDeleteChargePoolResponse},
+        },
+        engine::null::{Null, NullResponse},
+        notebook::{
+            add_notebook::{AddNotebook, AddNotebookResponse},
+            create_and_give_notebook::{CreateAndGiveNotebook, CreateAndGiveNotebookResponse},
+            give_notebook::{GiveNotebook, GiveNotebookResponse},
+            lend_notebook::{LendNotebook, LendNotebookResponse},
+            notebook_scheduled_kill::{NotebookScheduledKill, NotebookScheduledKillResponse},
+            return_dormant_books::{ReturnDormantBooks, ReturnDormantBooksResponse},
+            set_books_dormant::{SetBooksDormant, SetBooksDormantResponse},
+            set_borrowers_to_owners::{SetBorrowersToOwners, SetBorrowersToOwnersResponse},
+            take_notebook::{TakeNotebook, TakeNotebookResponse},
+            write_name::{WriteName, WriteNameResponse},
+        },
+        passive::{
+            add_passive::{AddPassive, AddPassiveResponse},
+            create_and_give_passive::{CreateAndGivePassive, CreateAndGivePassiveResponse},
+            give_passive::{GivePassive, GivePassiveResponse},
+        },
+        poll::{
+            create_poll::{CreatePoll, CreatePollReponse},
+            poll_timeout::{PollTimeout, PollTimeoutResponse},
+            update_polls::{UpdatePolls, UpdatePollsResponse},
+        },
+        world::{
+            initialize_world::{InitializeWorld, InitializeWorldResponse},
+            update::{Update, UpdateResponse},
+        },
     },
     command::Command,
     common::Version,
     engine::Engine,
 };
 
-pub mod add_ability;
-pub mod add_charge_pool;
-pub mod add_notebook;
-pub mod add_passive;
-pub mod add_player;
-pub mod add_state;
-pub mod clear_volatile_links;
-pub mod create_actor_links;
-pub mod create_and_give_ability;
-pub mod create_and_give_notebook;
-pub mod create_and_give_passive;
-pub mod give_ability;
-pub mod give_notebook;
-pub mod give_passive;
-pub mod give_role;
-pub mod initialize_world;
-pub mod kill;
-pub mod lend_notebook;
-pub mod notebook_scheduled_kill;
-pub mod null;
-pub mod purge_volatiles;
-pub mod remove_state;
-pub mod return_dormant_books;
-pub mod revive;
-pub mod schedule_kill;
-pub mod schedule_revive;
-pub mod set_books_dormant;
-pub mod set_borrowers_to_owners;
-pub mod sever_links;
-pub mod take_notebook;
-pub mod try_delete_charge_pool;
-pub mod update;
-pub mod use_ability;
-pub mod use_org_ability;
-pub mod write_name;
+pub mod ability;
+pub mod actor;
+pub mod channel;
+pub mod chargepool;
+pub mod engine;
+pub mod notebook;
+pub mod passive;
+pub mod poll;
+pub mod world;
 
 #[derive(Debug)]
 pub enum ActionError {
@@ -110,6 +103,7 @@ pub enum ActionError {
     ChargePoolNotFound,
     ActorIsNotOrg,
     PlayerIsNotLeader,
+    PollDoesntExist,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -132,6 +126,7 @@ pub trait ActionInterface {
 
 #[derive(PartialEq, Eq, Clone)]
 #[enum_dispatch(ActionInterface)]
+#[derive(Debug)]
 pub enum Action {
     Kill(Kill),
     AddState(AddState),
@@ -168,6 +163,9 @@ pub enum Action {
     ClearVolatileLinks(ClearVolatileLinks),
     UseOrgAbility(UseOrgAbility),
     Update(Update),
+    UpdatePolls(UpdatePolls),
+    CreatePoll(CreatePoll),
+    PollTimeout(PollTimeout),
 }
 
 pub enum ActionResponse {
@@ -200,12 +198,15 @@ pub enum ActionResponse {
     SetBooksDormant(SetBooksDormantResponse),
     ReturnDormantBooks(ReturnDormantBooksResponse),
     NotebookScheduledKill(NotebookScheduledKillResponse),
-    DeleteChargePool(TryDeleteChargePoolResponse),
+    TryDeleteChargePool(TryDeleteChargePoolResponse),
     InitializeWorld(InitializeWorldResponse),
     AddChargePool(AddChargePoolResponse),
     ClearVolatileLinks(ClearVolatileLinksResponse),
     UseOrgAbility(UseOrgAbilityResponse),
     Update(UpdateResponse),
+    UpdatePolls(UpdatePollsResponse),
+    CreatePoll(CreatePollReponse),
+    PollTimeout(PollTimeoutResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -236,7 +237,6 @@ impl ActionActor {
             Err(ActionError::InsufficientPermissions)
         }
     }
-
     pub fn player_only(&self) -> Result<(), ActionError> {
         if matches!(self, ActionActor::Player(_)) {
             Ok(())

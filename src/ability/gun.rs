@@ -1,7 +1,7 @@
 use crate::{
     ID,
     ability::{AbilityInterface, AbilityResponse},
-    action::{Action, ActionContext, ActionInterface, kill::Kill},
+    action::{Action, ActionContext, ActionInterface, actor::player::kill::Kill},
     config::ability::AbilityName,
     helpers::actor_id,
 };
@@ -30,7 +30,7 @@ impl AbilityInterface for Gun {
     ) -> super::AbilityResult {
         let id = actor_id(actor);
 
-        Action::Kill(Kill {
+        Action::Kill(Kill{
             allow_link_chaining: true,
             sever_links: true,
             silent: false,

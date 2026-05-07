@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, BTreeSet, btree_map::Entry},
+    collections::{BTreeMap, btree_map::Entry},
     rc::Rc,
 };
 
@@ -18,41 +18,46 @@ use crate::{
     config::{role::Role, world::WorldChargePoolName},
     notebook::Notebook,
     passive::Passive,
+    poll::Poll,
 };
 
 #[derive(Debug)]
 pub struct World {
     pub blackout: bool,
-    pub actors: BTreeMap<ID, Actor>,
+    pub actors: IndexMap<ID, Actor>,
     pub player_names: BTreeMap<Rc<str>, ID>, // a map of true names to actor ids
-    pub abilities: BTreeMap<ID, Ability>,
-    pub notebooks: BTreeMap<ID, Notebook>,
-    pub passives: BTreeMap<ID, Passive>,
-    pub charge_pools: BTreeMap<ID, ChargePool>,
+    pub abilities: IndexMap<ID, Ability>,
+    pub notebooks: IndexMap<ID, Notebook>,
+    pub passives: IndexMap<ID, Passive>,
+    pub charge_pools: IndexMap<ID, ChargePool>,
     pub pool_map: IndexMap<WorldChargePoolName, ID>, // things like the world prosecution pool
+    pub polls: IndexMap<ID, Poll>,
     next_charge_pool_id: ID,
     next_actor_id: ID,
     next_notebook_id: ID,
     next_ability_id: ID,
     next_passive_id: ID,
+    next_poll_id: ID,
 }
 
 impl World {
     pub fn new() -> Self {
         World {
             blackout: false,
-            actors: BTreeMap::new(),
-            abilities: BTreeMap::new(),
-            notebooks: BTreeMap::new(),
+            actors: IndexMap::new(),
+            abilities: IndexMap::new(),
+            notebooks: IndexMap::new(),
             player_names: BTreeMap::new(),
-            passives: BTreeMap::new(),
-            charge_pools: BTreeMap::new(),
+            passives: IndexMap::new(),
+            charge_pools: IndexMap::new(),
             pool_map: IndexMap::new(),
+            polls: IndexMap::new(),
             next_charge_pool_id: 0,
             next_actor_id: 0,
             next_notebook_id: 0,
             next_ability_id: 0,
             next_passive_id: 0,
+            next_poll_id: 0,
         }
     }
 
@@ -135,7 +140,7 @@ impl World {
 
     /// be careful that there are no dangling ids
     pub fn remove_ability(&mut self, id: ID) {
-        self.abilities.remove(&id);
+        self.abilities.swap_remove(&id);
     }
 
     pub fn get_ability(&self, id: ID) -> Option<&Ability> {
@@ -155,7 +160,7 @@ impl World {
 
     /// be careful that there are no dangling ids
     pub fn remove_passive(&mut self, id: ID) {
-        self.passives.remove(&id);
+        self.passives.swap_remove(&id);
     }
 
     pub fn get_passive(&self, id: ID) -> Option<&Passive> {
@@ -167,7 +172,7 @@ impl World {
     }
 
     pub fn remove_notebook(&mut self, id: ID) {
-        self.notebooks.remove(&id);
+        self.notebooks.swap_remove(&id);
     }
 
     pub fn add_charge_pool(&mut self, charge_pool: ChargePool) -> ID {
@@ -178,7 +183,7 @@ impl World {
     }
 
     pub fn remove_charge_pool(&mut self, id: ID) {
-        self.charge_pools.remove(&id);
+        self.charge_pools.swap_remove(&id);
     }
 
     pub fn get_charge_pool(&self, id: ID) -> Option<&ChargePool> {
@@ -187,5 +192,24 @@ impl World {
 
     pub fn get_charge_pool_mut(&mut self, id: ID) -> Option<&mut ChargePool> {
         self.charge_pools.get_mut(&id)
+    }
+
+    pub fn get_poll(&self, id: ID) -> Option<&Poll> {
+        self.polls.get(&id)
+    }
+
+    pub fn get_poll_mut(&mut self, id: ID) -> Option<&mut Poll> {
+        self.polls.get_mut(&id)
+    }
+
+    pub fn add_poll(&mut self, poll: Poll) -> ID {
+        let id = self.next_poll_id;
+        self.next_poll_id += 1;
+        self.polls.insert(id, poll);
+        id
+    }
+
+    pub fn remove_poll(&mut self, id: ID) -> bool {
+        self.polls.swap_remove(&id).is_some()
     }
 }
