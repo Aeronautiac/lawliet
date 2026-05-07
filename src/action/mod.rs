@@ -13,7 +13,12 @@ use crate::{
         actor::{
             add_state::{AddState, AddStateResponse},
             create_actor_links::{CreateActorLinks, CreateActorLinksResponse},
-            org::use_org_ability::{UseOrgAbility, UseOrgAbilityResponse},
+            org::{
+                add_to_org::{AddToOrg, AddToOrgResponse},
+                create_org::{CreateOrg, CreateOrgResponse},
+                remove_from_org::{RemoveFromOrg, RemoveFromOrgResponse},
+                use_org_ability::{UseOrgAbility, UseOrgAbilityResponse},
+            },
             player::{
                 add_player::{AddPlayer, AddPlayerResponse},
                 give_role::{GiveRole, GiveRoleResponse},
@@ -111,6 +116,10 @@ pub enum ActionError {
     PollDoesntExist,
     InvalidVoter,
     NotAVoter,
+    PlayerIsBlacklisted,
+    OrgDoesntHaveLeadership,
+    ActorAlreadyInOrg,
+    PlayerNotInOrg,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -176,6 +185,9 @@ pub enum Action {
     ScheduleJob(ScheduleJob),
     AddVote(AddVote),
     RemoveVote(RemoveVote),
+    AddToOrg(AddToOrg),
+    RemoveFromOrg(RemoveFromOrg),
+    CreateOrg(CreateOrg),
 }
 
 pub enum ActionResponse {
@@ -220,6 +232,9 @@ pub enum ActionResponse {
     ScheduleJob(ScheduleJobResponse),
     AddVote(AddVoteResponse),
     RemoveVote(RemoveVoteResponse),
+    AddToOrg(AddToOrgResponse),
+    RemoveFromOrg(RemoveFromOrgResponse),
+    CreateOrg(CreateOrgResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]

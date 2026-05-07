@@ -47,7 +47,7 @@ impl ActionInterface for UseOrgAbility {
                 let Some(leadership_struct) = &org_data.leadership_struct else {
                     unreachable!(); // there must be a leadership struct if the ability requires a leader
                 };
-                if leadership_struct.leader != player_id {
+                if leadership_struct.leader != Some(player_id) {
                     return Err(ActionError::PlayerIsNotLeader);
                 }
             }

@@ -13,7 +13,7 @@ use indexmap::IndexMap;
 use crate::{
     ID,
     ability::Ability,
-    actor::{Actor, ActorType, Player},
+    actor::{Actor, ActorType, Organization, Player},
     chargepool::ChargePool,
     config::{role::Role, world::WorldChargePoolName},
     notebook::Notebook,

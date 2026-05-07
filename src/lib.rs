@@ -107,14 +107,13 @@ pub use common::{ID, Time};
 
 // TODO:
 // - Implement organizations. Idea: organizations hold passives, and every member gets a passive link to
+// their orgs
 // - Begin implementing every ability
-// - Implement polls/votes
 // - Implement channels
 //    * Implement lounges
 //    * Implement group chats
 // - Implement bugs (simple message relayers with channel context filtering)
-// - Implement news (likely just a special channel)
-// the orgs they are in. if they leave the org, the link is severed.
+// - Implement news (likely just a special channel within the world struct)
 // - Implement any necessary actions
 // - Go through everything and implement frontend commands
 // - Write extensive integration tests

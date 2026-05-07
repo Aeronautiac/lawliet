@@ -1,0 +1,66 @@
+/*
+* SYSTEM ACTION
+* Add a player to an organization
+*/
+
+use crate::{
+    ID,
+    action::{ActionError, ActionInterface, ActionResponse},
+    actor::{ActorLink, ActorLinkType},
+    helpers::{get_actor, get_actor_mut, get_org, get_org_mut},
+};
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct AddToOrgResponse {}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct AddToOrg {
+    pub leader: bool,
+    pub og: bool,
+    pub actor_id: ID,
+    pub org_id: ID,
+}
+
+impl ActionInterface for AddToOrg {
+    fn handle(
+        &mut self,
+        eng: &mut crate::engine::Engine,
+        ctx: &mut crate::action::ActionContext,
+        actor: &crate::action::ActionActor,
+        version: crate::common::Version,
+        mutate: bool,
+    ) -> crate::action::ActionResult {
+        actor.require_system()?;
+        get_actor(eng, self.actor_id)?;
+
+        let org = get_org_mut(eng, self.org_id)?;
+        if org.has_member(self.actor_id) {
+            // TODO:
+            // Add a new action to make an existing member into the leader
+            // Also a new action to remove leadership from a member without kicking them
+            return Err(ActionError::ActorAlreadyInOrg);
+        }
+        if org.leadership_struct.is_none() && self.leader {
+            return Err(ActionError::OrgDoesntHaveLeadership);
+        }
+        if org.is_blacklisted(self.actor_id) {
+            return Err(ActionError::PlayerIsBlacklisted);
+        }
+
+        // keep in mind that the leader is replaced if leader is true. the case where there was a
+        // previous leader should be handled (notify them that they have lost leadership).
+        if mutate {
+            org.add_member(self.actor_id, self.og, self.leader);
+            let actor = get_actor_mut(eng, self.actor_id)?;
+            actor.add_link(ActorLink {
+                link_type: ActorLinkType::Passive,
+                link_dest: self.org_id,
+            });
+            // TODO:
+            // Notify member of leadership change and membership
+        }
+
+        Ok(ActionResponse::AddToOrg(AddToOrgResponse {}))
+    }
+}
+

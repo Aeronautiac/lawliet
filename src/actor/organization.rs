@@ -50,13 +50,13 @@ pub type LeadershipTransferPolicies = BitFlags<LeadershipTransferPolicy>;
 
 #[derive(Hash, PartialEq, Eq, Debug)]
 pub struct LeadershipStruct {
-    pub leader: ID,
+    pub leader: Option<ID>,
     pub transfer_policies: LeadershipTransferPolicies,
 }
 
 #[derive(Hash, PartialEq, Eq, Debug)]
 pub struct OrgMember {
-    pub id: ID,
+    pub og: bool,
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -81,5 +81,29 @@ impl Organization {
 
     pub fn has_member(&self, id: ID) -> bool {
         self.members.contains_key(&id)
+    }
+
+    pub fn is_blacklisted(&self, id: ID) -> bool {
+        self.blacklist.contains(&id)
+    }
+
+    /// this will replace the old leader (if applicable)
+    pub fn add_member(&mut self, id: ID, og: bool, leader: bool) {
+        self.members.insert(id, OrgMember { og });
+        if let Some(leadership_struct) = &mut self.leadership_struct
+            && leader
+        {
+            leadership_struct.leader = Some(id);
+        }
+    }
+
+    /// if this member was the leader, there will be no leader after this
+    pub fn remove_member(&mut self, id: ID) {
+        self.members.swap_remove(&id);
+        if let Some(leadership_struct) = &mut self.leadership_struct
+            && leadership_struct.leader == Some(id)
+        {
+            leadership_struct.leader = None;
+        }
     }
 }
