@@ -162,4 +162,16 @@ impl Poll {
             potential_total: potential,
         }
     }
+
+    pub fn add_vote(&mut self, id: ID, accept: bool) {
+        self.votes.insert(id, Vote { accept });
+    }
+
+    pub fn remove_vote(&mut self, id: ID) {
+        self.votes.swap_remove(&id);
+    }
+
+    pub fn contains_voter(&self, id: ID) -> bool {
+        self.votes.contains_key(&id)
+    }
 }

@@ -52,8 +52,10 @@ use crate::{
             give_passive::{GivePassive, GivePassiveResponse},
         },
         poll::{
+            add_vote::{AddVote, AddVoteResponse},
             create_poll::{CreatePoll, CreatePollReponse},
             poll_timeout::{PollTimeout, PollTimeoutResponse},
+            remove_vote::{RemoveVote, RemoveVoteResponse},
             update_polls::{UpdatePolls, UpdatePollsResponse},
         },
         world::{
@@ -107,6 +109,8 @@ pub enum ActionError {
     ActorIsNotOrg,
     PlayerIsNotLeader,
     PollDoesntExist,
+    InvalidVoter,
+    NotAVoter,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -170,6 +174,8 @@ pub enum Action {
     CreatePoll(CreatePoll),
     PollTimeout(PollTimeout),
     ScheduleJob(ScheduleJob),
+    AddVote(AddVote),
+    RemoveVote(RemoveVote),
 }
 
 pub enum ActionResponse {
@@ -212,6 +218,8 @@ pub enum ActionResponse {
     CreatePoll(CreatePollReponse),
     PollTimeout(PollTimeoutResponse),
     ScheduleJob(ScheduleJobResponse),
+    AddVote(AddVoteResponse),
+    RemoveVote(RemoveVoteResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]
