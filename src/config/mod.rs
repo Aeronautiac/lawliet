@@ -8,7 +8,10 @@ pub mod world;
 
 use crate::config::{
     ability::{AbilityConfigMap, default_ability_config},
-    actor::player::PlayerConfig,
+    actor::{
+        organization::{OrganizationConfigMap, default_org_config},
+        player::PlayerConfig,
+    },
     defaults::{DefaultConfig, default_defaults},
     role::{RoleConfigMap, default_role_config},
     state::{StateRestrictionMap, default_state_restrictions},
@@ -23,6 +26,7 @@ pub struct Config {
     pub defaults: DefaultConfig,
     pub world_config: WorldConfig,
     pub player_config: PlayerConfig,
+    pub org_config: OrganizationConfigMap,
 }
 
 impl Config {
@@ -34,6 +38,7 @@ impl Config {
             defaults: default_defaults(), // defaults are things like fallback death messages
             world_config: WorldConfig::new(),
             player_config: PlayerConfig::new(),
+            org_config: default_org_config(),
         }
     }
 }

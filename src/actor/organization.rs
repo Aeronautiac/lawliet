@@ -59,7 +59,7 @@ pub enum LeadershipTransferPolicy {
 }
 pub type LeadershipTransferPolicies = BitFlags<LeadershipTransferPolicy>;
 
-#[derive(Hash, PartialEq, Eq, Debug)]
+#[derive(Hash, PartialEq, Eq, Debug, Clone)]
 pub struct LeadershipStruct {
     pub leader: Option<ID>,
     pub transfer_policies: LeadershipTransferPolicies,
@@ -80,9 +80,9 @@ pub struct Organization {
 }
 
 impl Organization {
-    pub fn new(name: OrganizationName) -> Self {
+    pub fn new(name: OrganizationName, leadership_struct: Option<LeadershipStruct>) -> Self {
         Organization {
-            leadership_struct: None,
+            leadership_struct,
             members: IndexMap::new(),
             abilities: IndexMap::new(),
             blacklist: IndexSet::new(),

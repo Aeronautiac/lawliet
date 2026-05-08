@@ -11,6 +11,7 @@ pub use self::player::Player;
 use crate::{
     ID,
     actor::{
+        organization::LeadershipStruct,
         restriction::Restrictions,
         state::{State, States},
     },
@@ -76,7 +77,7 @@ impl Actor {
         }
     }
 
-    pub fn new_org(name: OrganizationName) -> Self {
+    pub fn new_org(name: OrganizationName, leadership_struct: Option<LeadershipStruct>) -> Self {
         Actor {
             kills: vec![],
             abilities: BTreeSet::new(),
@@ -85,7 +86,7 @@ impl Actor {
             restrictions: BTreeMap::new(),
             actor_links: BTreeSet::new(),
             states: States::empty(),
-            actor_type: ActorType::Org(Organization::new(name)),
+            actor_type: ActorType::Org(Organization::new(name, leadership_struct)),
             pool_map: IndexMap::new(),
         }
     }

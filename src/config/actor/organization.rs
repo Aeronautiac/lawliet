@@ -12,13 +12,14 @@ use crate::{
     passive::PassiveType,
 };
 
-#[derive(Hash, PartialEq, Eq, Debug)]
+#[derive(Hash, PartialEq, Eq, Debug, Clone, Copy)]
 pub enum OrganizationName {
     KK,
     TF,
     SPK,
 }
 
+#[derive(Clone)]
 pub struct OrgConfigAbility {
     pub identifier: AbilityIdentifier,
     pub require_roles: Vec<Role>,
@@ -36,7 +37,7 @@ pub struct OrganizationConfig {
     pub passives: Vec<PassiveType>,
 }
 
-type OrganizationConfigMap = IndexMap<OrganizationName, OrganizationConfig>;
+pub type OrganizationConfigMap = IndexMap<OrganizationName, OrganizationConfig>;
 
 pub fn default_org_config() -> OrganizationConfigMap {
     let mut map = IndexMap::new();

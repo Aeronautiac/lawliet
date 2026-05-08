@@ -13,9 +13,9 @@ use indexmap::IndexMap;
 use crate::{
     ID,
     ability::Ability,
-    actor::{Actor, ActorType, Organization, Player},
+    actor::{Actor, ActorType, Organization, Player, organization::LeadershipStruct},
     chargepool::ChargePool,
-    config::{role::Role, world::WorldChargePoolName},
+    config::{actor::organization::OrganizationName, role::Role, world::WorldChargePoolName},
     notebook::Notebook,
     passive::Passive,
     poll::Poll,
@@ -114,6 +114,18 @@ impl World {
             }
             Entry::Occupied(_) => Err(WorldError::DuplicateName),
         }
+    }
+
+    pub fn add_org(
+        &mut self,
+        name: OrganizationName,
+        leadership_struct: Option<LeadershipStruct>,
+    ) -> ID {
+        let id = self.next_actor_id;
+        self.next_actor_id += 1;
+        self.actors
+            .insert(id, Actor::new_org(name, leadership_struct));
+        id
     }
 
     pub fn add_notebook(&mut self, fake: bool) -> ID {
