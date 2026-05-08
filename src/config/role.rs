@@ -273,7 +273,7 @@ pub fn default_role_config() -> RoleConfigMap {
                 transferrable: false,
             }],
             passives: vec![RolePassive {
-                passive_type: PassiveType::JuryDuty,
+                passive_type: PassiveType::VoteAmplication { multiplier: 2 },
                 transferrable: false,
             }],
             notebooks: vec![],

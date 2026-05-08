@@ -44,6 +44,7 @@ pub enum AbilityName {
     TrueNameInvite, // linked to the org's invite pool
     LeaderResign,   // this will have no charge pools (infinite usages)
     ForceInvite,    // orgs invite pool
+    SilentProsecute,
 }
 
 #[derive(Hash, Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
@@ -492,6 +493,14 @@ pub fn default_ability_config() -> AbilityConfigMap {
 
     map.insert(
         identifier(AbilityName::LeaderResign, 0),
+        AbilityConfig {
+            require_presence: true,
+            default_links: vec![],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::SilentProsecute, 0),
         AbilityConfig {
             require_presence: true,
             default_links: vec![],

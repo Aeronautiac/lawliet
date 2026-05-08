@@ -134,7 +134,7 @@ mod tests {
         actor::state::State,
         config::role::Role,
         engine::Engine,
-        helpers::{actor_has_effective_passive, get_actor, get_notebook},
+        helpers::{actor_get_effective_passive, get_actor, get_notebook},
         passive::{ContactLogType, PassiveType},
     };
 
@@ -268,21 +268,23 @@ mod tests {
         let l_id = add_player(&mut eng, 3, Role::L, "John Pork");
         let w_id_2 = add_player(&mut eng, 5, Role::Watari, "Oima Haumzaundwich");
 
-        assert!(actor_has_effective_passive(
-            &eng,
-            l_id,
-            PassiveType::ContactLogs(ContactLogType::Full)
-        ));
+        assert!(
+            actor_get_effective_passive(&eng, l_id, |passive_type| {
+                matches!(passive_type, PassiveType::ContactLogs(ContactLogType::Full))
+            })
+            .is_some()
+        );
 
         // link to this one should be severed now
         quick_kill(&mut eng, 5, false, true, false, w_id_1);
 
         // L should still be linked to watari 1
-        assert!(actor_has_effective_passive(
-            &eng,
-            l_id,
-            PassiveType::ContactLogs(ContactLogType::Full)
-        ));
+        assert!(
+            actor_get_effective_passive(&eng, l_id, |passive_type| {
+                matches!(passive_type, PassiveType::ContactLogs(ContactLogType::Full))
+            })
+            .is_some()
+        );
 
         // this one should only kill watari 2 and L
         // links should remain intact
@@ -297,11 +299,12 @@ mod tests {
 
         // the passive link to watari 2 should still be intact although disabled due to the passive
         // link restriction on watari 2
-        assert!(!actor_has_effective_passive(
-            &eng,
-            l_id,
-            PassiveType::ContactLogs(ContactLogType::Full)
-        ));
+        assert!(
+            actor_get_effective_passive(&eng, l_id, |passive_type| {
+                matches!(passive_type, PassiveType::ContactLogs(ContactLogType::Full))
+            })
+            .is_none()
+        );
 
         // links were ignored, so only L should have been revived
         let watari1 = get_actor(&eng, w_id_1).unwrap();
@@ -315,11 +318,12 @@ mod tests {
         quick_revive(&mut eng, 6, false, l_id);
 
         // the passive link should be enabled again because there is no passive link restriction
-        assert!(actor_has_effective_passive(
-            &eng,
-            l_id,
-            PassiveType::ContactLogs(ContactLogType::Full)
-        ));
+        assert!(
+            actor_get_effective_passive(&eng, l_id, |passive_type| {
+                matches!(passive_type, PassiveType::ContactLogs(ContactLogType::Full))
+            })
+            .is_some()
+        );
 
         // only watari 2 and L should be revived as watari 1 died alone
         let watari1 = get_actor(&eng, w_id_1).unwrap();

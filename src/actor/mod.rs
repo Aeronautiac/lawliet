@@ -42,7 +42,6 @@ pub struct ActorLink {
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum ActorType {
-    System,
     Org(Organization),
     Player(Player),
 }

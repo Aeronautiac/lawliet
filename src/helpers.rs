@@ -40,6 +40,7 @@ pub fn require_player(eng: &Engine, actor_id: ID) -> Result<(), ActionError> {
         Ok(())
     }
 }
+
 pub fn actor_id(actor: &ActionActor) -> Option<ID> {
     match actor {
         ActionActor::System => None,
@@ -123,30 +124,31 @@ pub fn get_role_config(eng: &Engine, role: Role) -> Result<&RoleConfig, ActionEr
     }
 }
 
-pub fn actor_has_effective_passive(eng: &Engine, actor_id: ID, passive_type: PassiveType) -> bool {
-    let Some(actor_data) = eng.world.get_actor(actor_id) else {
-        return false;
-    };
+pub fn actor_get_effective_passive(
+    eng: &Engine,
+    actor_id: ID,
+    check: impl Fn(&PassiveType) -> bool + Copy,
+) -> Option<ID> {
+    let actor_data = eng.world.get_actor(actor_id)?;
     for id in actor_data.passives.iter() {
         let passive = eng.world.get_passive(*id).unwrap(); // if the list is not accurate
         // to the passives that actually exist, then something is wrong with the engine and a crash
         // is warranted.
-        if passive.ownership_struct.owner == Some(actor_id) && passive.passive_type == passive_type
-        {
-            return true;
+        if passive.ownership_struct.owner == Some(actor_id) && check(&passive.passive_type) {
+            return Some(*id);
         }
     }
     for link in &actor_data.actor_links {
         if link.link_type == ActorLinkType::Passive {
             let other_actor = get_actor(eng, link.link_dest).unwrap();
-            if !other_actor.has_restriction(Restriction::PassiveLinks)
-                && actor_has_effective_passive(eng, link.link_dest, passive_type)
+            if let Some(found_id) = actor_get_effective_passive(eng, link.link_dest, check)
+                && !other_actor.has_restriction(Restriction::PassiveLinks)
             {
-                return true;
-            }
+                return Some(found_id);
+            };
         }
     }
-    false
+    None
 }
 
 pub fn get_player(eng: &Engine, id: ID) -> Result<&Player, ActionError> {
@@ -242,5 +244,21 @@ pub fn get_poll_mut(eng: &mut Engine, id: ID) -> Result<&mut Poll, ActionError> 
 // return 0 for organizations, return 1 for normal players, return some other number if they have
 // the vote amplification passive
 pub fn get_voter_weight(eng: &Engine, id: ID) -> PollWeight {
-    1
+    get_actor(eng, id).expect("Expected a valid actor ID");
+    if get_player(eng, id).is_ok() {
+        let passive_id = actor_get_effective_passive(eng, id, |passive_type| {
+            matches!(passive_type, PassiveType::VoteAmplication { multiplier: _ })
+        });
+        if let Some(id) = passive_id {
+            let passive = get_passive(eng, id).expect("Expected passive to exist");
+            let PassiveType::VoteAmplication { multiplier: val } = passive.passive_type else {
+                unreachable!();
+            };
+            val
+        } else {
+            1
+        }
+    } else {
+        0
+    }
 }

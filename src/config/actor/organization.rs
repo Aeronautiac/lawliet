@@ -194,15 +194,112 @@ pub fn default_org_config() -> OrganizationConfigMap {
                     require_members: 0,
                     usage_policies: OrgAbilityPolicy::RequireLeader.into(),
                 },
-                // TODO:
-                // add silent prosecute
+                OrgConfigAbility {
+                    identifier: AbilityIdentifier {
+                        name: AbilityName::SilentProsecute,
+                        variant: 0,
+                    },
+                    require_roles: vec![],
+                    require_members: 0,
+                    usage_policies: OrgAbilityPolicies::empty(),
+                },
             ],
             passives: vec![],
         },
     );
 
-    // TODO:
-    // - add spk (basically task force clone)
+    map.insert(
+        OrganizationName::SPK,
+        OrganizationConfig {
+            leadership: Some(OrgLeadershipConfig {
+                transfer_policies: LeadershipTransferPolicy::Random.into(),
+            }),
+            abilities: vec![
+                OrgConfigAbility {
+                    identifier: AbilityIdentifier {
+                        name: AbilityName::BackgroundCheck,
+                        variant: 0,
+                    },
+                    require_roles: vec![],
+                    require_members: 3,
+                    usage_policies: OrgAbilityPolicy::RequireVote.into(),
+                },
+                OrgConfigAbility {
+                    identifier: AbilityIdentifier {
+                        name: AbilityName::CivilianArrest,
+                        variant: 0,
+                    },
+                    require_roles: vec![],
+                    require_members: 4,
+                    usage_policies: OrgAbilityPolicy::RequireVote.into(),
+                },
+                OrgConfigAbility {
+                    identifier: AbilityIdentifier {
+                        name: AbilityName::UnlawfulArrest,
+                        variant: 0,
+                    },
+                    require_roles: vec![],
+                    require_members: 5,
+                    usage_policies: OrgAbilityPolicy::RequireVote.into(),
+                },
+                OrgConfigAbility {
+                    identifier: AbilityIdentifier {
+                        name: AbilityName::UnlawfulArrest,
+                        variant: 0,
+                    },
+                    require_roles: vec![Role::PrivateInvestigator, Role::Watari],
+                    require_members: 0,
+                    usage_policies: OrgAbilityPolicy::RequireVote.into(),
+                },
+                OrgConfigAbility {
+                    identifier: AbilityIdentifier {
+                        name: AbilityName::LeaderResign,
+                        variant: 0,
+                    },
+                    require_roles: vec![],
+                    require_members: 0,
+                    usage_policies: OrgAbilityPolicy::RequireLeader.into(),
+                },
+                OrgConfigAbility {
+                    identifier: AbilityIdentifier {
+                        name: AbilityName::Prosecute,
+                        variant: 0,
+                    },
+                    require_roles: vec![],
+                    require_members: 0,
+                    usage_policies: OrgAbilityPolicies::empty(),
+                },
+                OrgConfigAbility {
+                    identifier: AbilityIdentifier {
+                        name: AbilityName::Outsource,
+                        variant: 0,
+                    },
+                    require_roles: vec![],
+                    require_members: 0,
+                    usage_policies: OrgAbilityPolicies::empty(),
+                },
+                OrgConfigAbility {
+                    identifier: AbilityIdentifier {
+                        name: AbilityName::TrueNameInvite,
+                        variant: 0,
+                    },
+                    require_roles: vec![],
+                    require_members: 0,
+                    usage_policies: OrgAbilityPolicy::RequireLeader.into(),
+                },
+                OrgConfigAbility {
+                    identifier: AbilityIdentifier {
+                        name: AbilityName::SilentProsecute,
+                        variant: 0,
+                    },
+                    require_roles: vec![],
+                    require_members: 0,
+                    usage_policies: OrgAbilityPolicies::empty(),
+                },
+            ],
+            passives: vec![],
+        },
+    );
 
     map
 }

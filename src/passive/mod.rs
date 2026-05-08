@@ -1,4 +1,4 @@
-use crate::ownership::OwnershipStruct;
+use crate::{common::VoteAmplifier, ownership::OwnershipStruct};
 
 #[derive(PartialEq, Eq, Clone, Debug, Copy)]
 pub enum ContactLogType {
@@ -9,8 +9,8 @@ pub enum ContactLogType {
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum PassiveType {
-    Wanted,       // you can be silently prosecuted regardless of your affiliations
-    JuryDuty,     // all votes are multiplied by some factor stated in config
+    Wanted, // you can be silently prosecuted regardless of your affiliations
+    VoteAmplication { multiplier: VoteAmplifier },
     VolatileEyes, // certain abilities will cause the player to lose eyes when certain conditions
     // are met. if the player loses both their eyes, they cannot use certain abilities anymore.
     ContactLogs(ContactLogType),
