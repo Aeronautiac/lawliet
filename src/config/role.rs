@@ -12,7 +12,7 @@ use crate::{
 // would allow dynamic role creation on the host's end and wouldn't require much refactoring because
 // the engine doesn't hardcode anything.
 
-#[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord)]
 pub enum Role {
     Kira,
     SecondKira,
@@ -153,7 +153,7 @@ pub fn default_role_config() -> RoleConfigMap {
                 },
                 RoleAbility {
                     identifier: AbilityIdentifier {
-                        name: AbilityName::AnonymousProsecution,
+                        name: AbilityName::AnonymousProsecute,
                         variant: 0,
                     },
                     transferrable: false,

@@ -53,14 +53,14 @@ impl ActionInterface for CreatePoll {
         };
 
         // poll only exists in the mutate path
-        if mutate {
-            if let Some(duration) = self.duration {
-                Action::ScheduleJob(ScheduleJob {
-                    timestamp: eng.time + duration,
-                    payload: Box::new(Action::PollTimeout(PollTimeout { poll_id: id })),
-                })
-                .handle(eng, ctx, actor, version, mutate)?;
-            }
+        if let Some(duration) = self.duration
+            && mutate
+        {
+            Action::ScheduleJob(ScheduleJob {
+                timestamp: eng.time + duration,
+                payload: Box::new(Action::PollTimeout(PollTimeout { poll_id: id })),
+            })
+            .handle(eng, ctx, actor, version, mutate)?;
         }
 
         Ok(ActionResponse::CreatePoll(CreatePollReponse { id }))

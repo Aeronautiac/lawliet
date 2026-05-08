@@ -60,8 +60,6 @@ impl ActionInterface for CreateActorLinks {
                     }
                 }
             }
-            // TODO:
-            // Org links (if added in the future)
         }
 
         if mutate {

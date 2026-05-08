@@ -15,6 +15,7 @@ pub enum AbilityCategory {
 #[derive(Hash, Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 pub enum AbilityName {
     Contact,
+    CreateGroupChat,
     AnonymousContact,
     FalseAnonymousContact,
     AnonymousAnnouncement,
@@ -29,7 +30,7 @@ pub enum AbilityName {
     UnlawfulArrest,
     UnderTheRadar,
     KiraConnection,
-    AnonymousProsecution,
+    AnonymousProsecute,
     Autopsy,
     Ipp,
     TrueNameReroll,
@@ -38,6 +39,11 @@ pub enum AbilityName {
     TrueNameReveal,
     NotebookReveal,
     Gun,
+    Prosecute,      // this will be linked to a global charge pool
+    Outsource,      // linked to both the org's invite pool and the global prosecution pool
+    TrueNameInvite, // linked to the org's invite pool
+    LeaderResign,   // this will have no charge pools (infinite usages)
+    ForceInvite,    // orgs invite pool
 }
 
 #[derive(Hash, Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
@@ -72,12 +78,6 @@ pub struct AbilityConfig {
     pub require_presence: bool,
 }
 
-// TODO:
-// - Instead of trying to match an ability's pool to config to figure out what the base values are,
-// just go loop through abilities and change their base value fields when config changes (take into
-// consideration that a new pool may have been added by the host. Consider only the pools that match
-// config entries.)
-
 // Ability must not have multiple individual links and must not have multiple links to the same pool
 pub fn default_ability_config() -> AbilityConfigMap {
     let mut map: AbilityConfigMap = IndexMap::new();
@@ -89,6 +89,18 @@ pub fn default_ability_config() -> AbilityConfigMap {
             default_links: vec![ConfigPoolLink {
                 link_type: PoolLinkType::Limit,
                 weight: 1,
+                details: ConfigPoolLinkDetails::Actor(ActorChargePoolName::Contact),
+            }],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::CreateGroupChat, 0),
+        AbilityConfig {
+            require_presence: true,
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 5,
                 details: ConfigPoolLinkDetails::Actor(ActorChargePoolName::Contact),
             }],
         },
@@ -301,7 +313,7 @@ pub fn default_ability_config() -> AbilityConfigMap {
     );
 
     map.insert(
-        identifier(AbilityName::AnonymousProsecution, 0),
+        identifier(AbilityName::AnonymousProsecute, 0),
         AbilityConfig {
             require_presence: true,
             default_links: vec![ConfigPoolLink {
@@ -432,6 +444,57 @@ pub fn default_ability_config() -> AbilityConfigMap {
                     reset_time: 1,
                 }),
             }],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::Prosecute, 0),
+        AbilityConfig {
+            require_presence: true,
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::World(WorldChargePoolName::Prosecution),
+            }],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::Outsource, 0),
+        AbilityConfig {
+            require_presence: true,
+            default_links: vec![
+                ConfigPoolLink {
+                    link_type: PoolLinkType::Limit,
+                    weight: 1,
+                    details: ConfigPoolLinkDetails::World(WorldChargePoolName::Prosecution),
+                },
+                ConfigPoolLink {
+                    link_type: PoolLinkType::Limit,
+                    weight: 1,
+                    details: ConfigPoolLinkDetails::Actor(ActorChargePoolName::Invite),
+                },
+            ],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::TrueNameInvite, 0),
+        AbilityConfig {
+            require_presence: true,
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Actor(ActorChargePoolName::Invite),
+            }],
+        },
+    );
+
+    map.insert(
+        identifier(AbilityName::LeaderResign, 0),
+        AbilityConfig {
+            require_presence: true,
+            default_links: vec![],
         },
     );
 

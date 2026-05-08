@@ -2,7 +2,7 @@
 * SYSTEM ACTION
 * Create a new organization
 * Use config to determine details
-* Remember than an org is just a variant of an actor
+* Remember that an org is just a variant of an actor
 */
 
 use crate::action::{ActionInterface, ActionResponse};

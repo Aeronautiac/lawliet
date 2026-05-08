@@ -1,4 +1,8 @@
-use crate::{ID, config::actor::organization::OrganizationName};
+use crate::{
+    ID,
+    common::MemberCount,
+    config::{actor::organization::OrganizationName, role::Role},
+};
 use enumflags2::{BitFlags, bitflags};
 use indexmap::{IndexMap, IndexSet};
 
@@ -38,6 +42,13 @@ pub enum OrgAbilityPolicy {
 }
 pub type OrgAbilityPolicies = BitFlags<OrgAbilityPolicy>;
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct OrgAbility {
+    pub require_roles: IndexSet<Role>,
+    pub require_members: MemberCount,
+    pub usage_policies: OrgAbilityPolicies,
+}
+
 // the leader can be allowed to use multiple transfer policies at once
 #[bitflags]
 #[repr(u8)]
@@ -64,7 +75,7 @@ pub struct Organization {
     pub leadership_struct: Option<LeadershipStruct>,
     pub members: IndexMap<ID, OrgMember>,
     pub blacklist: IndexSet<ID>,
-    pub abilities: IndexMap<ID, OrgAbilityPolicies>,
+    pub abilities: IndexMap<ID, OrgAbility>,
     pub org_name: OrganizationName,
 }
 
@@ -105,5 +116,16 @@ impl Organization {
         {
             leadership_struct.leader = None;
         }
+    }
+
+    /// count number of members matching a certain condition
+    pub fn member_count(&self, condition: impl Fn(ID, &OrgMember) -> bool) -> MemberCount {
+        let mut count = 0;
+        for (id, member) in self.members.iter() {
+            if condition(*id, member) {
+                count += 1;
+            }
+        }
+        count
     }
 }

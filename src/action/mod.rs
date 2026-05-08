@@ -17,6 +17,7 @@ use crate::{
                 add_to_org::{AddToOrg, AddToOrgResponse},
                 create_org::{CreateOrg, CreateOrgResponse},
                 remove_from_org::{RemoveFromOrg, RemoveFromOrgResponse},
+                system_use_org_ability::{SystemUseOrgAbility, SystemUseOrgAbilityResponse},
                 use_org_ability::{UseOrgAbility, UseOrgAbilityResponse},
             },
             player::{
@@ -100,6 +101,8 @@ pub enum ActionError {
     CannotLendToYourself,
     TimeAlreadyPassed,
     AbilityCategoryBlocked,
+    NotEnoughMembers,
+    RequiredRolesNotPresent,
     PassiveNotFound,
     AbilityConfigNotFound,
     AbilityNotFound,
@@ -188,6 +191,7 @@ pub enum Action {
     AddToOrg(AddToOrg),
     RemoveFromOrg(RemoveFromOrg),
     CreateOrg(CreateOrg),
+    SystemUseOrgAbility(SystemUseOrgAbility),
 }
 
 pub enum ActionResponse {
@@ -235,6 +239,7 @@ pub enum ActionResponse {
     AddToOrg(AddToOrgResponse),
     RemoveFromOrg(RemoveFromOrgResponse),
     CreateOrg(CreateOrgResponse),
+    SystemUseOrgAbility(SystemUseOrgAbilityResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]

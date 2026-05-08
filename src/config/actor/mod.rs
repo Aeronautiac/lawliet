@@ -5,4 +5,5 @@ pub mod player;
 #[derive(Hash, Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
 pub enum ActorChargePoolName {
     Contact,
+    Invite,
 }
