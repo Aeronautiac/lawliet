@@ -194,6 +194,8 @@ pub fn default_org_config() -> OrganizationConfigMap {
                     require_members: 0,
                     usage_policies: OrgAbilityPolicy::RequireLeader.into(),
                 },
+                // TODO:
+                // add silent prosecute
             ],
             passives: vec![],
         },

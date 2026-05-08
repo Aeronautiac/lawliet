@@ -288,9 +288,9 @@ impl ActionActor {
 
     pub fn require_not_system(&self) -> Result<(), ActionError> {
         if matches!(self, ActionActor::System) {
-            Ok(())
-        } else {
             Err(ActionError::ActorIsSystem)
+        } else {
+            Ok(())
         }
     }
 }
