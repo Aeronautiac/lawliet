@@ -11,10 +11,12 @@ use crate::{
             create_and_give_notebook::CreateAndGiveNotebook, lend_notebook::LendNotebook,
             write_name::WriteName,
         },
+        passive::create_and_give_passive::CreateAndGivePassive,
         poll::{add_vote::AddVote, create_poll::CreatePoll, remove_vote::RemoveVote},
     },
     config::role::Role,
     engine::Engine,
+    passive::{Passive, PassiveType},
     poll::{Poll, PollPolicy, PollVisibility, VoterPolicy},
 };
 
@@ -131,6 +133,32 @@ pub fn quick_notebook(eng: &mut Engine, time: Time, player: ID, fake: bool) -> I
         .unwrap()
         .0;
     let ActionResponse::CreateAndGiveNotebook(response) = data else {
+        unreachable!()
+    };
+    response.id
+}
+
+pub fn quick_passive(
+    eng: &mut Engine,
+    time: Time,
+    player: ID,
+    passive_type: PassiveType,
+    transferrable: bool,
+) -> ID {
+    let data = eng
+        .execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: time,
+            payload: Action::CreateAndGivePassive(CreateAndGivePassive {
+                passive_type,
+                transferrable,
+                actor_id: player,
+                volatile: false,
+            }),
+        })
+        .unwrap()
+        .0;
+    let ActionResponse::CreateAndGivePassive(response) = data else {
         unreachable!()
     };
     response.id

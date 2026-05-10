@@ -15,6 +15,7 @@ mod poll_tests {
         config::role::Role,
         engine::Engine,
         helpers::get_actor,
+        passive::PassiveType,
         poll::{PollPolicy, PollVisibility, VoterPolicy},
         test_helpers::*,
     };
@@ -285,23 +286,227 @@ mod poll_tests {
     }
 
     #[test]
-    fn present_no_update_winning_timeout() {}
+    fn present_no_update_winning_timeout() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        let poll_id = create_poll(
+            &mut eng,
+            0,
+            CreatePoll {
+                voter_policy: VoterPolicy::Present,
+                visibility: PollVisibility::AllPresent,
+                update_policy: PollPolicy::AlwaysInconclusive,
+                timeout_policy: PollPolicy::WinningVote,
+                duration: Some(10),
+                payload: Box::new(default_kill(p1)),
+            },
+        );
+
+        add_vote(&mut eng, 1, poll_id, p1, true).unwrap();
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        assert!(!p1_actor.has_state(State::Dead));
+
+        null_action(&mut eng, 20);
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        assert!(p1_actor.has_state(State::Dead));
+    }
 
     #[test]
-    fn present_no_update_majority_timeout() {}
+    fn present_no_update_majority_timeout() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+        let p3 = add_player(&mut eng, 0, Role::Civilian, "p3");
+
+        let poll_id = create_poll(
+            &mut eng,
+            0,
+            CreatePoll {
+                voter_policy: VoterPolicy::Present,
+                visibility: PollVisibility::AllPresent,
+                update_policy: PollPolicy::AlwaysInconclusive,
+                timeout_policy: PollPolicy::Majority,
+                duration: Some(10),
+                payload: Box::new(default_kill(p1)),
+            },
+        );
+
+        add_vote(&mut eng, 1, poll_id, p1, true).unwrap();
+        add_vote(&mut eng, 1, poll_id, p2, true).unwrap();
+        add_vote(&mut eng, 1, poll_id, p3, true).unwrap();
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        assert!(!p1_actor.has_state(State::Dead));
+
+        null_action(&mut eng, 20);
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        assert!(p1_actor.has_state(State::Dead));
+    }
 
     #[test]
-    fn vote_amplification() {}
+    fn present_timeout_majority_failure() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+        let p3 = add_player(&mut eng, 0, Role::Civilian, "p3");
+
+        quick_passive(
+            &mut eng,
+            0,
+            p3,
+            PassiveType::VoteAmplication { multiplier: 2 },
+            false,
+        );
+
+        let poll_id = create_poll(
+            &mut eng,
+            0,
+            CreatePoll {
+                voter_policy: VoterPolicy::Present,
+                visibility: PollVisibility::AllPresent,
+                update_policy: PollPolicy::Majority,
+                timeout_policy: PollPolicy::Majority,
+                duration: Some(5),
+                payload: Box::new(default_kill(p1)),
+            },
+        );
+
+        add_vote(&mut eng, 0, poll_id, p1, true).unwrap();
+        add_vote(&mut eng, 0, poll_id, p2, true).unwrap();
+        add_vote(&mut eng, 0, poll_id, p3, false).unwrap();
+        null_action(&mut eng, 10);
+
+        // it should be a 50/50 split
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        assert!(!p1_actor.has_state(State::Dead));
+    }
 
     #[test]
-    fn voter_death_majority_update() {}
+    fn vote_amplification() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+
+        quick_passive(
+            &mut eng,
+            0,
+            p2,
+            PassiveType::VoteAmplication { multiplier: 10 },
+            false,
+        );
+
+        let poll_id = create_poll(
+            &mut eng,
+            0,
+            CreatePoll {
+                voter_policy: VoterPolicy::Present,
+                visibility: PollVisibility::AllPresent,
+                update_policy: PollPolicy::Majority,
+                timeout_policy: PollPolicy::Majority,
+                duration: Some(5),
+                payload: Box::new(default_kill(p1)),
+            },
+        );
+
+        add_vote(&mut eng, 0, poll_id, p1, false).unwrap();
+        add_vote(&mut eng, 0, poll_id, p2, true).unwrap();
+        null_action(&mut eng, 10);
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        assert!(p1_actor.has_state(State::Dead));
+    }
+
+    // test the scenario where a death allows a vote to cross threshold
+    #[test]
+    fn voter_death_majority_update() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+
+        let poll_id = create_poll(
+            &mut eng,
+            0,
+            CreatePoll {
+                voter_policy: VoterPolicy::Present,
+                visibility: PollVisibility::AllPresent,
+                update_policy: PollPolicy::Majority,
+                timeout_policy: PollPolicy::Majority,
+                duration: None,
+                payload: Box::new(default_kill(p1)),
+            },
+        );
+
+        add_vote(&mut eng, 0, poll_id, p1, true).unwrap();
+        quick_kill(&mut eng, 0, true, true, false, p2);
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        assert!(p1_actor.has_state(State::Dead));
+    }
 
     #[test]
-    fn voter_death_winning_vote_timeout() {}
+    fn voter_death_winning_vote_timeout() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+
+        quick_passive(
+            &mut eng,
+            0,
+            p2,
+            PassiveType::VoteAmplication { multiplier: 10 },
+            false,
+        );
+
+        let poll_id = create_poll(
+            &mut eng,
+            0,
+            CreatePoll {
+                voter_policy: VoterPolicy::Present,
+                visibility: PollVisibility::AllPresent,
+                update_policy: PollPolicy::AlwaysInconclusive,
+                timeout_policy: PollPolicy::WinningVote,
+                duration: Some(5),
+                payload: Box::new(default_kill(p1)),
+            },
+        );
+
+        add_vote(&mut eng, 0, poll_id, p1, true).unwrap();
+        add_vote(&mut eng, 0, poll_id, p2, false).unwrap();
+        quick_kill(&mut eng, 0, true, true, false, p2);
+        null_action(&mut eng, 10);
+
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        assert!(p1_actor.has_state(State::Dead));
+    }
 
     #[test]
-    fn action_becomes_invalid() {}
+    fn action_becomes_invalid() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+
+        let poll_id = create_poll(
+            &mut eng,
+            0,
+            CreatePoll {
+                voter_policy: VoterPolicy::Present,
+                visibility: PollVisibility::AllPresent,
+                update_policy: PollPolicy::Majority,
+                timeout_policy: PollPolicy::AlwaysInconclusive,
+                duration: None,
+                payload: Box::new(default_kill(p2)),
+            },
+        );
+
+        quick_kill(&mut eng, 0, true, true, false, p2);
+        assert!(add_vote(&mut eng, 0, poll_id, p1, true).is_err());
+    }
 
     // TODO:
     // visibility based tests (orgs, channels, etc...)
+    // do it when channels are implemented
 }

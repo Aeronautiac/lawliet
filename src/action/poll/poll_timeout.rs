@@ -38,7 +38,7 @@ impl ActionInterface for PollTimeout {
             // practice. The poll will update and fail beforehand.)
         } else {
             let poll = get_poll(eng, self.poll_id).unwrap();
-            let policy_res = poll.update_policy(eng);
+            let policy_res = poll.timeout_policy(eng);
             match policy_res {
                 PolicyResult::Accept => {
                     payload.handle(eng, ctx, actor, version, mutate)?;
