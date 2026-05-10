@@ -20,6 +20,7 @@ pub fn majority(poll: &Poll, eng: &Engine) -> PolicyResult {
 // if the weights are equal, inconclusive pub fn winning_vote(poll: &Poll, eng: &Engine) -> PolicyResult {
 pub fn winning_vote(poll: &Poll, eng: &Engine) -> PolicyResult {
     let query = poll.weights(eng);
+    dbg!(&query);
     if query.accept > query.reject {
         PolicyResult::Accept
     } else if query.reject > query.accept {

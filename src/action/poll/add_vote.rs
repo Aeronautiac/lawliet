@@ -34,6 +34,9 @@ impl ActionInterface for AddVote {
         if !poll.voter_policy(eng, player_id) {
             return Err(ActionError::InvalidVoter);
         }
+        if poll.contains_voter(player_id) {
+            return Err(ActionError::AlreadyVoted);
+        }
         if mutate {
             let poll = get_poll_mut(eng, self.poll_id)?;
             poll.add_vote(player_id, self.accept);

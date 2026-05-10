@@ -119,6 +119,7 @@ pub enum ActionError {
     PollDoesntExist,
     InvalidVoter,
     NotAVoter,
+    AlreadyVoted,
     PlayerIsBlacklisted,
     OrgDoesntHaveLeadership,
     ActorAlreadyInOrg,
@@ -304,7 +305,9 @@ impl Action {
         version: Version,
     ) -> ActionResult {
         let result = self.handle(eng, ctx, actor, version, true);
-        let _ = Action::Update(Update {}).handle(eng, ctx, actor, version, true);
+        Action::Update(Update {})
+            .handle(eng, ctx, &ActionActor::System, version, true)
+            .expect("Update action has failed");
         result
     }
 
