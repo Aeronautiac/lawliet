@@ -11,7 +11,7 @@ use crate::{
         ActionResult,
         actor::player::{kill::Kill, schedule_kill::ScheduleKill},
     },
-    actor::restriction::Restriction,
+    actor::modifier::Modifier,
     common::Version,
     engine::Engine,
     helpers::actor_id,
@@ -43,7 +43,7 @@ impl ActionInterface for WriteName {
         let target = eng.world.get_player_id_by_name(&self.true_name);
 
         let player_actor = eng.world.get_actor_mut(player_id).unwrap();
-        if player_actor.has_restriction(Restriction::NotebookUsage) {
+        if player_actor.has_modifier(Modifier::NoNotebookUsage) {
             return Err(ActionError::NotebookUsageBlocked);
         }
 

@@ -2,7 +2,7 @@ use crate::{
     ID,
     ability::{AbilityInterface, AbilityResponse},
     action::{
-        Action, ActionContext, ActionInterface,
+        Action, ActionActor, ActionContext, ActionInterface,
         actor::player::{kill::Kill, revive::Revive, schedule_revive::ScheduleRevive},
     },
     config::{ability::AbilityName, role::Role},
@@ -44,7 +44,7 @@ impl AbilityInterface for Pseudocide {
             killer_id: None,
             target_id: self.target_id,
         })
-        .handle(eng, ctx, actor, version, mutate)?;
+        .handle(eng, ctx, &ActionActor::System, version, mutate)?;
 
         ctx.commands.push(crate::command::Command::AnnounceDeath {
             true_name: self.true_name.to_lowercase(),
@@ -61,7 +61,7 @@ impl AbilityInterface for Pseudocide {
                 target_id: self.target_id,
             },
         })
-        .handle(eng, ctx, actor, version, mutate)?;
+        .handle(eng, ctx, &ActionActor::System, version, mutate)?;
 
         Ok(AbilityResponse::Pseudocide(PseudocideResponse {}))
     }

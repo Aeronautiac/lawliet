@@ -12,7 +12,7 @@ use crate::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
         ActionResult, ability::use_ability::UseAbility, poll::create_poll::CreatePoll,
     },
-    actor::{organization::OrgAbilityPolicy, restriction::Restriction},
+    actor::{modifier::Modifier, organization::OrgAbilityPolicy},
     config::role::Role,
     helpers::get_org,
     poll::{PollPolicy, PollVisibility, VoterPolicy},
@@ -49,7 +49,7 @@ impl ActionInterface for SystemUseOrgAbility {
             let org_ability = org_data.abilities.get(&self.ability_id).unwrap();
             if org_data.member_count(|id, _| {
                 let member_data = eng.world.get_actor(id).unwrap();
-                !member_data.has_restriction(Restriction::Presence)
+                !member_data.has_modifier(Modifier::NoPresence)
             }) < org_ability.require_members
             {
                 return Err(ActionError::NotEnoughMembers);
@@ -60,7 +60,7 @@ impl ActionInterface for SystemUseOrgAbility {
                 .keys()
                 .filter(|id| {
                     let actor_data = eng.world.get_actor(**id).unwrap();
-                    !actor_data.has_restriction(Restriction::Presence)
+                    !actor_data.has_modifier(Modifier::NoPresence)
                 })
                 .map(|id| eng.world.get_player(*id).unwrap().role)
                 .collect();

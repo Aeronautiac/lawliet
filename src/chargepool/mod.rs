@@ -45,12 +45,23 @@ impl ChargePool {
         }
     }
 
-    pub fn can_use_charges(&self, charges: ChargeCount) -> bool {
-        self.charges >= charges
+    fn use_charges(&mut self, charges: ChargeCount) {
+        self.charges = max(self.charges - charges, 0);
+        if self.iterations_to_reset > 0 {
+            self.iterations_to_reset = self.base_reset_time;
+        }
     }
 
-    pub fn use_charges(&mut self, charges: ChargeCount) {
-        self.charges = max(self.charges - charges, 0);
+    pub fn add_charges(&mut self, charges: ChargeCount) {
+        self.charges += charges;
+    }
+
+    pub fn can_use(&self, link: &PoolLink) -> bool {
+        self.charges >= link.weight
+    }
+
+    pub fn on_use(&mut self, link: &PoolLink) {
+        self.charges = max(self.charges - link.weight, 0);
         if self.iterations_to_reset > 0 {
             self.iterations_to_reset = self.base_reset_time;
         }

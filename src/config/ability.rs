@@ -84,6 +84,21 @@ pub fn default_ability_config() -> AbilityConfigMap {
     let mut map: AbilityConfigMap = IndexMap::new();
 
     map.insert(
+        identifier(AbilityName::Gun, 0),
+        AbilityConfig {
+            require_presence: true,
+            default_links: vec![ConfigPoolLink {
+                link_type: PoolLinkType::Limit,
+                weight: 1,
+                details: ConfigPoolLinkDetails::Individual(PoolSpecifier {
+                    charges: 1,
+                    reset_time: 1,
+                }),
+            }],
+        },
+    );
+
+    map.insert(
         identifier(AbilityName::Contact, 0),
         AbilityConfig {
             require_presence: true,

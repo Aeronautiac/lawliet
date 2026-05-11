@@ -1,7 +1,7 @@
 use crate::{
     ID,
     ability::{AbilityInterface, AbilityResponse},
-    action::{Action, ActionContext, ActionInterface, actor::player::kill::Kill},
+    action::{Action, ActionActor, ActionContext, ActionInterface, actor::player::kill::Kill},
     config::ability::AbilityName,
     helpers::actor_id,
 };
@@ -39,7 +39,7 @@ impl AbilityInterface for Gun {
             killer_id: id,
             target_id: self.target_id,
         })
-        .handle(eng, ctx, actor, version, mutate)?;
+        .handle(eng, ctx, &ActionActor::System, version, mutate)?;
 
         Ok(AbilityResponse::Gun(GunResponse {}))
     }

@@ -8,10 +8,10 @@ use crate::{
     action::{
         ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse, ActionResult,
     },
-    actor::restriction::Restriction,
+    actor::modifier::Modifier,
     common::Version,
     engine::Engine,
-    helpers::{actor_id, get_actor, get_actor_mut, get_notebook, get_notebook_mut, require_alive},
+    helpers::{actor_id, get_actor_mut, get_notebook_mut},
 };
 
 #[derive(Debug)]
@@ -48,7 +48,7 @@ impl ActionInterface for LendNotebook {
         }
 
         let player_actor = get_actor_mut(eng, user_id)?;
-        if player_actor.has_restriction(Restriction::NotebookPassage) {
+        if player_actor.has_modifier(Modifier::NoNotebookPassage) {
             return Err(ActionError::NotebookPassageBlocked);
         }
         if mutate {
@@ -56,7 +56,7 @@ impl ActionInterface for LendNotebook {
         }
 
         let target_actor = get_actor_mut(eng, self.target_id)?;
-        if target_actor.has_restriction(Restriction::NotebookReceive) {
+        if target_actor.has_modifier(Modifier::NoNotebookReceive) {
             return Err(ActionError::ActorHasNotebookReceiveRestriction);
         }
         if mutate {

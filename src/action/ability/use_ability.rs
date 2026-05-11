@@ -9,7 +9,7 @@ use crate::{
     action::{
         ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse, ActionResult,
     },
-    actor::restriction::Restriction,
+    actor::modifier::Modifier,
     chargepool::PoolLinkType,
     helpers::{
         actor_id, get_ability, get_ability_config, get_ability_mut, get_actor, get_charge_pool_mut,
@@ -40,12 +40,12 @@ impl ActionInterface for UseAbility {
         let req_presence = config.require_presence;
 
         let actor_data = get_actor(eng, actor_id)?;
-        if req_presence && actor_data.has_restriction(Restriction::Presence) {
+        if req_presence && actor_data.has_modifier(Modifier::NoPresence) {
             return Err(ActionError::AbilityCategoryBlocked);
         }
 
         let ability = get_ability(eng, self.ability_id)?;
-        if Some(self.ability_id) != ability.ownership_struct.owner {
+        if Some(actor_id) != ability.ownership_struct.owner {
             return Err(ActionError::AbilityNotOwned);
         }
         if ability.ability_name != self.ability_args.ability_name() {
@@ -58,26 +58,29 @@ impl ActionInterface for UseAbility {
         // state.
         let ability = get_ability_mut(eng, self.ability_id)?;
         let links = ability.pool_links.clone();
-        let mut pool_condition = false;
+        let mut pool_condition = None;
         for link in &links {
             let pool = get_charge_pool_mut(eng, link.link.link_dest)?;
             match link.link.link_type {
                 PoolLinkType::Limit => {
-                    if !pool.can_use_charges(link.link.weight) {
+                    if !pool.can_use(&link.link) {
                         return Err(ActionError::AbilityNotEnoughCharges);
                     }
                 }
                 PoolLinkType::Pool => {
-                    if pool.can_use_charges(link.link.weight) {
-                        pool_condition = true;
+                    if pool_condition.is_none() {
+                        pool_condition = Some(false);
+                    }
+                    if pool.can_use(&link.link) {
+                        pool_condition = Some(true);
                     }
                 }
             }
-            if mutate && pool.can_use_charges(link.link.weight) {
-                pool.use_charges(link.link.weight);
+            if mutate && pool.can_use(&link.link) {
+                pool.on_use(&link.link);
             }
         }
-        if !pool_condition {
+        if Some(false) == pool_condition {
             return Err(ActionError::AbilityNotEnoughCharges);
         }
 

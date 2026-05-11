@@ -60,32 +60,6 @@
 // - Frontend servers handle routing and similar tasks
 // - Response data structs are used internally (tests, sub-action return values, yagami)
 // - Frontends must have host controls and game views
-//
-// POLL IDEAS:
-// - Polls should cancel themselves if the action attached to them is rejected (pass mutate false)
-// - The poll create action will check the attached action as well to gate initial creation
-// - Adding a vote to a poll should first evaluate the poll
-// - There should be an update action which handles sub-actions like poll
-// updates which should run to keep game state up to date for things that may seem unrelated but
-// significantly effect world state. Just scheduling poll update actions every 10 seconds or so is
-// both unfair and inefficient. For example, an actor may die pushing the game state into a place
-// where a poll may pass and imprison someone, but since it didnt update, that person may be able to
-// do something before they were imprisoned even though they should already be in prison
-// - An update action should ALWAYS run after any other action (things like polls may
-// change depending on the things that other actions do. for example, killing a member of kira's
-// kingdom who voted no for a poll might push that poll into the passing threshold even though there
-// was no direct update to the poll
-// - On every update, polls should be evaluated and checked for validity
-// - Additionally, polls should be updated when they are interacted with (it is not
-// necessary to even call the update function directly in handlers which simply modify poll state
-// because the update action will be called directly afterwards anyway)
-// - Update actions are called only AFTER other actions because there can be no poll with no initial
-// creation action, and padding both sides would lead to double updates between every event
-// (pointless)
-
-// Update actions should be called not in the engine, but in the action execute function
-// Dry runs SHOULD NOT call poll updates, only execute actions
-// Interleaving is not an issue because actions are atomic by nature
 
 mod ability;
 mod action;
@@ -107,7 +81,7 @@ mod world;
 pub use common::{ID, Time};
 
 // TODO:
-// - Test the ability system, poll system, and organization system
+// - Test the ability system and organization system
 // - Implement channels
 //    * Implement lounges
 //    * Implement group chats

@@ -90,6 +90,7 @@ impl ActionInterface for GiveAbility {
             for link in &links_to_create {
                 ability.add_link(link.link_dest, link.link_type, link.weight, true);
             }
+
             for link in &links_to_create {
                 let pool = get_charge_pool_mut(eng, link.link_dest)?;
                 pool.on_link();

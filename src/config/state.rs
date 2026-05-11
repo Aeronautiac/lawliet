@@ -1,33 +1,34 @@
-use std::collections::BTreeMap;
+use indexmap::IndexMap;
 
 use crate::actor::{
-    restriction::{Restriction, Restrictions},
+    modifier::{Modifier, Modifiers},
     state::State,
 };
 
-pub type StateRestrictionMap = BTreeMap<State, Restrictions>;
+pub type StateModifierMap = IndexMap<State, Modifiers>;
 
-pub fn default_state_restrictions() -> StateRestrictionMap {
-    let mut map = BTreeMap::new();
+pub fn default_state_modifiers() -> StateModifierMap {
+    let mut map = IndexMap::new();
 
-    map.insert(State::Dead, Restrictions::all());
+    map.insert(State::Dead, Modifiers::all()); // later restrict this to some set. there
+    // may be positive modifiers in the future
     map.insert(
         State::Incarcerated,
-        Restriction::Presence
-            | Restriction::Contact
-            | Restriction::NotebookPassage
-            | Restriction::NotebookUsage,
+        Modifier::NoPresence
+            | Modifier::NoContact
+            | Modifier::NoNotebookPassage
+            | Modifier::NoNotebookUsage,
     );
     map.insert(
         State::Kidnapped,
-        Restriction::Presence
-            | Restriction::Contact
-            | Restriction::NotebookUsage
-            | Restriction::NotebookPassage,
+        Modifier::NoPresence
+            | Modifier::NoContact
+            | Modifier::NoNotebookUsage
+            | Modifier::NoNotebookPassage,
     );
     map.insert(
         State::Custody,
-        Restriction::NotebookPassage | Restriction::NotebookUsage,
+        Modifier::NoNotebookPassage | Modifier::NoNotebookUsage,
     );
 
     map

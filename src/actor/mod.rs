@@ -1,9 +1,7 @@
+pub mod modifier;
 pub mod organization;
 pub mod player;
-pub mod restriction;
 pub mod state;
-
-use std::collections::{BTreeMap, BTreeSet};
 
 pub use self::organization::Organization;
 pub use self::player::Player;
@@ -11,8 +9,8 @@ pub use self::player::Player;
 use crate::{
     ID,
     actor::{
+        modifier::{Modifier, Modifiers, Source},
         organization::LeadershipStruct,
-        restriction::Restrictions,
         state::{State, States},
     },
     config::{
@@ -20,10 +18,9 @@ use crate::{
         role::Role,
     },
 };
-use indexmap::IndexMap;
-use restriction::{Restriction, Source};
+use indexmap::{IndexMap, IndexSet};
 
-#[derive(PartialEq, Eq, Debug, Ord, PartialOrd, Clone, Copy)]
+#[derive(Hash, PartialEq, Eq, Debug, Ord, PartialOrd, Clone, Copy)]
 pub enum ActorLinkType {
     Life, // if an actor has a life link to another actor, then when the main actor dies, so will
     // the other actor, and the same is true for revivals.
@@ -34,7 +31,7 @@ pub enum ActorLinkType {
              // link death and revive behaviours can be explicitly ignored in their corresponding actions
 }
 
-#[derive(PartialEq, Eq, Debug, Ord, PartialOrd, Clone)]
+#[derive(Hash, PartialEq, Eq, Debug, Ord, PartialOrd, Clone)]
 pub struct ActorLink {
     pub link_type: ActorLinkType,
     pub link_dest: ID,
@@ -46,18 +43,18 @@ pub enum ActorType {
     Player(Player),
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug)]
 pub struct Actor {
     pub kills: Vec<ID>,
-    pub abilities: BTreeSet<ID>, // true ownership is in the structs themselves, these sets are here
+    pub abilities: IndexSet<ID>, // true ownership is in the structs themselves, these sets are here
     // for performance and utility
     // they must be synced to game state
-    pub passives: BTreeSet<ID>,
-    pub notebooks: BTreeSet<ID>, // any notebook currently HELD (not owned) by this actor
-    pub restrictions: BTreeMap<Source, Restrictions>,
+    pub passives: IndexSet<ID>,
+    pub notebooks: IndexSet<ID>, // any notebook currently HELD (not owned) by this actor
+    pub modifiers: IndexMap<Source, Modifiers>,
     pub states: States,
     pub actor_type: ActorType,
-    pub actor_links: BTreeSet<ActorLink>,
+    pub actor_links: IndexSet<ActorLink>,
     pub pool_map: IndexMap<ActorChargePoolName, ID>,
 }
 
@@ -65,12 +62,12 @@ impl Actor {
     pub fn new_player(true_name: &str, role: Role) -> Self {
         Actor {
             kills: vec![],
-            abilities: BTreeSet::new(),
-            passives: BTreeSet::new(),
-            notebooks: BTreeSet::new(),
-            restrictions: BTreeMap::new(),
+            abilities: IndexSet::new(),
+            passives: IndexSet::new(),
+            notebooks: IndexSet::new(),
+            modifiers: IndexMap::new(),
             states: States::empty(),
-            actor_links: BTreeSet::new(),
+            actor_links: IndexSet::new(),
             actor_type: ActorType::Player(Player::new(true_name, role)),
             pool_map: IndexMap::new(),
         }
@@ -79,31 +76,31 @@ impl Actor {
     pub fn new_org(name: OrganizationName, leadership_struct: Option<LeadershipStruct>) -> Self {
         Actor {
             kills: vec![],
-            abilities: BTreeSet::new(),
-            passives: BTreeSet::new(),
-            notebooks: BTreeSet::new(),
-            restrictions: BTreeMap::new(),
-            actor_links: BTreeSet::new(),
+            abilities: IndexSet::new(),
+            passives: IndexSet::new(),
+            notebooks: IndexSet::new(),
+            modifiers: IndexMap::new(),
+            actor_links: IndexSet::new(),
             states: States::empty(),
             actor_type: ActorType::Org(Organization::new(name, leadership_struct)),
             pool_map: IndexMap::new(),
         }
     }
 
-    pub fn add_restrictions(&mut self, source: Source, restrictions: Restrictions) {
-        self.restrictions.insert(source, restrictions);
+    pub fn add_modifiers(&mut self, source: Source, modifiers: Modifiers) {
+        self.modifiers.insert(source, modifiers);
     }
 
-    pub fn remove_restrictions(&mut self, source: Source) {
-        self.restrictions.remove(&source);
+    pub fn remove_modifiers(&mut self, source: Source) {
+        self.modifiers.swap_remove(&source);
     }
 
-    pub fn has_restriction(&self, restriction: Restriction) -> bool {
-        let mut restrictions = Restrictions::empty();
-        for restrict in self.restrictions.values() {
-            restrictions |= *restrict;
+    pub fn has_modifier(&self, modifier: Modifier) -> bool {
+        let mut modifiers = Modifiers::empty();
+        for modifier in self.modifiers.values() {
+            modifiers |= *modifier;
         }
-        restrictions.contains(restriction)
+        modifiers.contains(modifier)
     }
 
     pub fn has_state(&self, state: State) -> bool {
@@ -112,16 +109,16 @@ impl Actor {
 
     // adds a state
     // if any restrictions are associated with the state, it also adds the restrictions
-    pub fn add_state(&mut self, new_state: State, restrictions: Restrictions) {
+    pub fn add_state(&mut self, new_state: State, modifiers: Modifiers) {
         self.states.set(new_state, true);
-        self.add_restrictions(Source::State(new_state), restrictions);
+        self.add_modifiers(Source::State(new_state), modifiers);
     }
 
     // removes a state
     // if any restrictions are associated with the state, it removes the restrictions
     pub fn remove_state(&mut self, remove_state: State) {
         self.states.set(remove_state, false);
-        self.remove_restrictions(Source::State(remove_state));
+        self.remove_modifiers(Source::State(remove_state));
     }
 
     pub fn add_link(&mut self, link: ActorLink) {
@@ -129,11 +126,11 @@ impl Actor {
     }
 
     pub fn sever_link(&mut self, link: ActorLink) {
-        self.actor_links.remove(&link);
+        self.actor_links.swap_remove(&link);
     }
 
     pub fn remove_ability(&mut self, id: ID) {
-        self.abilities.remove(&id);
+        self.abilities.swap_remove(&id);
     }
 
     pub fn add_ability(&mut self, id: ID) {
@@ -141,7 +138,7 @@ impl Actor {
     }
 
     pub fn remove_passive(&mut self, id: ID) {
-        self.passives.remove(&id);
+        self.passives.swap_remove(&id);
     }
 
     pub fn add_passive(&mut self, id: ID) {
@@ -153,7 +150,7 @@ impl Actor {
     }
 
     pub fn remove_notebook(&mut self, id: ID) {
-        self.notebooks.remove(&id);
+        self.notebooks.swap_remove(&id);
     }
 
     pub fn has_notebook(&self, id: ID) -> bool {

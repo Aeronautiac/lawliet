@@ -16,8 +16,8 @@ use crate::{
         pseudocide::{Pseudocide, PseudocideResponse},
     },
     action::{ActionActor, ActionContext, ActionError},
-    chargepool::{PoolLink, PoolLinkType},
-    common::{LinkWeight, Variant},
+    chargepool::{ChargePool, PoolLink, PoolLinkType},
+    common::{ChargeCount, LinkWeight, Variant},
     config::ability::AbilityName,
     engine::Engine,
     ownership::OwnershipStruct,
@@ -26,6 +26,7 @@ use enum_dispatch::enum_dispatch;
 use indexmap::IndexSet;
 
 pub mod gun;
+pub mod ipp;
 pub mod pseudocide;
 
 #[enum_dispatch]
@@ -109,5 +110,44 @@ impl Ability {
 
     pub fn remove_link(&mut self, link_dest: ID) {
         self.pool_links.retain(|l| l.link.link_dest != link_dest)
+    }
+
+    /// return the number of available usages
+    /// for limit pools, pick the one with the lowest number of possible usages
+    /// for permissive pools, pick the one with the highest number of possible usages
+    /// if there are no pools, return None
+    pub fn get_usage_limit(&self, eng: &Engine) -> Option<ChargeCount> {
+        let mut lowest_limit: Option<ChargeCount> = None;
+        let mut highest_permissive: Option<ChargeCount> = None;
+
+        for link_container in self.pool_links.iter() {
+            let pool = eng
+                .world
+                .get_charge_pool(link_container.link.link_dest)
+                .expect("expected valid link destination");
+            let limit = pool.charges / link_container.link.weight;
+            match link_container.link.link_type {
+                PoolLinkType::Limit => {
+                    if let Some(lowest) = lowest_limit
+                        && limit < lowest
+                    {
+                        lowest_limit = Some(limit);
+                    } else if lowest_limit.is_none() {
+                        lowest_limit = Some(limit);
+                    }
+                }
+                PoolLinkType::Pool => {
+                    if let Some(highest) = highest_permissive
+                        && limit > highest
+                    {
+                        highest_permissive = Some(limit);
+                    } else if highest_permissive.is_none() {
+                        highest_permissive = Some(limit);
+                    }
+                }
+            }
+        }
+
+        lowest_limit.or(highest_permissive)
     }
 }

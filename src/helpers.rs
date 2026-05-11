@@ -3,8 +3,7 @@ use crate::{
     ability::Ability,
     action::{ActionActor, ActionError},
     actor::{
-        Actor, ActorLinkType, ActorType, Organization, Player, restriction::Restriction,
-        state::State,
+        Actor, ActorLinkType, ActorType, Organization, Player, modifier::Modifier, state::State,
     },
     chargepool::ChargePool,
     common::PollWeight,
@@ -142,7 +141,7 @@ pub fn actor_get_effective_passive(
         if link.link_type == ActorLinkType::Passive {
             let other_actor = get_actor(eng, link.link_dest).unwrap();
             if let Some(found_id) = actor_get_effective_passive(eng, link.link_dest, check)
-                && !other_actor.has_restriction(Restriction::PassiveLinks)
+                && !other_actor.has_modifier(Modifier::DisablePassiveLinks)
             {
                 return Some(found_id);
             };

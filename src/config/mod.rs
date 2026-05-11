@@ -14,7 +14,7 @@ use crate::config::{
     },
     defaults::{DefaultConfig, default_defaults},
     role::{RoleConfigMap, default_role_config},
-    state::{StateRestrictionMap, default_state_restrictions},
+    state::{StateModifierMap, default_state_modifiers},
     world::WorldConfig,
 };
 
@@ -22,7 +22,7 @@ use crate::config::{
 pub struct Config {
     pub roles: RoleConfigMap,
     pub abilities: AbilityConfigMap,
-    pub state_restrictions: StateRestrictionMap,
+    pub state_modifiers: StateModifierMap,
     pub defaults: DefaultConfig,
     pub world_config: WorldConfig,
     pub player_config: PlayerConfig,
@@ -34,7 +34,7 @@ impl Config {
         Config {
             roles: default_role_config(),
             abilities: default_ability_config(),
-            state_restrictions: default_state_restrictions(),
+            state_modifiers: default_state_modifiers(),
             defaults: default_defaults(), // defaults are things like fallback death messages
             world_config: WorldConfig::new(),
             player_config: PlayerConfig::new(),

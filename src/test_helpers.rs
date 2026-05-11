@@ -1,11 +1,14 @@
-use serde::de::Visitor;
-
 use crate::{
     ID, Time,
+    ability::AbilityBehaviour,
     action::{
-        Action, ActionActor, ActionContext, ActionError, ActionRequest, ActionResponse,
-        ActionResult,
+        Action, ActionActor, ActionRequest, ActionResponse, ActionResult,
+        ability::{
+            add_link::AddLink, create_and_give_ability::CreateAndGiveAbility,
+            use_ability::UseAbility,
+        },
         actor::player::{add_player::AddPlayer, kill::Kill, revive::Revive},
+        chargepool::add_charge_pool::AddChargePool,
         engine::null::Null,
         notebook::{
             create_and_give_notebook::CreateAndGiveNotebook, lend_notebook::LendNotebook,
@@ -14,10 +17,11 @@ use crate::{
         passive::create_and_give_passive::CreateAndGivePassive,
         poll::{add_vote::AddVote, create_poll::CreatePoll, remove_vote::RemoveVote},
     },
+    chargepool::PoolLinkType,
+    common::LinkWeight,
     config::role::Role,
-    engine::Engine,
-    passive::{Passive, PassiveType},
-    poll::{Poll, PollPolicy, PollVisibility, VoterPolicy},
+    engine::{Engine, ExecutionResult},
+    passive::PassiveType,
 };
 
 pub fn add_player(eng: &mut Engine, timestamp: Time, starting_role: Role, true_name: &str) -> ID {
@@ -185,7 +189,7 @@ pub fn add_vote(
     poll_id: ID,
     voter_id: ID,
     accept: bool,
-) -> Result<(ActionResponse, ActionContext), ActionError> {
+) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor: ActionActor::Player(voter_id),
         timestamp: time,
@@ -193,12 +197,7 @@ pub fn add_vote(
     })
 }
 
-pub fn remove_vote(
-    eng: &mut Engine,
-    time: Time,
-    poll_id: ID,
-    voter_id: ID,
-) -> Result<(ActionResponse, ActionContext), ActionError> {
+pub fn remove_vote(eng: &mut Engine, time: Time, poll_id: ID, voter_id: ID) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor: ActionActor::Player(voter_id),
         timestamp: time,
@@ -216,4 +215,71 @@ pub fn default_kill(id: ID) -> Action {
         silent: false,
         set_books_dormant: false,
     })
+}
+
+pub fn quick_ability(eng: &mut Engine, time: Time, args: CreateAndGiveAbility) -> ID {
+    let data = eng
+        .execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: time,
+            payload: Action::CreateAndGiveAbility(args),
+        })
+        .unwrap()
+        .0;
+    let ActionResponse::CreateAndGiveAbility(response) = data else {
+        unreachable!()
+    };
+    response.id
+}
+
+pub fn use_ability(
+    eng: &mut Engine,
+    time: Time,
+    user_id: ID,
+    ability_id: ID,
+    args: AbilityBehaviour,
+) -> ExecutionResult {
+    eng.execute(ActionRequest {
+        actor: ActionActor::Player(user_id),
+        timestamp: time,
+        payload: Action::UseAbility(UseAbility {
+            ability_id,
+            ability_args: args,
+        }),
+    })
+}
+
+pub fn quick_pool(
+    eng: &mut Engine,
+    time: Time,
+    ability_id: ID,
+    link_type: PoolLinkType,
+    weight: LinkWeight,
+    args: AddChargePool,
+) -> ID {
+    let data = eng
+        .execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: time,
+            payload: Action::AddChargePool(args),
+        })
+        .unwrap()
+        .0;
+    let ActionResponse::AddChargePool(response) = data else {
+        unreachable!()
+    };
+    let pool_id = response.id;
+    eng.execute(ActionRequest {
+        actor: ActionActor::System,
+        timestamp: time,
+        payload: Action::AddLink(AddLink {
+            ability_id,
+            pool_id,
+            weight,
+            link_type,
+            volatile: false,
+        }),
+    })
+    .unwrap();
+    pool_id
 }

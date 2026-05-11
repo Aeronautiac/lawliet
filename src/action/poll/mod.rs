@@ -4,6 +4,31 @@ pub mod poll_timeout;
 pub mod remove_vote;
 pub mod update_polls;
 
+// - Polls should cancel themselves if the action attached to them is rejected (pass mutate false)
+// - The poll create action will check the attached action as well to gate initial creation
+// - Adding a vote to a poll should first evaluate the poll
+// - There should be an update action which handles sub-actions like poll
+// updates which should run to keep game state up to date for things that may seem unrelated but
+// significantly effect world state. Just scheduling poll update actions every 10 seconds or so is
+// both unfair and inefficient. For example, an actor may die pushing the game state into a place
+// where a poll may pass and imprison someone, but since it didnt update, that person may be able to
+// do something before they were imprisoned even though they should already be in prison
+// - An update action should ALWAYS run after any other action (things like polls may
+// change depending on the things that other actions do. for example, killing a member of kira's
+// kingdom who voted no for a poll might push that poll into the passing threshold even though there
+// was no direct update to the poll
+// - On every update, polls should be evaluated and checked for validity
+// - Additionally, polls should be updated when they are interacted with (it is not
+// necessary to even call the update function directly in handlers which simply modify poll state
+// because the update action will be called directly afterwards anyway)
+// - Update actions are called only AFTER other actions because there can be no poll with no initial
+// creation action, and padding both sides would lead to double updates between every event
+// (pointless)
+
+// Update actions should be called not in the engine, but in the action execute function
+// Dry runs SHOULD NOT call poll updates, only execute actions
+// Interleaving is not an issue because actions are atomic by nature
+
 // these tests will largely just use polls for killing people as that is a very easy action to test
 // the polls will all have different configurations and voting scenarios ranging from actors with
 // vote amplification passives, dead voters, side effect based executions, etc...
@@ -205,9 +230,26 @@ mod poll_tests {
         assert!(!p2_actor.has_state(State::Dead));
     }
 
-    // TODO:
-    // test case where the poll timeout is scheduled at the same time that an event comes in. the
-    // timeout should occur first due to the job scheduler.
+    #[test]
+    fn simultaneous_timeout() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        let poll_id = create_poll(
+            &mut eng,
+            0,
+            CreatePoll {
+                voter_policy: VoterPolicy::Present,
+                visibility: PollVisibility::AllPresent,
+                update_policy: PollPolicy::Majority,
+                timeout_policy: PollPolicy::AlwaysInconclusive,
+                duration: Some(10),
+                payload: Box::new(default_kill(p1)),
+            },
+        );
+
+        assert!(add_vote(&mut eng, 10, poll_id, p1, true).is_err());
+    }
 
     #[test]
     fn present_majority_update_no_timeout() {

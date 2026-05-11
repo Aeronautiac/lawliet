@@ -5,6 +5,7 @@ use crate::{
     action::{
         ability::{
             add_ability::{AddAbility, AddAbilityResponse},
+            add_link::{AddLink, AddLinkResponse},
             clear_volatile_links::{ClearVolatileLinks, ClearVolatileLinksResponse},
             create_and_give_ability::{CreateAndGiveAbility, CreateAndGiveAbilityResponse},
             give_ability::{GiveAbility, GiveAbilityResponse},
@@ -34,6 +35,7 @@ use crate::{
         },
         chargepool::{
             add_charge_pool::{AddChargePool, AddChargePoolResponse},
+            add_charges::{AddCharges, AddChargesResponse},
             try_delete_charge_pool::{TryDeleteChargePool, TryDeleteChargePoolResponse},
         },
         engine::{
@@ -193,6 +195,8 @@ pub enum Action {
     RemoveFromOrg(RemoveFromOrg),
     CreateOrg(CreateOrg),
     SystemUseOrgAbility(SystemUseOrgAbility),
+    AddCharges(AddCharges),
+    AddLink(AddLink),
 }
 
 pub enum ActionResponse {
@@ -241,6 +245,8 @@ pub enum ActionResponse {
     RemoveFromOrg(RemoveFromOrgResponse),
     CreateOrg(CreateOrgResponse),
     SystemUseOrgAbility(SystemUseOrgAbilityResponse),
+    AddCharges(AddChargesResponse),
+    AddLink(AddLinkResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]

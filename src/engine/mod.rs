@@ -38,6 +38,8 @@ pub struct Engine {
     next_job_id: SequenceNumber,
 }
 
+pub type ExecutionResult = Result<(ActionResponse, ActionContext), ActionError>;
+
 impl Engine {
     pub fn new() -> Self {
         Engine {
@@ -95,10 +97,7 @@ impl Engine {
     // execute the requested action
     // recursively execute sub-actions
     // return only top level result (with the combined command buffer)
-    pub fn execute(
-        &mut self,
-        action: ActionRequest,
-    ) -> Result<(ActionResponse, ActionContext), ActionError> {
+    pub fn execute(&mut self, action: ActionRequest) -> ExecutionResult {
         if action.timestamp < self.time {
             return Err(ActionError::TimeAlreadyPassed);
         }

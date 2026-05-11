@@ -38,7 +38,7 @@ impl ActionInterface for AddState {
 
         let restrictions = eng
             .config
-            .state_restrictions
+            .state_modifiers
             .get(&self.state)
             .cloned()
             .unwrap_or_default();
