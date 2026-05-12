@@ -16,7 +16,7 @@ use crate::{
         pseudocide::{Pseudocide, PseudocideResponse},
     },
     action::{ActionActor, ActionContext, ActionError},
-    chargepool::{ChargePool, PoolLink, PoolLinkType},
+    chargepool::{PoolLink, PoolLinkType},
     common::{ChargeCount, LinkWeight, Variant},
     config::ability::AbilityName,
     engine::Engine,

@@ -1,5 +1,6 @@
 pub mod add_ability;
 pub mod add_link;
+pub mod clear_links;
 pub mod clear_volatile_links;
 pub mod create_and_give_ability;
 pub mod give_ability;
@@ -16,7 +17,7 @@ pub mod use_ability;
 #[cfg(test)]
 mod ability_tests {
     use crate::{
-        ability::{AbilityBehaviour, gun::Gun, pseudocide::Pseudocide},
+        ability::{AbilityBehaviour, AbilityPoolLink, gun::Gun, pseudocide::Pseudocide},
         action::{
             ability::create_and_give_ability::CreateAndGiveAbility,
             chargepool::add_charge_pool::AddChargePool,
@@ -25,7 +26,7 @@ mod ability_tests {
         chargepool::PoolLinkType,
         config::{ability::AbilityName, role::Role},
         engine::Engine,
-        helpers::{get_ability, get_ability_mut, get_actor},
+        helpers::{get_ability, get_actor},
         test_helpers::*,
     };
 
@@ -285,13 +286,14 @@ mod ability_tests {
         .unwrap();
         quick_revive(&mut eng, 0, false, p2);
 
-        let _ = use_ability(
+        use_ability(
             &mut eng,
             0,
             p1,
             a1,
             AbilityBehaviour::Gun(Gun { target_id: p2 }),
-        );
+        )
+        .unwrap();
 
         let ability = get_ability(&eng, a2).unwrap();
         let limit = ability.get_usage_limit(&eng).unwrap();
@@ -300,7 +302,198 @@ mod ability_tests {
 
     // verify infinite usage behaviour
     #[test]
-    fn no_links() {}
+    fn no_links() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        let a1 = quick_ability(
+            &mut eng,
+            0,
+            CreateAndGiveAbility {
+                actor_id: p1,
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                transferrable: false,
+                volatile: false,
+            },
+        );
+        quick_clear_links(&mut eng, 0, a1);
+
+        let ability = get_ability(&eng, a1).unwrap();
+        let limit = ability.get_usage_limit(&eng);
+        assert!(limit.is_none());
+
+        for _ in 0..100 {
+            use_ability(
+                &mut eng,
+                0,
+                p1,
+                a1,
+                AbilityBehaviour::Gun(Gun { target_id: p1 }),
+            )
+            .unwrap();
+            quick_revive(&mut eng, 0, false, p1);
+        }
+    }
+
+    // see if multiple abilities linking to the same pool with different weights is properly handled
+    #[test]
+    fn link_weights() {
+        let mut eng = Engine::new();
+        init_world(&mut eng);
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        let a1 = quick_ability(
+            &mut eng,
+            0,
+            CreateAndGiveAbility {
+                actor_id: p1,
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                transferrable: false,
+                volatile: false,
+            },
+        );
+        let a2 = quick_ability(
+            &mut eng,
+            0,
+            CreateAndGiveAbility {
+                actor_id: p1,
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                transferrable: false,
+                volatile: false,
+            },
+        );
+        quick_clear_links(&mut eng, 0, a1);
+        quick_clear_links(&mut eng, 0, a2);
+
+        let pool = quick_pool(
+            &mut eng,
+            0,
+            AddChargePool {
+                base_charges: 10,
+                base_reset_time: 1,
+            },
+        );
+
+        quick_link(&mut eng, 0, a1, pool, PoolLinkType::Limit, 1);
+        quick_link(&mut eng, 0, a2, pool, PoolLinkType::Limit, 5);
+
+        let ability = get_ability(&eng, a1).unwrap();
+        let limit = ability.get_usage_limit(&eng);
+        assert!(limit == Some(10));
+
+        let ability = get_ability(&eng, a2).unwrap();
+        let limit = ability.get_usage_limit(&eng);
+        assert!(limit == Some(2));
+
+        use_ability(
+            &mut eng,
+            0,
+            p1,
+            a2,
+            AbilityBehaviour::Gun(Gun { target_id: p1 }),
+        )
+        .unwrap();
+        quick_revive(&mut eng, 0, false, p1);
+
+        let ability = get_ability(&eng, a1).unwrap();
+        let limit = ability.get_usage_limit(&eng);
+        assert!(limit == Some(5));
+
+        let ability = get_ability(&eng, a2).unwrap();
+        let limit = ability.get_usage_limit(&eng);
+        assert!(limit == Some(1));
+
+        use_ability(
+            &mut eng,
+            0,
+            p1,
+            a1,
+            AbilityBehaviour::Gun(Gun { target_id: p1 }),
+        )
+        .unwrap();
+        quick_revive(&mut eng, 0, false, p1);
+
+        let ability = get_ability(&eng, a1).unwrap();
+        let limit = ability.get_usage_limit(&eng);
+        assert!(limit == Some(4));
+
+        let ability = get_ability(&eng, a2).unwrap();
+        let limit = ability.get_usage_limit(&eng);
+        assert!(limit == Some(0));
+    }
+
+    // see if the overlap between pool and limit links works correctly (limit links take priority)
+    #[test]
+    fn pool_and_limit_links() {
+        let mut eng = Engine::new();
+        init_world(&mut eng);
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        let a1 = quick_ability(
+            &mut eng,
+            0,
+            CreateAndGiveAbility {
+                actor_id: p1,
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                transferrable: false,
+                volatile: false,
+            },
+        );
+        quick_clear_links(&mut eng, 0, a1);
+
+        let pool_1 = quick_pool(
+            &mut eng,
+            0,
+            AddChargePool {
+                base_charges: 5,
+                base_reset_time: 1,
+            },
+        );
+
+        let pool_2 = quick_pool(
+            &mut eng,
+            0,
+            AddChargePool {
+                base_charges: 10,
+                base_reset_time: 1,
+            },
+        );
+
+        let pool_3 = quick_pool(
+            &mut eng,
+            0,
+            AddChargePool {
+                base_charges: 3,
+                base_reset_time: 1,
+            },
+        );
+
+        quick_link(&mut eng, 0, a1, pool_1, PoolLinkType::Limit, 1);
+        quick_link(&mut eng, 0, a1, pool_2, PoolLinkType::Pool, 1);
+        quick_link(&mut eng, 0, a1, pool_3, PoolLinkType::Limit, 1);
+
+        let ability = get_ability(&eng, a1).unwrap();
+        let limit = ability.get_usage_limit(&eng);
+        assert!(limit == Some(3));
+
+        use_ability(
+            &mut eng,
+            0,
+            p1,
+            a1,
+            AbilityBehaviour::Gun(Gun { target_id: p1 }),
+        )
+        .unwrap();
+        quick_revive(&mut eng, 0, false, p1);
+
+        let ability = get_ability(&eng, a1).unwrap();
+        let limit = ability.get_usage_limit(&eng);
+        assert!(limit == Some(2));
+    }
 
     // test multiple abilities interacting with the same global pool
     // use the charges for one ability and see if it carries over to the other
@@ -313,24 +506,9 @@ mod ability_tests {
     #[test]
     fn actor_links() {}
 
+    // test that changing an ability's owner removes volatile links
     #[test]
-    fn local_links() {}
-
-    #[test]
-    fn local_link_volatility() {}
-
-    #[test]
-    fn limit_link() {}
-
-    #[test]
-    fn pool_link() {}
-
-    #[test]
-    fn pool_and_limit_links() {}
-
-    // see if multiple abilities linking to the same pool with different weights is properly handled
-    #[test]
-    fn link_weights() {}
+    fn link_volatility() {}
 
     // TODO:
     // Verify that ability state is properly dealt with on iteration progression (when these

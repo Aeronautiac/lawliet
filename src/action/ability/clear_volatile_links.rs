@@ -8,7 +8,7 @@ use crate::{
     ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
-        chargepool::try_delete_charge_pool::TryDeleteChargePool,
+        ability::remove_link::RemoveLink, chargepool::try_delete_charge_pool::TryDeleteChargePool,
     },
     helpers::{get_ability_mut, get_charge_pool_mut},
 };
@@ -40,20 +40,12 @@ impl ActionInterface for ClearVolatileLinks {
             }
         }
 
-        if mutate {
-            for id in &links_to_destroy {
-                ability.remove_link(*id);
-            }
-        }
-
-        if mutate {
-            for id in &links_to_destroy {
-                let pool = get_charge_pool_mut(eng, *id)?;
-                if pool.on_unlink() {
-                    Action::TryDeleteChargePool(TryDeleteChargePool { id: *id })
-                        .handle(eng, ctx, actor, version, mutate)?;
-                }
-            }
+        for id in &links_to_destroy {
+            Action::RemoveLink(RemoveLink {
+                ability_id: self.ability_id,
+                pool_id: *id,
+            })
+            .handle(eng, ctx, actor, version, mutate)?;
         }
 
         Ok(ActionResponse::ClearVolatileLinks(

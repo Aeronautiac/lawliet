@@ -3,6 +3,8 @@
 * Kill a player and handle side effects
 */
 
+use smallvec::{SmallVec, smallvec};
+
 use crate::{
     ID,
     action::{
@@ -66,7 +68,8 @@ impl ActionInterface for Kill {
 
         let mut notebook_transferred = false;
         let mut ability_transferred = false;
-        let mut next_actions = vec![state_addition(self.target_id, State::Dead)];
+        let mut next_actions: SmallVec<[Action; 8]> =
+            smallvec![state_addition(self.target_id, State::Dead)];
         if let Some(killer_id) = self.killer_id {
             let killer = get_actor_mut(eng, killer_id)?;
 

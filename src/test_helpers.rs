@@ -4,8 +4,8 @@ use crate::{
     action::{
         Action, ActionActor, ActionRequest, ActionResponse, ActionResult,
         ability::{
-            add_link::AddLink, create_and_give_ability::CreateAndGiveAbility,
-            use_ability::UseAbility,
+            add_link::AddLink, clear_links::ClearLinks,
+            create_and_give_ability::CreateAndGiveAbility, use_ability::UseAbility,
         },
         actor::player::{add_player::AddPlayer, kill::Kill, revive::Revive},
         chargepool::add_charge_pool::AddChargePool,
@@ -16,6 +16,7 @@ use crate::{
         },
         passive::create_and_give_passive::CreateAndGivePassive,
         poll::{add_vote::AddVote, create_poll::CreatePoll, remove_vote::RemoveVote},
+        world::initialize_world::InitializeWorld,
     },
     chargepool::PoolLinkType,
     common::LinkWeight,
@@ -249,14 +250,7 @@ pub fn use_ability(
     })
 }
 
-pub fn quick_pool(
-    eng: &mut Engine,
-    time: Time,
-    ability_id: ID,
-    link_type: PoolLinkType,
-    weight: LinkWeight,
-    args: AddChargePool,
-) -> ID {
+pub fn quick_pool(eng: &mut Engine, time: Time, args: AddChargePool) -> ID {
     let data = eng
         .execute(ActionRequest {
             actor: ActionActor::System,
@@ -268,7 +262,17 @@ pub fn quick_pool(
     let ActionResponse::AddChargePool(response) = data else {
         unreachable!()
     };
-    let pool_id = response.id;
+    response.id
+}
+
+pub fn quick_link(
+    eng: &mut Engine,
+    time: Time,
+    ability_id: ID,
+    pool_id: ID,
+    link_type: PoolLinkType,
+    weight: LinkWeight,
+) {
     eng.execute(ActionRequest {
         actor: ActionActor::System,
         timestamp: time,
@@ -281,5 +285,22 @@ pub fn quick_pool(
         }),
     })
     .unwrap();
-    pool_id
+}
+
+pub fn quick_clear_links(eng: &mut Engine, time: Time, ability_id: ID) {
+    eng.execute(ActionRequest {
+        actor: ActionActor::System,
+        timestamp: time,
+        payload: Action::ClearLinks(ClearLinks { ability_id }),
+    })
+    .unwrap();
+}
+
+pub fn init_world(eng: &mut Engine) {
+    eng.execute(ActionRequest {
+        actor: ActionActor::System,
+        timestamp: 0,
+        payload: Action::InitializeWorld(InitializeWorld {}),
+    })
+    .unwrap();
 }

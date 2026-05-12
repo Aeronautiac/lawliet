@@ -10,7 +10,8 @@ use crate::{
     ID,
     action::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
-        ActionResult, ability::clear_volatile_links::ClearVolatileLinks,
+        ActionResult,
+        ability::{add_link::AddLink, clear_volatile_links::ClearVolatileLinks},
     },
     chargepool::PoolLink,
     config::ability::{AbilityIdentifier, ConfigPoolLinkDetails},
@@ -88,12 +89,14 @@ impl ActionInterface for GiveAbility {
                 .set_owner(self.actor_id, self.volatile);
 
             for link in &links_to_create {
-                ability.add_link(link.link_dest, link.link_type, link.weight, true);
-            }
-
-            for link in &links_to_create {
-                let pool = get_charge_pool_mut(eng, link.link_dest)?;
-                pool.on_link();
+                Action::AddLink(AddLink {
+                    ability_id: self.ability_id,
+                    pool_id: link.link_dest,
+                    weight: link.weight,
+                    link_type: link.link_type,
+                    volatile: true,
+                })
+                .handle(eng, ctx, actor, version, mutate)?;
             }
 
             let actor_data = get_actor_mut(eng, self.actor_id)?;

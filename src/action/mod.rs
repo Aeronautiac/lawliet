@@ -6,9 +6,11 @@ use crate::{
         ability::{
             add_ability::{AddAbility, AddAbilityResponse},
             add_link::{AddLink, AddLinkResponse},
+            clear_links::{ClearLinks, ClearLinksResponse},
             clear_volatile_links::{ClearVolatileLinks, ClearVolatileLinksResponse},
             create_and_give_ability::{CreateAndGiveAbility, CreateAndGiveAbilityResponse},
             give_ability::{GiveAbility, GiveAbilityResponse},
+            remove_link::{RemoveLink, RemoveLinkResponse},
             use_ability::{UseAbility, UseAbilityResponse},
         },
         actor::{
@@ -197,6 +199,8 @@ pub enum Action {
     SystemUseOrgAbility(SystemUseOrgAbility),
     AddCharges(AddCharges),
     AddLink(AddLink),
+    RemoveLink(RemoveLink),
+    ClearLinks(ClearLinks),
 }
 
 pub enum ActionResponse {
@@ -247,6 +251,8 @@ pub enum ActionResponse {
     SystemUseOrgAbility(SystemUseOrgAbilityResponse),
     AddCharges(AddChargesResponse),
     AddLink(AddLinkResponse),
+    RemoveLink(RemoveLinkResponse),
+    ClearLinks(ClearLinksResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]
