@@ -8,7 +8,10 @@ use crate::{
             create_and_give_ability::CreateAndGiveAbility, use_ability::UseAbility,
         },
         actor::{
-            org::{add_to_org::AddToOrg, create_org::CreateOrg, remove_from_org::RemoveFromOrg},
+            org::{
+                add_to_org::AddToOrg, change_org_leader::ChangeOrgLeader, create_org::CreateOrg,
+                remove_from_org::RemoveFromOrg, set_leadership::SetLeadership,
+            },
             player::{add_player::AddPlayer, kill::Kill, revive::Revive},
         },
         chargepool::add_charge_pool::AddChargePool,
@@ -21,6 +24,7 @@ use crate::{
         poll::{add_vote::AddVote, create_poll::CreatePoll, remove_vote::RemoveVote},
         world::initialize_world::InitializeWorld,
     },
+    actor::organization::LeadershipTransferPolicies,
     chargepool::PoolLinkType,
     common::LinkWeight,
     config::{actor::organization::OrganizationName, role::Role},
@@ -344,6 +348,35 @@ pub fn remove_from_org(eng: &mut Engine, time: Time, org: ID, actor: ID) {
         payload: Action::RemoveFromOrg(RemoveFromOrg {
             actor_id: actor,
             org_id: org,
+        }),
+    })
+    .unwrap();
+}
+
+pub fn set_leadership(
+    eng: &mut Engine,
+    time: Time,
+    org: ID,
+    policies: Option<LeadershipTransferPolicies>,
+) {
+    eng.execute(ActionRequest {
+        actor: ActionActor::System,
+        timestamp: time,
+        payload: Action::SetLeadership(SetLeadership {
+            policies,
+            org_id: org,
+        }),
+    })
+    .unwrap();
+}
+
+pub fn change_leader(eng: &mut Engine, time: Time, org: ID, actor: Option<ID>) {
+    eng.execute(ActionRequest {
+        actor: ActionActor::System,
+        timestamp: time,
+        payload: Action::ChangeOrgLeader(ChangeOrgLeader {
+            org_id: org,
+            new_leader: actor,
         }),
     })
     .unwrap();

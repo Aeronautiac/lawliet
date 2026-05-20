@@ -88,6 +88,7 @@ pub use common::{ID, Time};
 // - Implement bugs (simple message relayers with channel context filtering)
 // - Implement news (likely just a special channel within the world struct)
 // - Implement any necessary actions
+// - Implement world initialization and iteration progression
 // - Write the test cases that depend on the new systems being implemented
 // - Begin implementing every ability and write tests for them
 // - Go through everything and implement frontend commands

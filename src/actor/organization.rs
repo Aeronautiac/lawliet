@@ -128,4 +128,12 @@ impl Organization {
         }
         count
     }
+
+    pub fn get_leader(&self) -> Option<ID> {
+        if let Some(leadership) = &self.leadership_struct {
+            leadership.leader
+        } else {
+            None
+        }
+    }
 }

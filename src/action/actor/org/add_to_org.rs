@@ -64,7 +64,7 @@ impl ActionInterface for AddToOrg {
             if self.leader {
                 Action::ChangeOrgLeader(ChangeOrgLeader {
                     org_id: self.org_id,
-                    new_leader: self.actor_id,
+                    new_leader: Some(self.actor_id),
                 })
                 .handle(eng, ctx, actor, version, mutate)?;
             }

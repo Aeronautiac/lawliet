@@ -20,7 +20,7 @@ use crate::{
         },
         passive::give_passive::GivePassive,
     },
-    actor::{ActorType, state::State},
+    actor::{ActorLinkType, ActorType, state::State},
     command::Command,
     common::Version,
     engine::Engine,
@@ -151,6 +151,9 @@ impl ActionInterface for Kill {
             // life links
             let links = target.actor_links.clone();
             for link in links {
+                if link.link_type != ActorLinkType::Life {
+                    continue;
+                }
                 let linked_actor = get_actor(eng, link.link_dest).unwrap();
                 if !linked_actor.states.contains(State::Dead) {
                     Action::Kill(Kill {
