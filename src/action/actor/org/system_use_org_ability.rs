@@ -10,11 +10,12 @@ use crate::{
     ability::AbilityBehaviour,
     action::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
-        ActionResult, ability::use_ability::UseAbility, poll::create_poll::CreatePoll,
+        ActionResult, OrgActorInfo, ability::use_ability::UseAbility,
+        poll::create_poll::CreatePoll,
     },
     actor::{modifier::Modifier, organization::OrgAbilityPolicy},
     config::role::Role,
-    helpers::get_org,
+    helpers::{get_actor, get_org},
     poll::{PollPolicy, PollVisibility, VoterPolicy},
 };
 
@@ -24,6 +25,7 @@ pub struct SystemUseOrgAbilityResponse {}
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct SystemUseOrgAbility {
     pub org_id: ID,
+    pub user_id: ID,
     pub ability_id: ID,
     pub ability_args: AbilityBehaviour,
     pub dont_vote: bool,
@@ -41,10 +43,11 @@ impl ActionInterface for SystemUseOrgAbility {
         actor.require_system()?;
 
         if let Ok(org_data) = get_org(eng, self.org_id) {
-            let ActionActor::Organization(org_info) = actor else {
-                unreachable!();
-            };
-            let player_id = org_info.player_id;
+            let player_id = self.user_id;
+            let player_data = get_actor(eng, player_id)?;
+            if player_data.has_modifier(Modifier::NoPresence) {
+                return Err(ActionError::UserNotPresent);
+            }
 
             let org_ability = org_data.abilities.get(&self.ability_id).unwrap();
             if org_data.member_count(|id, _| {
@@ -87,19 +90,29 @@ impl ActionInterface for SystemUseOrgAbility {
                     timeout_policy: PollPolicy::Majority,
                     payload: Box::new(Action::SystemUseOrgAbility(SystemUseOrgAbility {
                         org_id: self.org_id,
+                        user_id: self.user_id,
                         ability_id: self.ability_id,
                         ability_args: self.ability_args.clone(),
                         dont_vote: true,
                     })),
                     duration: Some(eng.config.defaults.org_vote_time),
                 })
-                .handle(eng, ctx, actor, version, mutate)?;
+                .handle(eng, ctx, &ActionActor::System, version, mutate)?;
             } else {
                 Action::UseAbility(UseAbility {
                     ability_id: self.ability_id,
                     ability_args: self.ability_args.clone(),
                 })
-                .handle(eng, ctx, actor, version, mutate)?;
+                .handle(
+                    eng,
+                    ctx,
+                    &ActionActor::Organization(OrgActorInfo {
+                        player_id,
+                        org_id: self.org_id,
+                    }),
+                    version,
+                    mutate,
+                )?;
             }
         }
 

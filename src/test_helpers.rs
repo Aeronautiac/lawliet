@@ -7,7 +7,10 @@ use crate::{
             add_link::AddLink, clear_links::ClearLinks,
             create_and_give_ability::CreateAndGiveAbility, use_ability::UseAbility,
         },
-        actor::player::{add_player::AddPlayer, kill::Kill, revive::Revive},
+        actor::{
+            org::{add_to_org::AddToOrg, create_org::CreateOrg, remove_from_org::RemoveFromOrg},
+            player::{add_player::AddPlayer, kill::Kill, revive::Revive},
+        },
         chargepool::add_charge_pool::AddChargePool,
         engine::null::Null,
         notebook::{
@@ -20,7 +23,7 @@ use crate::{
     },
     chargepool::PoolLinkType,
     common::LinkWeight,
-    config::role::Role,
+    config::{actor::organization::OrganizationName, role::Role},
     engine::{Engine, ExecutionResult},
     passive::PassiveType,
 };
@@ -301,6 +304,47 @@ pub fn init_world(eng: &mut Engine) {
         actor: ActionActor::System,
         timestamp: 0,
         payload: Action::InitializeWorld(InitializeWorld {}),
+    })
+    .unwrap();
+}
+
+pub fn add_org(eng: &mut Engine, time: Time, org: OrganizationName) -> ID {
+    let data = eng
+        .execute(ActionRequest {
+            timestamp: time,
+            actor: ActionActor::System,
+            payload: Action::CreateOrg(CreateOrg { name: org }),
+        })
+        .unwrap()
+        .0;
+    let ActionResponse::CreateOrg(response) = data else {
+        unreachable!()
+    };
+    response.id
+}
+
+pub fn add_to_org(eng: &mut Engine, time: Time, org: ID, actor: ID, leader: bool, og: bool) {
+    eng.execute(ActionRequest {
+        actor: ActionActor::System,
+        timestamp: time,
+        payload: Action::AddToOrg(AddToOrg {
+            actor_id: actor,
+            leader,
+            og,
+            org_id: org,
+        }),
+    })
+    .unwrap();
+}
+
+pub fn remove_from_org(eng: &mut Engine, time: Time, org: ID, actor: ID) {
+    eng.execute(ActionRequest {
+        actor: ActionActor::System,
+        timestamp: time,
+        payload: Action::RemoveFromOrg(RemoveFromOrg {
+            actor_id: actor,
+            org_id: org,
+        }),
     })
     .unwrap();
 }

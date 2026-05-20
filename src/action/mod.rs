@@ -18,6 +18,7 @@ use crate::{
             create_actor_links::{CreateActorLinks, CreateActorLinksResponse},
             org::{
                 add_to_org::{AddToOrg, AddToOrgResponse},
+                change_org_leader::{ChangeOrgLeader, ChangeOrgLeaderResponse},
                 create_org::{CreateOrg, CreateOrgResponse},
                 remove_from_org::{RemoveFromOrg, RemoveFromOrgResponse},
                 system_use_org_ability::{SystemUseOrgAbility, SystemUseOrgAbilityResponse},
@@ -69,6 +70,7 @@ use crate::{
             update_polls::{UpdatePolls, UpdatePollsResponse},
         },
         world::{
+            create_orgs::{CreateOrgs, CreateOrgsResponse},
             initialize_world::{InitializeWorld, InitializeWorldResponse},
             update::{Update, UpdateResponse},
         },
@@ -127,7 +129,9 @@ pub enum ActionError {
     PlayerIsBlacklisted,
     OrgDoesntHaveLeadership,
     ActorAlreadyInOrg,
+    UserNotPresent,
     PlayerNotInOrg,
+    AlreadyLeader,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -152,6 +156,7 @@ pub trait ActionInterface {
 #[enum_dispatch(ActionInterface)]
 #[derive(Debug)]
 pub enum Action {
+    ChangeOrgLeader(ChangeOrgLeader),
     Kill(Kill),
     AddState(AddState),
     Revive(Revive),
@@ -201,9 +206,11 @@ pub enum Action {
     AddLink(AddLink),
     RemoveLink(RemoveLink),
     ClearLinks(ClearLinks),
+    CreateOrgs(CreateOrgs),
 }
 
 pub enum ActionResponse {
+    ChangeOrgLeader(ChangeOrgLeaderResponse),
     Kill(KillResponse),
     AddState(AddStateResponse),
     AddPlayer(AddPlayerResponse),
@@ -253,6 +260,7 @@ pub enum ActionResponse {
     AddLink(AddLinkResponse),
     RemoveLink(RemoveLinkResponse),
     ClearLinks(ClearLinksResponse),
+    CreateOrgs(CreateOrgsResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]

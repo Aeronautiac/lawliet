@@ -14,6 +14,7 @@ use crate::{
 
 #[derive(Hash, PartialEq, Eq, Debug, Clone, Copy)]
 pub enum OrganizationName {
+    NULL,
     KK,
     TF,
     SPK,
@@ -41,6 +42,15 @@ pub type OrganizationConfigMap = IndexMap<OrganizationName, OrganizationConfig>;
 
 pub fn default_org_config() -> OrganizationConfigMap {
     let mut map = IndexMap::new();
+
+    map.insert(
+        OrganizationName::NULL,
+        OrganizationConfig {
+            leadership: None,
+            abilities: vec![],
+            passives: vec![],
+        },
+    );
 
     map.insert(
         OrganizationName::KK,

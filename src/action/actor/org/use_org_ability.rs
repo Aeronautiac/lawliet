@@ -11,6 +11,7 @@ use crate::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         actor::org::system_use_org_ability::SystemUseOrgAbility,
     },
+    helpers::actor_id,
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -35,10 +36,11 @@ impl ActionInterface for UseOrgAbility {
         actor.player_only()?;
 
         Action::SystemUseOrgAbility(SystemUseOrgAbility {
+            org_id: self.org_id,
+            user_id: actor_id(actor).unwrap(),
             ability_id: self.ability_id,
             ability_args: self.ability_args.clone(),
             dont_vote: false,
-            org_id: self.org_id,
         })
         .handle(eng, ctx, actor, version, mutate)?;
 

@@ -24,7 +24,6 @@ pub struct CreateOrgResponse {
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CreateOrg {
     pub name: OrganizationName,
-    pub leadership: Option<LeadershipStruct>,
 }
 
 impl ActionInterface for CreateOrg {
@@ -47,7 +46,15 @@ impl ActionInterface for CreateOrg {
         let passives = org_config.passives.clone();
 
         let id = if mutate {
-            eng.world.add_org(self.name, self.leadership.clone())
+            let mut leadership = None;
+            if let Some(leadership_conf) = &org_config.leadership {
+                let leadership_struct = LeadershipStruct {
+                    leader: None,
+                    transfer_policies: leadership_conf.transfer_policies,
+                };
+                leadership = Some(leadership_struct);
+            }
+            eng.world.add_org(self.name, leadership)
         } else {
             0
         };

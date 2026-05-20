@@ -5,9 +5,12 @@
 
 use crate::{
     ID,
-    action::{ActionError, ActionInterface, ActionResponse},
+    action::{
+        Action, ActionError, ActionInterface, ActionResponse,
+        actor::org::change_org_leader::ChangeOrgLeader,
+    },
     actor::{ActorLink, ActorLinkType},
-    helpers::{get_actor, get_actor_mut, get_org, get_org_mut},
+    helpers::{get_actor, get_actor_mut, get_org_mut},
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -35,9 +38,6 @@ impl ActionInterface for AddToOrg {
 
         let org = get_org_mut(eng, self.org_id)?;
         if org.has_member(self.actor_id) {
-            // TODO:
-            // Add a new action to make an existing member into the leader
-            // Also a new action to remove leadership from a member without kicking them
             return Err(ActionError::ActorAlreadyInOrg);
         }
         if org.leadership_struct.is_none() && self.leader {
@@ -51,16 +51,25 @@ impl ActionInterface for AddToOrg {
         // previous leader should be handled (notify them that they have lost leadership).
         if mutate {
             org.add_member(self.actor_id, self.og, self.leader);
-            let actor = get_actor_mut(eng, self.actor_id)?;
-            actor.add_link(ActorLink {
+            let actor_data = get_actor_mut(eng, self.actor_id)?;
+            actor_data.add_link(ActorLink {
                 link_type: ActorLinkType::Passive,
                 link_dest: self.org_id,
             });
+
             // TODO:
             // Notify member of leadership change and membership
+
+            // not possible to already be the leader because they cant have already been in the org
+            if self.leader {
+                Action::ChangeOrgLeader(ChangeOrgLeader {
+                    org_id: self.org_id,
+                    new_leader: self.actor_id,
+                })
+                .handle(eng, ctx, actor, version, mutate)?;
+            }
         }
 
         Ok(ActionResponse::AddToOrg(AddToOrgResponse {}))
     }
 }
-

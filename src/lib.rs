@@ -81,13 +81,14 @@ mod world;
 pub use common::{ID, Time};
 
 // TODO:
-// - Test the ability system and organization system
+// - Test the organization system
 // - Implement channels
 //    * Implement lounges
 //    * Implement group chats
 // - Implement bugs (simple message relayers with channel context filtering)
 // - Implement news (likely just a special channel within the world struct)
 // - Implement any necessary actions
+// - Write the test cases that depend on the new systems being implemented
 // - Begin implementing every ability and write tests for them
 // - Go through everything and implement frontend commands
 // - Write extensive integration tests
@@ -180,20 +181,4 @@ mod tests {
         let watari2 = get_actor(&eng, w_id_2).unwrap();
         assert!(watari1.has_state(State::Dead) && !watari2.has_state(State::Dead));
     }
-
-    #[test]
-    fn basic_ability_usage() {}
-
-    #[test]
-    fn ability_links() {}
-
-    #[test]
-    fn ability_transfers() {}
-
-    #[test]
-    fn passive_transfers() {}
-
-    // test the consistency of actor caches (things like owned ability sets)
-    #[test]
-    fn actor_caches() {}
 }
