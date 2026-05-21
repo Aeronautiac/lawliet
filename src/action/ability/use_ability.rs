@@ -17,7 +17,7 @@ use crate::{
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct UseAbilityResponse(AbilityResponse);
+pub struct UseAbilityResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct UseAbility {
@@ -88,6 +88,6 @@ impl ActionInterface for UseAbility {
             self.ability_args
                 .handle(eng, ctx, actor, self.ability_id, version, mutate)?;
 
-        Ok(ActionResponse::UseAbility(UseAbilityResponse(response)))
+        Ok(ActionResponse::UseAbility(UseAbilityResponse {}))
     }
 }

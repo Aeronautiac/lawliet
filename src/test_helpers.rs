@@ -9,8 +9,10 @@ use crate::{
         },
         actor::{
             org::{
-                add_to_org::AddToOrg, change_org_leader::ChangeOrgLeader, create_org::CreateOrg,
+                add_to_org::AddToOrg, change_org_leader::ChangeOrgLeader,
+                create_and_give_org_ability::CreateAndGiveOrgAbility, create_org::CreateOrg,
                 remove_from_org::RemoveFromOrg, set_leadership::SetLeadership,
+                use_org_ability::UseOrgAbility,
             },
             player::{add_player::AddPlayer, kill::Kill, revive::Revive},
         },
@@ -26,7 +28,7 @@ use crate::{
     },
     actor::organization::LeadershipTransferPolicies,
     chargepool::PoolLinkType,
-    common::LinkWeight,
+    common::{ChargeCount, LinkWeight},
     config::{actor::organization::OrganizationName, role::Role},
     engine::{Engine, ExecutionResult},
     passive::PassiveType,
@@ -327,7 +329,14 @@ pub fn add_org(eng: &mut Engine, time: Time, org: OrganizationName) -> ID {
     response.id
 }
 
-pub fn add_to_org(eng: &mut Engine, time: Time, org: ID, actor: ID, leader: bool, og: bool) {
+pub fn add_to_org(
+    eng: &mut Engine,
+    time: Time,
+    org: ID,
+    actor: ID,
+    leader: bool,
+    og: bool,
+) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor: ActionActor::System,
         timestamp: time,
@@ -338,10 +347,9 @@ pub fn add_to_org(eng: &mut Engine, time: Time, org: ID, actor: ID, leader: bool
             org_id: org,
         }),
     })
-    .unwrap();
 }
 
-pub fn remove_from_org(eng: &mut Engine, time: Time, org: ID, actor: ID) {
+pub fn remove_from_org(eng: &mut Engine, time: Time, org: ID, actor: ID) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor: ActionActor::System,
         timestamp: time,
@@ -350,7 +358,6 @@ pub fn remove_from_org(eng: &mut Engine, time: Time, org: ID, actor: ID) {
             org_id: org,
         }),
     })
-    .unwrap();
 }
 
 pub fn set_leadership(
@@ -370,7 +377,7 @@ pub fn set_leadership(
     .unwrap();
 }
 
-pub fn change_leader(eng: &mut Engine, time: Time, org: ID, actor: Option<ID>) {
+pub fn change_leader(eng: &mut Engine, time: Time, org: ID, actor: Option<ID>) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor: ActionActor::System,
         timestamp: time,
@@ -379,5 +386,50 @@ pub fn change_leader(eng: &mut Engine, time: Time, org: ID, actor: Option<ID>) {
             new_leader: actor,
         }),
     })
-    .unwrap();
+}
+
+pub fn quick_org_ability(eng: &mut Engine, time: Time, args: CreateAndGiveOrgAbility) -> ID {
+    let data = eng
+        .execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: time,
+            payload: Action::CreateAndGiveOrgAbility(args),
+        })
+        .unwrap()
+        .0;
+    let ActionResponse::CreateAndGiveOrgAbility(response) = data else {
+        unreachable!()
+    };
+    response.id
+}
+
+pub fn use_org_ability(
+    eng: &mut Engine,
+    time: Time,
+    user_id: ID,
+    org_id: ID,
+    ability_id: ID,
+    args: AbilityBehaviour,
+) -> ExecutionResult {
+    eng.execute(ActionRequest {
+        actor: ActionActor::Player(user_id),
+        timestamp: time,
+        payload: Action::UseOrgAbility(UseOrgAbility {
+            ability_id,
+            ability_args: args,
+            org_id,
+        }),
+    })
+}
+
+pub fn force_charges(eng: &mut Engine, time: Time, ability_id: ID, charges: ChargeCount) {
+    quick_clear_links(eng, 0, ability_id);
+    quick_pool(
+        eng,
+        0,
+        AddChargePool {
+            base_charges: charges,
+            base_reset_time: 1,
+        },
+    );
 }

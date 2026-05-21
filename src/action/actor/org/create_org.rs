@@ -10,9 +10,10 @@ use crate::{
     action::{
         Action, ActionInterface, ActionResponse,
         ability::create_and_give_ability::CreateAndGiveAbility,
+        actor::org::create_and_give_org_ability::CreateAndGiveOrgAbility,
         passive::create_and_give_passive::CreateAndGivePassive,
     },
-    actor::organization::LeadershipStruct,
+    actor::organization::{LeadershipStruct, OrgAbility},
     config::actor::organization::OrganizationName,
 };
 
@@ -61,12 +62,16 @@ impl ActionInterface for CreateOrg {
 
         if mutate {
             for ability in abilities {
-                Action::CreateAndGiveAbility(CreateAndGiveAbility {
+                let settings = OrgAbility {
+                    require_roles: ability.require_roles.into_iter().collect(),
+                    require_members: ability.require_members,
+                    usage_policies: ability.usage_policies,
+                };
+                Action::CreateAndGiveOrgAbility(CreateAndGiveOrgAbility {
                     ability_name: ability.identifier.name,
                     variant: ability.identifier.variant,
-                    transferrable: false,
-                    actor_id: id,
-                    volatile: true,
+                    org_id: id,
+                    settings,
                 })
                 .handle(eng, ctx, actor, version, mutate)?;
             }

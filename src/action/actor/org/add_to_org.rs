@@ -50,7 +50,7 @@ impl ActionInterface for AddToOrg {
         // keep in mind that the leader is replaced if leader is true. the case where there was a
         // previous leader should be handled (notify them that they have lost leadership).
         if mutate {
-            org.add_member(self.actor_id, self.og, self.leader);
+            org.add_member(self.actor_id, self.og);
             let actor_data = get_actor_mut(eng, self.actor_id)?;
             actor_data.add_link(ActorLink {
                 link_type: ActorLinkType::Passive,

@@ -1,6 +1,8 @@
 pub mod add_to_org;
 pub mod change_org_leader;
+pub mod create_and_give_org_ability;
 pub mod create_org;
+pub mod give_org_ability;
 pub mod remove_from_org;
 pub mod set_leadership;
 pub mod system_use_org_ability;
@@ -26,11 +28,20 @@ pub mod use_org_ability;
 
 #[cfg(test)]
 mod org_tests {
+    use indexmap::IndexSet;
+
     use crate::{
-        actor::organization::LeadershipTransferPolicies,
-        config::{actor::organization::OrganizationName, role::Role},
+        ability::{AbilityBehaviour, gun::Gun},
+        action::actor::org::create_and_give_org_ability::CreateAndGiveOrgAbility,
+        actor::{
+            organization::{
+                LeadershipTransferPolicies, OrgAbility, OrgAbilityPolicies, OrgAbilityPolicy,
+            },
+            state::State,
+        },
+        config::{ability::AbilityName, actor::organization::OrganizationName, role::Role},
         engine::Engine,
-        helpers::get_org,
+        helpers::{get_actor, get_org},
         test_helpers::*,
     };
 
@@ -43,7 +54,7 @@ mod org_tests {
         let org = get_org(&eng, o1).unwrap();
         assert!(!org.has_member(p1));
 
-        add_to_org(&mut eng, 0, o1, p1, false, true);
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
 
         let org = get_org(&eng, o1).unwrap();
         assert!(org.has_member(p1));
@@ -55,8 +66,8 @@ mod org_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
 
-        add_to_org(&mut eng, 0, o1, p1, false, true);
-        remove_from_org(&mut eng, 0, o1, p1);
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
+        remove_from_org(&mut eng, 0, o1, p1).unwrap();
 
         let org = get_org(&eng, o1).unwrap();
         assert!(!org.has_member(p1));
@@ -71,7 +82,7 @@ mod org_tests {
         let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
 
         quick_kill(&mut eng, 0, true, true, false, p1);
-        add_to_org(&mut eng, 0, o1, p1, false, true);
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
 
         let org = get_org(&eng, o1).unwrap();
         assert!(org.has_member(p1));
@@ -83,9 +94,9 @@ mod org_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
 
-        add_to_org(&mut eng, 0, o1, p1, false, true);
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
         quick_kill(&mut eng, 0, true, true, false, p1);
-        remove_from_org(&mut eng, 0, o1, p1);
+        remove_from_org(&mut eng, 0, o1, p1).unwrap();
 
         let org = get_org(&eng, o1).unwrap();
         assert!(!org.has_member(p1));
@@ -98,43 +109,208 @@ mod org_tests {
         let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
         set_leadership(&mut eng, 0, o1, Some(LeadershipTransferPolicies::ALL));
 
-        add_to_org(&mut eng, 0, o1, p1, false, true);
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
 
         let org = get_org(&eng, o1).unwrap();
         assert!(org.get_leader().is_none());
 
-        change_leader(&mut eng, 0, o1, Some(p1));
+        change_leader(&mut eng, 0, o1, Some(p1)).unwrap();
 
         let org = get_org(&eng, o1).unwrap();
         assert!(org.get_leader() == Some(p1));
     }
 
+    // TODO: implement actions for modifying OG status
     #[test]
     fn change_og_status() {}
 
     #[test]
-    fn already_member() {}
+    fn already_member() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
+        assert!(add_to_org(&mut eng, 0, o1, p1, false, true).is_err());
+    }
 
     #[test]
-    fn leader_replace() {}
+    fn kick_non_member() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+
+        assert!(remove_from_org(&mut eng, 0, o1, p1).is_err());
+    }
+
+    // replace an existing leader with a new leader
+    #[test]
+    fn leader_replace() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+        set_leadership(&mut eng, 0, o1, Some(LeadershipTransferPolicies::ALL));
+
+        add_to_org(&mut eng, 0, o1, p1, true, true).unwrap();
+
+        let org = get_org(&eng, o1).unwrap();
+        assert!(org.get_leader() == Some(p1));
+
+        add_to_org(&mut eng, 0, o1, p2, true, true).unwrap();
+
+        let org = get_org(&eng, o1).unwrap();
+        assert!(org.get_leader() == Some(p2));
+    }
+
+    #[test]
+    fn leader_replace_non_member() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+        set_leadership(&mut eng, 0, o1, Some(LeadershipTransferPolicies::ALL));
+
+        add_to_org(&mut eng, 0, o1, p1, true, true).unwrap();
+        assert!(change_leader(&mut eng, 0, o1, Some(p2)).is_err());
+    }
 
     // you should be allowed to replace the leader with a dead person
     #[test]
-    fn leader_replace_dead() {}
+    fn leader_replace_dead() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+        set_leadership(&mut eng, 0, o1, Some(LeadershipTransferPolicies::ALL));
 
-    #[test]
-    fn leader_only_ability() {}
+        quick_kill(&mut eng, 0, true, true, false, p2);
+        add_to_org(&mut eng, 0, o1, p1, true, true).unwrap();
+        add_to_org(&mut eng, 0, o1, p2, true, true).unwrap();
 
-    #[test]
-    fn no_vote_ability() {}
+        let org = get_org(&eng, o1).unwrap();
+        assert!(org.get_leader() == Some(p2));
+    }
 
+    // ensure that only the leader can use these abilities
     #[test]
-    fn vote_ability() {}
+    fn leader_only_ability() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+        set_leadership(&mut eng, 0, o1, Some(LeadershipTransferPolicies::ALL));
+
+        let a1 = quick_org_ability(
+            &mut eng,
+            0,
+            CreateAndGiveOrgAbility {
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                org_id: o1,
+                settings: OrgAbility {
+                    require_roles: IndexSet::new(),
+                    require_members: 0,
+                    usage_policies: OrgAbilityPolicy::RequireLeader.into(),
+                },
+            },
+        );
+        force_charges(&mut eng, 0, a1, 100);
+
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
+        add_to_org(&mut eng, 0, o1, p2, true, true).unwrap();
+
+        assert!(
+            use_org_ability(
+                &mut eng,
+                0,
+                p1,
+                o1,
+                a1,
+                AbilityBehaviour::Gun(Gun { target_id: p1 })
+            )
+            .is_err()
+        );
+
+        use_org_ability(
+            &mut eng,
+            0,
+            p2,
+            o1,
+            a1,
+            AbilityBehaviour::Gun(Gun { target_id: p1 }),
+        )
+        .unwrap();
+
+        let p1_data = get_actor(&eng, p1).unwrap();
+        assert!(p1_data.has_state(State::Dead))
+    }
+
+    // ensure that these abilities are used instantly
+    #[test]
+    fn no_vote_ability() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+
+        let a1 = quick_org_ability(
+            &mut eng,
+            0,
+            CreateAndGiveOrgAbility {
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                org_id: o1,
+                settings: OrgAbility {
+                    require_roles: IndexSet::new(),
+                    require_members: 0,
+                    usage_policies: OrgAbilityPolicies::EMPTY,
+                },
+            },
+        );
+        force_charges(&mut eng, 0, a1, 100);
+
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
+        use_org_ability(
+            &mut eng,
+            0,
+            p1,
+            o1,
+            a1,
+            AbilityBehaviour::Gun(Gun { target_id: p1 }),
+        )
+        .unwrap();
+
+        let p1_data = get_actor(&eng, p1).unwrap();
+        assert!(p1_data.has_state(State::Dead))
+    }
+
+    // ensure that these abilities are only used when votes go through
+    #[test]
+    fn vote_ability() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+    }
 
     // they shouldnt be allowed to start votes and such if theyre not present
     #[test]
     fn dead_use_ability() {}
 
     #[test]
+    fn role_requirements() {}
+
+    #[test]
+    fn member_requirements() {}
+
+    // check that members have the passives of the org
+    #[test]
     fn members_have_effective_passives() {}
+
+    // blacklisting someone kicks them from the org if applicable and prevents them from rejoining
+    #[test]
+    fn blacklist_in_org() {}
+
+    // blacklisting someone who is not in an org just removes their ability to join the org
+    #[test]
+    fn blacklist_not_in_org() {}
 }

@@ -99,13 +99,8 @@ impl Organization {
     }
 
     /// this will replace the old leader (if applicable)
-    pub fn add_member(&mut self, id: ID, og: bool, leader: bool) {
+    pub fn add_member(&mut self, id: ID, og: bool) {
         self.members.insert(id, OrgMember { og });
-        if let Some(leadership_struct) = &mut self.leadership_struct
-            && leader
-        {
-            leadership_struct.leader = Some(id);
-        }
     }
 
     /// if this member was the leader, there will be no leader after this
@@ -135,5 +130,9 @@ impl Organization {
         } else {
             None
         }
+    }
+
+    pub fn add_ability(&mut self, id: ID, settings: OrgAbility) {
+        self.abilities.insert(id, settings);
     }
 }

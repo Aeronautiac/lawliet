@@ -20,7 +20,9 @@ use crate::{
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct SystemUseOrgAbilityResponse {}
+pub struct SystemUseOrgAbilityResponse {
+    pub poll_id: Option<ID>,
+}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct SystemUseOrgAbility {
@@ -42,6 +44,7 @@ impl ActionInterface for SystemUseOrgAbility {
     ) -> ActionResult {
         actor.require_system()?;
 
+        let mut id = None;
         if let Ok(org_data) = get_org(eng, self.org_id) {
             let player_id = self.user_id;
             let player_data = get_actor(eng, player_id)?;
@@ -82,8 +85,9 @@ impl ActionInterface for SystemUseOrgAbility {
                     return Err(ActionError::PlayerIsNotLeader);
                 }
             }
+
             if !self.dont_vote && ability_policies.contains(OrgAbilityPolicy::RequireVote) {
-                Action::CreatePoll(CreatePoll {
+                let response = Action::CreatePoll(CreatePoll {
                     voter_policy: VoterPolicy::Present,
                     visibility: PollVisibility::Org(self.org_id),
                     update_policy: PollPolicy::Majority,
@@ -98,6 +102,10 @@ impl ActionInterface for SystemUseOrgAbility {
                     duration: Some(eng.config.defaults.org_vote_time),
                 })
                 .handle(eng, ctx, &ActionActor::System, version, mutate)?;
+                let ActionResponse::CreatePoll(create_poll_response) = response else {
+                    unreachable!();
+                };
+                id = Some(create_poll_response.id);
             } else {
                 Action::UseAbility(UseAbility {
                     ability_id: self.ability_id,
@@ -117,7 +125,7 @@ impl ActionInterface for SystemUseOrgAbility {
         }
 
         Ok(ActionResponse::SystemUseOrgAbility(
-            SystemUseOrgAbilityResponse {},
+            SystemUseOrgAbilityResponse { poll_id: id },
         ))
     }
 }

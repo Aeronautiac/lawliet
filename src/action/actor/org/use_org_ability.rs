@@ -15,7 +15,9 @@ use crate::{
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct UseOrgAbilityResponse {}
+pub struct UseOrgAbilityResponse {
+    pub poll_id: Option<ID>,
+}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct UseOrgAbility {
@@ -35,15 +37,21 @@ impl ActionInterface for UseOrgAbility {
     ) -> ActionResult {
         actor.player_only()?;
 
-        Action::SystemUseOrgAbility(SystemUseOrgAbility {
+        let response = Action::SystemUseOrgAbility(SystemUseOrgAbility {
             org_id: self.org_id,
             user_id: actor_id(actor).unwrap(),
             ability_id: self.ability_id,
             ability_args: self.ability_args.clone(),
             dont_vote: false,
         })
-        .handle(eng, ctx, actor, version, mutate)?;
+        .handle(eng, ctx, &ActionActor::System, version, mutate)?;
+        let ActionResponse::SystemUseOrgAbility(use_response) = response else {
+            unreachable!()
+        };
+        let poll_id = use_response.poll_id;
 
-        Ok(ActionResponse::UseOrgAbility(UseOrgAbilityResponse {}))
+        Ok(ActionResponse::UseOrgAbility(UseOrgAbilityResponse {
+            poll_id,
+        }))
     }
 }

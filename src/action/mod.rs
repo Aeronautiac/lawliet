@@ -19,7 +19,11 @@ use crate::{
             org::{
                 add_to_org::{AddToOrg, AddToOrgResponse},
                 change_org_leader::{ChangeOrgLeader, ChangeOrgLeaderResponse},
+                create_and_give_org_ability::{
+                    CreateAndGiveOrgAbility, CreateAndGiveOrgAbilityResponse,
+                },
                 create_org::{CreateOrg, CreateOrgResponse},
+                give_org_ability::{GiveOrgAbility, GiveOrgAbilityResponse},
                 remove_from_org::{RemoveFromOrg, RemoveFromOrgResponse},
                 set_leadership::{SetLeadership, SetLeadershipResponse},
                 system_use_org_ability::{SystemUseOrgAbility, SystemUseOrgAbilityResponse},
@@ -209,6 +213,8 @@ pub enum Action {
     ClearLinks(ClearLinks),
     CreateOrgs(CreateOrgs),
     SetLeadership(SetLeadership),
+    GiveOrgAbility(GiveOrgAbility),
+    CreateAndGiveOrgAbility(CreateAndGiveOrgAbility),
 }
 
 pub enum ActionResponse {
@@ -264,6 +270,8 @@ pub enum ActionResponse {
     ClearLinks(ClearLinksResponse),
     CreateOrgs(CreateOrgsResponse),
     SetLeadership(SetLeadershipResponse),
+    GiveOrgAbility(GiveOrgAbilityResponse),
+    CreateAndGiveOrgAbility(CreateAndGiveOrgAbilityResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]

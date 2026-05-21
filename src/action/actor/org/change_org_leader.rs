@@ -46,7 +46,7 @@ impl ActionInterface for ChangeOrgLeader {
             if self.new_leader == leadership_struct.leader {
                 return Err(ActionError::AlreadyLeader);
             }
-            if let Some(leader) = leadership_struct.leader {
+            if let Some(leader) = &leadership_struct.leader {
                 // TODO:
                 // alert them of leadership change
             }

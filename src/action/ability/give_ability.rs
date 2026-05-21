@@ -5,6 +5,7 @@
 
 // TODO:
 // Handle organization transfers. Orgs have a map of ability ids to ability metadata.
+// Shouild probably be done in higher level actions
 
 use crate::{
     ID,
