@@ -28,11 +28,13 @@ pub mod use_org_ability;
 
 #[cfg(test)]
 mod org_tests {
-    use indexmap::IndexSet;
+    use indexmap::{IndexSet, indexset};
 
     use crate::{
         ability::{AbilityBehaviour, gun::Gun},
-        action::actor::org::create_and_give_org_ability::CreateAndGiveOrgAbility,
+        action::{
+            ActionResponse, actor::org::create_and_give_org_ability::CreateAndGiveOrgAbility,
+        },
         actor::{
             organization::{
                 LeadershipTransferPolicies, OrgAbility, OrgAbilityPolicies, OrgAbilityPolicy,
@@ -289,15 +291,173 @@ mod org_tests {
     fn vote_ability() {
         let mut eng = Engine::new();
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+        let p3 = add_player(&mut eng, 0, Role::Civilian, "p3");
         let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+
+        let a1 = quick_org_ability(
+            &mut eng,
+            0,
+            CreateAndGiveOrgAbility {
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                org_id: o1,
+                settings: OrgAbility {
+                    require_roles: IndexSet::new(),
+                    require_members: 0,
+                    usage_policies: OrgAbilityPolicy::RequireVote.into(),
+                },
+            },
+        );
+        force_charges(&mut eng, 0, a1, 100);
+
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
+        add_to_org(&mut eng, 0, o1, p2, false, true).unwrap();
+        add_to_org(&mut eng, 0, o1, p3, false, true).unwrap();
+
+        let response = use_org_ability(
+            &mut eng,
+            0,
+            p1,
+            o1,
+            a1,
+            AbilityBehaviour::Gun(Gun { target_id: p1 }),
+        )
+        .unwrap()
+        .0;
+        let ActionResponse::UseOrgAbility(data) = response else {
+            unreachable!()
+        };
+
+        let poll_id = data.poll_id.unwrap();
+
+        let p1_data = get_actor(&eng, p1).unwrap();
+        assert!(!p1_data.has_state(State::Dead));
+
+        add_vote(&mut eng, 0, poll_id, p1, false).unwrap();
+        add_vote(&mut eng, 0, poll_id, p2, true).unwrap();
+        add_vote(&mut eng, 0, poll_id, p3, true).unwrap();
+
+        let p1_data = get_actor(&eng, p1).unwrap();
+        assert!(p1_data.has_state(State::Dead));
     }
 
     // they shouldnt be allowed to start votes and such if theyre not present
     #[test]
-    fn dead_use_ability() {}
+    fn dead_use_ability() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+
+        let a1 = quick_org_ability(
+            &mut eng,
+            0,
+            CreateAndGiveOrgAbility {
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                org_id: o1,
+                settings: OrgAbility {
+                    require_roles: IndexSet::new(),
+                    require_members: 0,
+                    usage_policies: OrgAbilityPolicies::EMPTY,
+                },
+            },
+        );
+        force_charges(&mut eng, 0, a1, 100);
+
+        quick_kill(&mut eng, 0, true, true, false, p1);
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
+
+        assert!(
+            use_org_ability(
+                &mut eng,
+                0,
+                p1,
+                o1,
+                a1,
+                AbilityBehaviour::Gun(Gun { target_id: p1 }),
+            )
+            .is_err()
+        );
+    }
 
     #[test]
-    fn role_requirements() {}
+    fn role_requirements_has_role() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::RogueCivilian, "p1");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+
+        dbg!(p1);
+
+        let a1 = quick_org_ability(
+            &mut eng,
+            0,
+            CreateAndGiveOrgAbility {
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                org_id: o1,
+                settings: OrgAbility {
+                    require_roles: indexset![Role::RogueCivilian],
+                    require_members: 0,
+                    usage_policies: OrgAbilityPolicies::EMPTY,
+                },
+            },
+        );
+        force_charges(&mut eng, 0, a1, 100);
+
+        dbg!(p1);
+
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
+
+        dbg!(p1);
+
+        use_org_ability(
+            &mut eng,
+            0,
+            p1,
+            o1,
+            a1,
+            AbilityBehaviour::Gun(Gun { target_id: p1 }),
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn role_requirements_doesnt_have_role() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::RogueCivilian, "p1");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+
+        let a1 = quick_org_ability(
+            &mut eng,
+            0,
+            CreateAndGiveOrgAbility {
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                org_id: o1,
+                settings: OrgAbility {
+                    require_roles: indexset![Role::ConArtist],
+                    require_members: 0,
+                    usage_policies: OrgAbilityPolicies::EMPTY,
+                },
+            },
+        );
+        force_charges(&mut eng, 0, a1, 100);
+
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
+
+        assert!(
+            use_org_ability(
+                &mut eng,
+                0,
+                p1,
+                o1,
+                a1,
+                AbilityBehaviour::Gun(Gun { target_id: p1 }),
+            )
+            .is_err()
+        )
+    }
 
     #[test]
     fn member_requirements() {}

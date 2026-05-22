@@ -47,6 +47,15 @@ pub fn actor_id(actor: &ActionActor) -> Option<ID> {
         ActionActor::Organization(org_info) => Some(org_info.org_id),
     }
 }
+
+pub fn player_id(actor: &ActionActor) -> Option<ID> {
+    match actor {
+        ActionActor::System => None,
+        ActionActor::Player(id) => Some(*id),
+        ActionActor::Organization(org_info) => Some(org_info.player_id),
+    }
+}
+
 pub fn require_time_not_passed(eng: &Engine, t: Time) -> Result<(), ActionError> {
     if eng.is_future_timestamp(t) {
         Ok(())

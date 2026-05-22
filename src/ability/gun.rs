@@ -3,7 +3,7 @@ use crate::{
     ability::{AbilityInterface, AbilityResponse},
     action::{Action, ActionActor, ActionContext, ActionInterface, actor::player::kill::Kill},
     config::ability::AbilityName,
-    helpers::actor_id,
+    helpers::{actor_id, player_id},
 };
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]
@@ -28,7 +28,7 @@ impl AbilityInterface for Gun {
         version: u8,
         mutate: bool,
     ) -> super::AbilityResult {
-        let id = actor_id(actor);
+        let id = player_id(actor);
 
         Action::Kill(Kill{
             allow_link_chaining: true,
