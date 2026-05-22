@@ -43,7 +43,8 @@ mod org_tests {
         },
         config::{ability::AbilityName, actor::organization::OrganizationName, role::Role},
         engine::Engine,
-        helpers::{get_actor, get_org},
+        helpers::{actor_get_effective_passive, get_actor, get_org},
+        passive::PassiveType,
         test_helpers::*,
     };
 
@@ -387,8 +388,6 @@ mod org_tests {
         let p1 = add_player(&mut eng, 0, Role::RogueCivilian, "p1");
         let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
 
-        dbg!(p1);
-
         let a1 = quick_org_ability(
             &mut eng,
             0,
@@ -405,11 +404,7 @@ mod org_tests {
         );
         force_charges(&mut eng, 0, a1, 100);
 
-        dbg!(p1);
-
         add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
-
-        dbg!(p1);
 
         use_org_ability(
             &mut eng,
@@ -460,11 +455,94 @@ mod org_tests {
     }
 
     #[test]
-    fn member_requirements() {}
+    fn member_requirements_met() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+
+        let a1 = quick_org_ability(
+            &mut eng,
+            0,
+            CreateAndGiveOrgAbility {
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                org_id: o1,
+                settings: OrgAbility {
+                    require_roles: indexset![],
+                    require_members: 1,
+                    usage_policies: OrgAbilityPolicies::EMPTY,
+                },
+            },
+        );
+        force_charges(&mut eng, 0, a1, 100);
+
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
+
+        use_org_ability(
+            &mut eng,
+            0,
+            p1,
+            o1,
+            a1,
+            AbilityBehaviour::Gun(Gun { target_id: p1 }),
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn member_requirements_unmet() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+
+        let a1 = quick_org_ability(
+            &mut eng,
+            0,
+            CreateAndGiveOrgAbility {
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                org_id: o1,
+                settings: OrgAbility {
+                    require_roles: indexset![],
+                    require_members: 2,
+                    usage_policies: OrgAbilityPolicies::EMPTY,
+                },
+            },
+        );
+        force_charges(&mut eng, 0, a1, 100);
+
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
+
+        assert!(
+            use_org_ability(
+                &mut eng,
+                0,
+                p1,
+                o1,
+                a1,
+                AbilityBehaviour::Gun(Gun { target_id: p1 }),
+            )
+            .is_err()
+        );
+    }
 
     // check that members have the passives of the org
     #[test]
-    fn members_have_effective_passives() {}
+    fn members_have_effective_passives() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        add_org(&mut eng, 0, OrganizationName::NULL);
+        quick_passive(&mut eng, 0, p1, PassiveType::Wanted, false);
+
+        assert!(
+            actor_get_effective_passive(&eng, p1, |passive| { *passive == PassiveType::Wanted })
+                .is_some()
+        );
+    }
+
+    // TODO:
+    // blacklisting
 
     // blacklisting someone kicks them from the org if applicable and prevents them from rejoining
     #[test]

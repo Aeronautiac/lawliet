@@ -81,7 +81,6 @@ mod world;
 pub use common::{ID, Time};
 
 // TODO:
-// - Test the organization system
 // - Implement channels
 //    * Implement lounges
 //    * Implement group chats
