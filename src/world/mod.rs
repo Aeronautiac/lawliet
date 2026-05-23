@@ -14,6 +14,7 @@ use crate::{
     ID,
     ability::Ability,
     actor::{Actor, ActorType, Organization, Player, organization::LeadershipStruct},
+    channel::Channel,
     chargepool::ChargePool,
     config::{actor::organization::OrganizationName, role::Role, world::WorldChargePoolName},
     notebook::Notebook,
@@ -32,12 +33,14 @@ pub struct World {
     pub charge_pools: IndexMap<ID, ChargePool>,
     pub pool_map: IndexMap<WorldChargePoolName, ID>, // things like the world prosecution pool
     pub polls: IndexMap<ID, Poll>,
+    pub channels: IndexMap<ID, Channel>,
     next_charge_pool_id: ID,
     next_actor_id: ID,
     next_notebook_id: ID,
     next_ability_id: ID,
     next_passive_id: ID,
     next_poll_id: ID,
+    next_channel_id: ID,
 }
 
 impl World {
@@ -52,12 +55,14 @@ impl World {
             charge_pools: IndexMap::new(),
             pool_map: IndexMap::new(),
             polls: IndexMap::new(),
+            channels: IndexMap::new(),
             next_charge_pool_id: 0,
             next_actor_id: 0,
             next_notebook_id: 0,
             next_ability_id: 0,
             next_passive_id: 0,
             next_poll_id: 0,
+            next_channel_id: 0,
         }
     }
 
@@ -223,5 +228,13 @@ impl World {
 
     pub fn remove_poll(&mut self, id: ID) -> bool {
         self.polls.swap_remove(&id).is_some()
+    }
+
+    pub fn get_channel(&self, id: ID) -> Option<&Channel> {
+        self.channels.get(&id)
+    }
+
+    pub fn get_channel_mut(&mut self, id: ID) -> Option<&mut Channel> {
+        self.channels.get_mut(&id)
     }
 }

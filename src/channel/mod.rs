@@ -1,6 +1,7 @@
 // channels are the primitive objects used to facilitate communication
+//
 // lounges use channels
-// group use channels
+// groups use channels
 // general chat is a channel
 // the news uses a channel
 //
@@ -16,51 +17,65 @@
 // messages themselves are stored in the yagami layer database and sent to lawliet for processing if
 // required
 
-use indexmap::IndexSet;
+use indexmap::IndexMap;
 
-use crate::{ID, Time};
+use crate::{ID, config::role::Role};
+use enumflags2::{BitFlags, bitflags};
 
-// messages are ephemeral within lawliet. they are just a delivery mechanism.
-pub struct Message {
-    pub content: String, // this may be empty in certain cases (when content is irrelevant)
-    pub sent_at: Time,
-    pub sent_by: ID,
-    pub channel_id: ID,
+// frontend servers can maintain tables of visible messages for specific channels within
+// a temporary database or even memory (database makes more sense)
+// frontend clients can render those messages when necessary
+
+// if a channel is not visible to you, you cannot read the messages in the channel
+// if you have send perms in a channel, but you cannot see that channel, you can still speak there,
+// but you wont see any messages there (including your own)
+
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord)]
+pub enum SenderDisplay {
+    Raw,
+    Role(Role),
+    Mysterious,
 }
 
-// channels have members
-// this only contains the id for now, but it may contain other stuff later
-#[derive(Eq, Hash, PartialEq)]
+#[bitflags]
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord)]
+pub enum ChannelPermission {
+    Send = 1 << 0,
+    View = 1 << 1,
+}
+pub type ChannelPermissions = BitFlags<ChannelPermission>;
+
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord)]
 pub struct ChannelMember {
-    pub id: ID,
+    pub perms: ChannelPermissions,
+    pub display: SenderDisplay,
 }
 
+#[derive(Debug)]
 pub struct Channel {
     pub loggable: bool, // whether or not abilities like autopsy can use messages sent here
-    pub members: IndexSet<ChannelMember>, // the people in the channel
+    pub members: IndexMap<ID, ChannelMember>, // the people in the channel and their permissions
 }
 
 impl Channel {
     pub fn new(loggable: bool) -> Self {
         Channel {
             loggable,
-            members: IndexSet::new(),
+            members: IndexMap::new(),
         }
     }
 
-    pub fn add_member(&mut self, id: ID) {
-        let member = ChannelMember { id };
-        self.members.insert(member);
+    pub fn set_member(&mut self, id: ID, settings: Option<ChannelMember>) {
+        if let Some(obj) = settings {
+            self.members.insert(id, obj);
+        } else {
+            self.members.swap_remove(&id);
+        }
     }
 
-    pub fn remove_member(&mut self, id: ID) {
-        let member = ChannelMember { id };
-        self.members.swap_remove(&member);
-    }
-
-    pub fn has_member(&self, id: ID) {
-        let member = ChannelMember { id };
-        self.members.contains(&member);
+    pub fn get_member(&self, id: ID) -> Option<&ChannelMember> {
+        self.members.get(&id)
     }
 
     pub fn set_loggable(&mut self, loggable: bool) {

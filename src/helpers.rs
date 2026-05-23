@@ -1,10 +1,11 @@
 use crate::{
     ID, Time,
     ability::Ability,
-    action::{ActionActor, ActionError},
+    action::{Action, ActionActor, ActionError},
     actor::{
         Actor, ActorLinkType, ActorType, Organization, Player, modifier::Modifier, state::State,
     },
+    channel::Channel,
     chargepool::ChargePool,
     common::PollWeight,
     config::{
@@ -268,5 +269,23 @@ pub fn get_voter_weight(eng: &Engine, id: ID) -> PollWeight {
         }
     } else {
         0
+    }
+}
+
+pub fn get_channel(eng: &Engine, id: ID) -> Result<&Channel, ActionError> {
+    let channel = eng.world.get_channel(id);
+    if let Some(data) = channel {
+        Ok(data)
+    } else {
+        Err(ActionError::ChannelDoesntExist)
+    }
+}
+
+pub fn get_channel_mut(eng: &mut Engine, id: ID) -> Result<&mut Channel, ActionError> {
+    let channel = eng.world.get_channel_mut(id);
+    if let Some(data) = channel {
+        Ok(data)
+    } else {
+        Err(ActionError::ChannelDoesntExist)
     }
 }

@@ -86,7 +86,6 @@ pub use common::{ID, Time};
 //    * Implement group chats
 // - Implement bugs (simple message relayers with channel context filtering)
 // - Implement news (likely just a special channel within the world struct)
-// - Implement any necessary actions
 // - Implement world initialization and iteration progression
 // - Write the test cases that depend on the new systems being implemented
 // - Begin implementing every ability and write tests for them
@@ -112,7 +111,7 @@ mod tests {
     // If the death was not caused by a link, they are typically severed, though this can be
     // disabled as well
     #[test]
-    fn actor_links() {
+    fn l_watari_links() {
         let mut eng = Engine::new();
 
         let w_id_1 = add_player(&mut eng, 0, Role::Watari, "John Candlewick");

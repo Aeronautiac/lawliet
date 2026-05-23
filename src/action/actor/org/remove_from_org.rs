@@ -43,6 +43,7 @@ impl ActionInterface for RemoveFromOrg {
                 link_type: ActorLinkType::Passive,
                 link_dest: self.org_id,
             });
+            dbg!(&actor);
         }
 
         Ok(ActionResponse::RemoveFromOrg(RemoveFromOrgResponse {}))

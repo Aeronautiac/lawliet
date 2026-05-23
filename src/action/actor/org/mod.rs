@@ -531,13 +531,30 @@ mod org_tests {
     fn members_have_effective_passives() {
         let mut eng = Engine::new();
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
 
-        add_org(&mut eng, 0, OrganizationName::NULL);
-        quick_passive(&mut eng, 0, p1, PassiveType::Wanted, false);
+        quick_passive(&mut eng, 0, o1, PassiveType::Wanted, false);
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
 
         assert!(
             actor_get_effective_passive(&eng, p1, |passive| { *passive == PassiveType::Wanted })
                 .is_some()
+        );
+    }
+
+    #[test]
+    fn links_get_severed() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let o1 = add_org(&mut eng, 0, OrganizationName::NULL);
+
+        quick_passive(&mut eng, 0, o1, PassiveType::Wanted, false);
+        add_to_org(&mut eng, 0, o1, p1, false, true).unwrap();
+        remove_from_org(&mut eng, 0, o1, p1).unwrap();
+
+        assert!(
+            actor_get_effective_passive(&eng, p1, |passive| { *passive == PassiveType::Wanted })
+                .is_none()
         );
     }
 

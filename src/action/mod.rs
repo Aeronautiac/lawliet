@@ -46,6 +46,7 @@ use crate::{
             add_charges::{AddCharges, AddChargesResponse},
             try_delete_charge_pool::{TryDeleteChargePool, TryDeleteChargePoolResponse},
         },
+        comms::channel::send_message::{SendMessage, SendMessageResponse},
         engine::{
             null::{Null, NullResponse},
             schedule_job::{ScheduleJob, ScheduleJobResponse},
@@ -87,8 +88,8 @@ use crate::{
 
 pub mod ability;
 pub mod actor;
-pub mod channel;
 pub mod chargepool;
+pub mod comms;
 pub mod engine;
 pub mod notebook;
 pub mod passive;
@@ -137,6 +138,8 @@ pub enum ActionError {
     UserNotPresent,
     PlayerNotInOrg,
     AlreadyLeader,
+    ChannelDoesntExist,
+    NotAChannelMember,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -215,6 +218,7 @@ pub enum Action {
     SetLeadership(SetLeadership),
     GiveOrgAbility(GiveOrgAbility),
     CreateAndGiveOrgAbility(CreateAndGiveOrgAbility),
+    SendMessage(SendMessage),
 }
 
 pub enum ActionResponse {
@@ -272,6 +276,7 @@ pub enum ActionResponse {
     SetLeadership(SetLeadershipResponse),
     GiveOrgAbility(GiveOrgAbilityResponse),
     CreateAndGiveOrgAbility(CreateAndGiveOrgAbilityResponse),
+    SendMessage(SendMessageResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]
