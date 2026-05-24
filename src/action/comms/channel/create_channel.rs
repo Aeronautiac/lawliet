@@ -1,24 +1,25 @@
 /*
 * SYSTEM ACTION
-* Set the loggable status of a channel
+* Create a channel
 */
 
 use crate::{
     ID,
     action::{ActionInterface, ActionResponse},
-    helpers::get_channel_mut,
+    channel::Channel,
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct SetLoggableResponse {}
+pub struct CreateChannelResponse {
+    pub id: ID,
+}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct SetLoggable {
-    pub channel_id: ID,
+pub struct CreateChannel {
     pub loggable: bool,
 }
 
-impl ActionInterface for SetLoggable {
+impl ActionInterface for CreateChannel {
     fn handle(
         &mut self,
         eng: &mut crate::engine::Engine,
@@ -29,11 +30,12 @@ impl ActionInterface for SetLoggable {
     ) -> crate::action::ActionResult {
         actor.require_system()?;
 
-        let channel = get_channel_mut(eng, self.channel_id)?;
-        if mutate {
-            channel.loggable = self.loggable
-        }
+        let id = if mutate {
+            eng.world.add_channel(Channel::new(self.loggable))
+        } else {
+            0
+        };
 
-        Ok(ActionResponse::SetLoggable(SetLoggableResponse {}))
+        Ok(ActionResponse::CreateChannel(CreateChannelResponse { id }))
     }
 }

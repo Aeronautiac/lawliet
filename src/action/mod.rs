@@ -46,7 +46,13 @@ use crate::{
             add_charges::{AddCharges, AddChargesResponse},
             try_delete_charge_pool::{TryDeleteChargePool, TryDeleteChargePoolResponse},
         },
-        comms::channel::send_message::{SendMessage, SendMessageResponse},
+        comms::channel::{
+            create_channel::{CreateChannel, CreateChannelResponse},
+            delete_channel::{DeleteChannel, DeleteChannelResponse},
+            send_message::{SendMessage, SendMessageResponse},
+            set_loggable::{SetLoggable, SetLoggableResponse},
+            set_member::{SetMember, SetMemberResponse},
+        },
         engine::{
             null::{Null, NullResponse},
             schedule_job::{ScheduleJob, ScheduleJobResponse},
@@ -219,6 +225,10 @@ pub enum Action {
     GiveOrgAbility(GiveOrgAbility),
     CreateAndGiveOrgAbility(CreateAndGiveOrgAbility),
     SendMessage(SendMessage),
+    CreateChannel(CreateChannel),
+    DeleteChannel(DeleteChannel),
+    SetMember(SetMember),
+    SetLoggable(SetLoggable),
 }
 
 pub enum ActionResponse {
@@ -277,6 +287,10 @@ pub enum ActionResponse {
     GiveOrgAbility(GiveOrgAbilityResponse),
     CreateAndGiveOrgAbility(CreateAndGiveOrgAbilityResponse),
     SendMessage(SendMessageResponse),
+    CreateChannel(CreateChannelResponse),
+    DeleteChannel(DeleteChannelResponse),
+    SetMember(SetMemberResponse),
+    SetLoggable(SetLoggableResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]

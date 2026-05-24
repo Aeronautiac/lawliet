@@ -1,24 +1,23 @@
 /*
 * SYSTEM ACTION
-* Set the loggable status of a channel
+* Delete a channel
 */
 
 use crate::{
     ID,
     action::{ActionInterface, ActionResponse},
-    helpers::get_channel_mut,
+    helpers::get_channel,
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct SetLoggableResponse {}
+pub struct DeleteChannelResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct SetLoggable {
+pub struct DeleteChannel {
     pub channel_id: ID,
-    pub loggable: bool,
 }
 
-impl ActionInterface for SetLoggable {
+impl ActionInterface for DeleteChannel {
     fn handle(
         &mut self,
         eng: &mut crate::engine::Engine,
@@ -28,12 +27,12 @@ impl ActionInterface for SetLoggable {
         mutate: bool,
     ) -> crate::action::ActionResult {
         actor.require_system()?;
+        get_channel(eng, self.channel_id)?;
 
-        let channel = get_channel_mut(eng, self.channel_id)?;
         if mutate {
-            channel.loggable = self.loggable
+            eng.world.remove_channel(self.channel_id);
         }
 
-        Ok(ActionResponse::SetLoggable(SetLoggableResponse {}))
+        Ok(ActionResponse::DeleteChannel(DeleteChannelResponse {}))
     }
 }

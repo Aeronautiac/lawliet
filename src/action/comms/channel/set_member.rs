@@ -1,24 +1,29 @@
 /*
 * SYSTEM ACTION
-* Set the loggable status of a channel
+* Map a player ID to a channel member struct within the channel
 */
 
 use crate::{
     ID,
     action::{ActionInterface, ActionResponse},
-    helpers::get_channel_mut,
+    channel::ChannelMember,
+    helpers::{get_channel_mut, get_player},
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct SetLoggableResponse {}
+pub struct SetMemberResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct SetLoggable {
+pub struct SetMember {
+    pub player_id: ID,
     pub channel_id: ID,
-    pub loggable: bool,
+    pub settings: Option<ChannelMember>,
 }
 
-impl ActionInterface for SetLoggable {
+// TODO:
+// handle sending out the right commands
+
+impl ActionInterface for SetMember {
     fn handle(
         &mut self,
         eng: &mut crate::engine::Engine,
@@ -28,12 +33,13 @@ impl ActionInterface for SetLoggable {
         mutate: bool,
     ) -> crate::action::ActionResult {
         actor.require_system()?;
+        get_player(eng, self.player_id)?;
 
         let channel = get_channel_mut(eng, self.channel_id)?;
         if mutate {
-            channel.loggable = self.loggable
+            channel.set_member(self.player_id, self.settings);
         }
 
-        Ok(ActionResponse::SetLoggable(SetLoggableResponse {}))
+        Ok(ActionResponse::SetMember(SetMemberResponse {}))
     }
 }

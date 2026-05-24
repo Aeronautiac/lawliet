@@ -64,13 +64,16 @@
 mod ability;
 mod action;
 mod actor;
+mod bug;
 mod channel;
 mod chargepool;
 mod command;
 mod common;
 mod config;
 mod engine;
+mod groupchat;
 mod helpers;
+mod lounge;
 mod notebook;
 mod ownership;
 mod passive;
@@ -81,11 +84,11 @@ mod world;
 pub use common::{ID, Time};
 
 // TODO:
-// - Implement channels
-//    * Implement lounges
-//    * Implement group chats
+// - Implement lounges
+// - Implement group chats
 // - Implement bugs (simple message relayers with channel context filtering)
-// - Implement news (likely just a special channel within the world struct)
+// - Implement news (likely just a special channel within the world struct and dedicated abilities
+// designated to the news anchor)
 // - Implement world initialization and iteration progression
 // - Write the test cases that depend on the new systems being implemented
 // - Begin implementing every ability and write tests for them

@@ -13,6 +13,7 @@ use indexmap::IndexMap;
 use crate::{
     ID,
     ability::Ability,
+    action::comms::channel,
     actor::{Actor, ActorType, Organization, Player, organization::LeadershipStruct},
     channel::Channel,
     chargepool::ChargePool,
@@ -34,6 +35,7 @@ pub struct World {
     pub pool_map: IndexMap<WorldChargePoolName, ID>, // things like the world prosecution pool
     pub polls: IndexMap<ID, Poll>,
     pub channels: IndexMap<ID, Channel>,
+    pub lounges: IndexMap<ID, Channel>,
     next_charge_pool_id: ID,
     next_actor_id: ID,
     next_notebook_id: ID,
@@ -41,6 +43,7 @@ pub struct World {
     next_passive_id: ID,
     next_poll_id: ID,
     next_channel_id: ID,
+    next_lounge_id: ID,
 }
 
 impl World {
@@ -56,6 +59,7 @@ impl World {
             pool_map: IndexMap::new(),
             polls: IndexMap::new(),
             channels: IndexMap::new(),
+            lounges: IndexMap::new(),
             next_charge_pool_id: 0,
             next_actor_id: 0,
             next_notebook_id: 0,
@@ -63,6 +67,7 @@ impl World {
             next_passive_id: 0,
             next_poll_id: 0,
             next_channel_id: 0,
+            next_lounge_id: 0,
         }
     }
 
@@ -228,6 +233,17 @@ impl World {
 
     pub fn remove_poll(&mut self, id: ID) -> bool {
         self.polls.swap_remove(&id).is_some()
+    }
+
+    pub fn add_channel(&mut self, channel: Channel) -> ID {
+        let id = self.next_channel_id;
+        self.next_channel_id += 1;
+        self.channels.insert(id, channel);
+        id
+    }
+
+    pub fn remove_channel(&mut self, id: ID) -> bool {
+        self.channels.swap_remove(&id).is_some()
     }
 
     pub fn get_channel(&self, id: ID) -> Option<&Channel> {
