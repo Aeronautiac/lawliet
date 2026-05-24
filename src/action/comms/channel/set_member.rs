@@ -37,7 +37,7 @@ impl ActionInterface for SetMember {
 
         let channel = get_channel_mut(eng, self.channel_id)?;
         if mutate {
-            channel.set_member(self.player_id, self.settings);
+            channel.set_member(self.player_id, self.settings.clone());
         }
 
         Ok(ActionResponse::SetMember(SetMemberResponse {}))

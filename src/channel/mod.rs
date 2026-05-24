@@ -32,7 +32,7 @@ use enumflags2::{BitFlags, bitflags};
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord)]
 pub enum SenderDisplay {
-    Raw,
+    Raw(ID),
     Role(Role),
     Mysterious,
 }
@@ -46,10 +46,10 @@ pub enum ChannelPermission {
 }
 pub type ChannelPermissions = BitFlags<ChannelPermission>;
 
-#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ChannelMember {
     pub perms: ChannelPermissions,
-    pub display: SenderDisplay,
+    pub displays: IndexMap<ID, SenderDisplay>,
 }
 
 #[derive(Debug)]
