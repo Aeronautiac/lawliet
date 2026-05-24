@@ -17,7 +17,7 @@
 // messages themselves are stored in the yagami layer database and sent to lawliet for processing if
 // required
 
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 
 use crate::{ID, config::role::Role};
 use enumflags2::{BitFlags, bitflags};
@@ -49,7 +49,7 @@ pub type ChannelPermissions = BitFlags<ChannelPermission>;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ChannelMember {
     pub perms: ChannelPermissions,
-    pub displays: IndexMap<ID, SenderDisplay>,
+    pub displays: IndexSet<SenderDisplay>,
 }
 
 #[derive(Debug)]

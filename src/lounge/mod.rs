@@ -28,14 +28,28 @@
 // solution:
 // simply handle logging in the actions which create lounges. do not use lounges raw.
 
+// players maintain an array of the lounges they are in
+// leaving a lounge simply removes the lounge id from their array and subsequently removes them from
+// the channel
+
 use crate::ID;
 
-pub struct FakeLoungeInfo {
-    pub creator_id: ID,
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub enum LoungeVariant {
+    Fake {
+        creator_id: ID,
+        contacted_id: ID,
+        contactor_id: ID,
+    },
+    Basic {
+        contacted_id: ID,
+        contactor_id: ID,
+    },
 }
 
 // storing the player's ids is necessary
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Lounge {
     pub channel_id: ID,
-    pub fake: Option<FakeLoungeInfo>,
+    pub variant: LoungeVariant,
 }

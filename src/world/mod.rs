@@ -13,11 +13,11 @@ use indexmap::IndexMap;
 use crate::{
     ID,
     ability::Ability,
-    action::comms::channel,
-    actor::{Actor, ActorType, Organization, Player, organization::LeadershipStruct},
+    actor::{Actor, ActorType, Player, organization::LeadershipStruct},
     channel::Channel,
     chargepool::ChargePool,
     config::{actor::organization::OrganizationName, role::Role, world::WorldChargePoolName},
+    lounge::Lounge,
     notebook::Notebook,
     passive::Passive,
     poll::Poll,
@@ -35,7 +35,7 @@ pub struct World {
     pub pool_map: IndexMap<WorldChargePoolName, ID>, // things like the world prosecution pool
     pub polls: IndexMap<ID, Poll>,
     pub channels: IndexMap<ID, Channel>,
-    pub lounges: IndexMap<ID, Channel>,
+    pub lounges: IndexMap<ID, Lounge>,
     next_charge_pool_id: ID,
     next_actor_id: ID,
     next_notebook_id: ID,
@@ -252,5 +252,12 @@ impl World {
 
     pub fn get_channel_mut(&mut self, id: ID) -> Option<&mut Channel> {
         self.channels.get_mut(&id)
+    }
+
+    pub fn add_lounge(&mut self, lounge: Lounge) -> ID {
+        let id = self.next_lounge_id;
+        self.next_lounge_id += 1;
+        self.lounges.insert(id, lounge);
+        id
     }
 }

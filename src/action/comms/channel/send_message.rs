@@ -6,7 +6,7 @@
 use crate::{
     ID,
     action::{ActionError, ActionInterface, ActionResponse},
-    channel::ChannelPermission,
+    channel::{ChannelPermission, SenderDisplay},
     helpers::{get_channel, player_id},
 };
 
@@ -16,15 +16,9 @@ pub struct SendMessageResponse {}
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct SendMessage {
     pub channel_id: ID,
+    pub display: SenderDisplay,
     pub content: String,
 }
-
-// PROBLEM:
-// how to handle anonymous messaging?
-// - instead of mapping to only permissions for channel members, map to a channel member object which
-// includes an optional "display" of "role" or "mysterious", etc...
-
-// handle permissions, repeating, and relaying
 
 impl ActionInterface for SendMessage {
     fn handle(
@@ -40,12 +34,14 @@ impl ActionInterface for SendMessage {
 
         let channel = get_channel(eng, id)?;
         let member = channel.get_member(id);
-        if let Some(member_data) = member {
-            if !member_data.perms.contains(ChannelPermission::Send) {
-                return Err(ActionError::InsufficientPermissions);
-            }
-        } else {
+        let Some(member_data) = member else {
             return Err(ActionError::NotAChannelMember);
+        };
+        if !member_data.perms.contains(ChannelPermission::Send) {
+            return Err(ActionError::InsufficientPermissions);
+        }
+        if !member_data.displays.contains(&self.display) {
+            return Err(ActionError::DisplayNotOwned);
         }
 
         // repeating
@@ -56,7 +52,7 @@ impl ActionInterface for SendMessage {
 
         // relays
         // TODO:
-        // loop through all bugs and relay the messages if the channel is loggable and the bug
+        // loop through all bugs and relay the message to those as well if the channel is loggable and the bug
         // applies to the person who sent the message
 
         Ok(ActionResponse::SendMessage(SendMessageResponse {}))

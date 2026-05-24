@@ -46,12 +46,15 @@ use crate::{
             add_charges::{AddCharges, AddChargesResponse},
             try_delete_charge_pool::{TryDeleteChargePool, TryDeleteChargePoolResponse},
         },
-        comms::channel::{
-            create_channel::{CreateChannel, CreateChannelResponse},
-            delete_channel::{DeleteChannel, DeleteChannelResponse},
-            send_message::{SendMessage, SendMessageResponse},
-            set_loggable::{SetLoggable, SetLoggableResponse},
-            set_member::{SetMember, SetMemberResponse},
+        comms::{
+            channel::{
+                create_channel::{CreateChannel, CreateChannelResponse},
+                delete_channel::{DeleteChannel, DeleteChannelResponse},
+                send_message::{SendMessage, SendMessageResponse},
+                set_loggable::{SetLoggable, SetLoggableResponse},
+                set_member::{SetMember, SetMemberResponse},
+            },
+            lounge::create_lounge::{CreateLounge, CreateLoungeResponse},
         },
         engine::{
             null::{Null, NullResponse},
@@ -146,6 +149,7 @@ pub enum ActionError {
     AlreadyLeader,
     ChannelDoesntExist,
     NotAChannelMember,
+    DisplayNotOwned,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -229,6 +233,7 @@ pub enum Action {
     DeleteChannel(DeleteChannel),
     SetMember(SetMember),
     SetLoggable(SetLoggable),
+    CreateLounge(CreateLounge),
 }
 
 pub enum ActionResponse {
@@ -291,6 +296,7 @@ pub enum ActionResponse {
     DeleteChannel(DeleteChannelResponse),
     SetMember(SetMemberResponse),
     SetLoggable(SetLoggableResponse),
+    CreateLounge(CreateLoungeResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]
