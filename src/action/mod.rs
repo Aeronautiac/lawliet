@@ -57,6 +57,7 @@ use crate::{
             lounge::{
                 create_lounge::{CreateLounge, CreateLoungeResponse},
                 leave_lounge::{LeaveLounge, LeaveLoungeResponse},
+                remove_from_lounge::{RemoveFromLounge, RemoveFromLoungeResponse},
             },
             update_contact_channels::{UpdateContactChannels, UpdateContactChannelsResponse},
         },
@@ -154,6 +155,8 @@ pub enum ActionError {
     ChannelDoesntExist,
     NotAChannelMember,
     DisplayNotOwned,
+    PlayerNotInLounge,
+    LoungeDoesntExist,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -240,6 +243,7 @@ pub enum Action {
     CreateLounge(CreateLounge),
     UpdateContactChannels(UpdateContactChannels),
     LeaveLounge(LeaveLounge),
+    RemoveFromLounge(RemoveFromLounge),
 }
 
 pub enum ActionResponse {
@@ -305,6 +309,7 @@ pub enum ActionResponse {
     CreateLounge(CreateLoungeResponse),
     UpdateContactChannels(UpdateContactChannelsResponse),
     LeaveLounge(LeaveLoungeResponse),
+    RemoveFromLounge(RemoveFromLoungeResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]

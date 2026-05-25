@@ -260,4 +260,12 @@ impl World {
         self.lounges.insert(id, lounge);
         id
     }
+
+    pub fn get_lounge(&self, id: ID) -> Option<&Lounge> {
+        self.lounges.get(&id)
+    }
+
+    pub fn get_lounge_mut(&mut self, id: ID) -> Option<&mut Lounge> {
+        self.lounges.get_mut(&id)
+    }
 }

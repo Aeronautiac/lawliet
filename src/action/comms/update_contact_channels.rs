@@ -8,7 +8,7 @@ use crate::{
     action::{ActionInterface, ActionResponse},
     actor::modifier::Modifier,
     channel::{ChannelPermission, ChannelPermissions},
-    helpers::{get_actor, get_channel_mut, get_player},
+    helpers::{get_actor, get_channel, get_channel_mut, get_lounge, get_player},
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -36,7 +36,8 @@ impl ActionInterface for UpdateContactChannels {
         let player_data = get_player(eng, self.player_id)?;
         let lounges = player_data.lounges.clone();
         for lounge_id in lounges {
-            let channel = get_channel_mut(eng, lounge_id)?;
+            let lounge = get_lounge(eng, lounge_id)?;
+            let channel = get_channel_mut(eng, lounge.channel_id)?;
             let mut member_settings = channel
                 .get_member(self.player_id)
                 .expect("expected player to be in a lounge within their lounge cache")
@@ -59,4 +60,3 @@ impl ActionInterface for UpdateContactChannels {
         ))
     }
 }
-

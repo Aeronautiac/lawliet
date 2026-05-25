@@ -5,7 +5,11 @@
 
 use crate::{
     ID,
-    action::{ActionInterface, ActionResponse},
+    action::{
+        Action, ActionInterface, ActionResponse,
+        comms::lounge::remove_from_lounge::RemoveFromLounge,
+    },
+    helpers::player_id,
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -26,6 +30,19 @@ impl ActionInterface for LeaveLounge {
         mutate: bool,
     ) -> crate::action::ActionResult {
         actor.player_only()?;
+        let id = player_id(actor).expect("expected valid player id");
+
+        Action::RemoveFromLounge(RemoveFromLounge {
+            lounge_id: self.lounge_id,
+            player_id: id,
+        })
+        .handle(
+            eng,
+            ctx,
+            &crate::action::ActionActor::System,
+            version,
+            mutate,
+        )?;
 
         Ok(ActionResponse::LeaveLounge(LeaveLoungeResponse {}))
     }

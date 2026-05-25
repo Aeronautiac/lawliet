@@ -1,7 +1,7 @@
 use crate::{
     ID, Time,
     ability::Ability,
-    action::{Action, ActionActor, ActionError},
+    action::{ActionActor, ActionError},
     actor::{
         Actor, ActorLinkType, ActorType, Organization, Player, modifier::Modifier, state::State,
     },
@@ -13,6 +13,7 @@ use crate::{
         role::{Role, RoleConfig},
     },
     engine::Engine,
+    lounge::Lounge,
     notebook::Notebook,
     passive::{Passive, PassiveType},
     poll::Poll,
@@ -287,5 +288,23 @@ pub fn get_channel_mut(eng: &mut Engine, id: ID) -> Result<&mut Channel, ActionE
         Ok(data)
     } else {
         Err(ActionError::ChannelDoesntExist)
+    }
+}
+
+pub fn get_lounge(eng: &Engine, id: ID) -> Result<&Lounge, ActionError> {
+    let lounge = eng.world.get_lounge(id);
+    if let Some(data) = lounge {
+        Ok(data)
+    } else {
+        Err(ActionError::LoungeDoesntExist)
+    }
+}
+
+pub fn get_lounge_mut(eng: &mut Engine, id: ID) -> Result<&mut Lounge, ActionError> {
+    let lounge = eng.world.get_lounge_mut(id);
+    if let Some(data) = lounge {
+        Ok(data)
+    } else {
+        Err(ActionError::LoungeDoesntExist)
     }
 }
