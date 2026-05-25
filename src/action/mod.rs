@@ -54,7 +54,11 @@ use crate::{
                 set_loggable::{SetLoggable, SetLoggableResponse},
                 set_member::{SetMember, SetMemberResponse},
             },
-            lounge::create_lounge::{CreateLounge, CreateLoungeResponse},
+            lounge::{
+                create_lounge::{CreateLounge, CreateLoungeResponse},
+                leave_lounge::{LeaveLounge, LeaveLoungeResponse},
+            },
+            update_contact_channels::{UpdateContactChannels, UpdateContactChannelsResponse},
         },
         engine::{
             null::{Null, NullResponse},
@@ -234,6 +238,8 @@ pub enum Action {
     SetMember(SetMember),
     SetLoggable(SetLoggable),
     CreateLounge(CreateLounge),
+    UpdateContactChannels(UpdateContactChannels),
+    LeaveLounge(LeaveLounge),
 }
 
 pub enum ActionResponse {
@@ -297,6 +303,8 @@ pub enum ActionResponse {
     SetMember(SetMemberResponse),
     SetLoggable(SetLoggableResponse),
     CreateLounge(CreateLoungeResponse),
+    UpdateContactChannels(UpdateContactChannelsResponse),
+    LeaveLounge(LeaveLoungeResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]

@@ -1,0 +1,62 @@
+/*
+* SYSTEM ACTION
+* Update a player's contact channel (groupchats and lounges) permissions based on current state.
+*/
+
+use crate::{
+    ID,
+    action::{ActionInterface, ActionResponse},
+    actor::modifier::Modifier,
+    channel::{ChannelPermission, ChannelPermissions},
+    helpers::{get_actor, get_channel_mut, get_player},
+};
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct UpdateContactChannelsResponse {}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct UpdateContactChannels {
+    pub player_id: ID,
+}
+
+impl ActionInterface for UpdateContactChannels {
+    fn handle(
+        &mut self,
+        eng: &mut crate::engine::Engine,
+        ctx: &mut crate::action::ActionContext,
+        actor: &crate::action::ActionActor,
+        version: crate::common::Version,
+        mutate: bool,
+    ) -> crate::action::ActionResult {
+        actor.require_system()?;
+
+        let actor_data = get_actor(eng, self.player_id)?;
+        let no_contact = actor_data.has_modifier(Modifier::NoContact);
+
+        let player_data = get_player(eng, self.player_id)?;
+        let lounges = player_data.lounges.clone();
+        for lounge_id in lounges {
+            let channel = get_channel_mut(eng, lounge_id)?;
+            let mut member_settings = channel
+                .get_member(self.player_id)
+                .expect("expected player to be in a lounge within their lounge cache")
+                .clone();
+            if mutate {
+                if no_contact {
+                    member_settings.perms = ChannelPermissions::EMPTY;
+                } else {
+                    member_settings.perms = ChannelPermission::Send | ChannelPermission::View;
+                }
+                channel.set_member(self.player_id, Some(member_settings));
+            }
+        }
+
+        // TODO:
+        // groupchats
+
+        Ok(ActionResponse::UpdateContactChannels(
+            UpdateContactChannelsResponse {},
+        ))
+    }
+}
+

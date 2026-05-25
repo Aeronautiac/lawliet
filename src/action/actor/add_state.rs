@@ -5,11 +5,14 @@
 
 use crate::{
     ID,
-    action::{Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    action::{
+        Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
+        comms::update_contact_channels::UpdateContactChannels,
+    },
     actor::state::State,
     common::Version,
     engine::Engine,
-    helpers::get_actor_mut,
+    helpers::{get_actor_mut, get_player},
 };
 
 #[derive(PartialEq, Eq, Clone)]
@@ -46,6 +49,13 @@ impl ActionInterface for AddState {
         let target = get_actor_mut(eng, self.actor_id)?;
         if mutate {
             target.add_state(self.state, restrictions);
+        }
+
+        if get_player(eng, self.actor_id).is_ok() {
+            Action::UpdateContactChannels(UpdateContactChannels {
+                player_id: self.actor_id,
+            })
+            .handle(eng, ctx, actor, version, mutate)?;
         }
 
         Ok(ActionResponse::AddState(AddStateResponse {}))
