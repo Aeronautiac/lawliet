@@ -84,11 +84,11 @@ mod world;
 pub use common::{ID, Time};
 
 // TODO:
-// - Implement lounges
 // - Implement group chats
 // - Implement bugs (simple message relayers with channel context filtering)
 // - Implement news (likely just a special channel within the world struct and dedicated abilities
 // designated to the news anchor)
+// - Implement prosecution and custody system
 // - Implement world initialization and iteration progression
 // - Write the test cases that depend on the new systems being implemented
 // - Begin implementing every ability and write tests for them

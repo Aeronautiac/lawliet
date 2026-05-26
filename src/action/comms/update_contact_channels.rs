@@ -8,7 +8,7 @@ use crate::{
     action::{ActionInterface, ActionResponse},
     actor::modifier::Modifier,
     channel::{ChannelPermission, ChannelPermissions},
-    helpers::{get_actor, get_channel, get_channel_mut, get_lounge, get_player},
+    helpers::{get_actor, get_channel_mut, get_gc, get_lounge, get_player},
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -35,6 +35,8 @@ impl ActionInterface for UpdateContactChannels {
 
         let player_data = get_player(eng, self.player_id)?;
         let lounges = player_data.lounges.clone();
+        let gcs = player_data.groupchats.clone();
+
         for lounge_id in lounges {
             let lounge = get_lounge(eng, lounge_id)?;
             let channel = get_channel_mut(eng, lounge.channel_id)?;
@@ -52,8 +54,22 @@ impl ActionInterface for UpdateContactChannels {
             }
         }
 
-        // TODO:
-        // groupchats
+        for gc_id in gcs {
+            let gc = get_gc(eng, gc_id)?;
+            let channel = get_channel_mut(eng, gc.channel_id)?;
+            let mut member_settings = channel
+                .get_member(self.player_id)
+                .expect("expected player to be in a gc within their gc cache")
+                .clone();
+            if mutate {
+                if no_contact {
+                    member_settings.perms = ChannelPermissions::EMPTY;
+                } else {
+                    member_settings.perms = ChannelPermission::Send | ChannelPermission::View;
+                }
+                channel.set_member(self.player_id, Some(member_settings));
+            }
+        }
 
         Ok(ActionResponse::UpdateContactChannels(
             UpdateContactChannelsResponse {},

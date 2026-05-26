@@ -13,6 +13,7 @@ use crate::{
         role::{Role, RoleConfig},
     },
     engine::Engine,
+    groupchat::Groupchat,
     lounge::Lounge,
     notebook::Notebook,
     passive::{Passive, PassiveType},
@@ -306,5 +307,23 @@ pub fn get_lounge_mut(eng: &mut Engine, id: ID) -> Result<&mut Lounge, ActionErr
         Ok(data)
     } else {
         Err(ActionError::LoungeDoesntExist)
+    }
+}
+
+pub fn get_gc(eng: &Engine, id: ID) -> Result<&Groupchat, ActionError> {
+    let gc = eng.world.get_groupchat(id);
+    if let Some(data) = gc {
+        Ok(data)
+    } else {
+        Err(ActionError::GroupchatDoesntExist)
+    }
+}
+
+pub fn get_gc_mut(eng: &mut Engine, id: ID) -> Result<&mut Groupchat, ActionError> {
+    let gc = eng.world.get_groupchat_mut(id);
+    if let Some(data) = gc {
+        Ok(data)
+    } else {
+        Err(ActionError::GroupchatDoesntExist)
     }
 }

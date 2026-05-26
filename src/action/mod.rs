@@ -54,6 +54,12 @@ use crate::{
                 set_loggable::{SetLoggable, SetLoggableResponse},
                 set_member::{SetMember, SetMemberResponse},
             },
+            groupchat::{
+                add_to_groupchat::{AddToGroupchat, AddToGroupchatResponse},
+                create_groupchat::{CreateGroupchat, CreateGroupchatResponse},
+                remove_from_groupchat::{RemoveFromGroupchat, RemoveFromGroupchatResponse},
+                set_groupchat_owner::{SetGroupchatOwner, SetGroupchatOwnerResponse},
+            },
             lounge::{
                 create_lounge::{CreateLounge, CreateLoungeResponse},
                 leave_lounge::{LeaveLounge, LeaveLoungeResponse},
@@ -157,6 +163,10 @@ pub enum ActionError {
     DisplayNotOwned,
     PlayerNotInLounge,
     LoungeDoesntExist,
+    GroupchatDoesntExist,
+    CannotContact,
+    NotTheOwner,
+    NotInGroupchat,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -244,6 +254,10 @@ pub enum Action {
     UpdateContactChannels(UpdateContactChannels),
     LeaveLounge(LeaveLounge),
     RemoveFromLounge(RemoveFromLounge),
+    AddToGroupchat(AddToGroupchat),
+    CreateGroupchat(CreateGroupchat),
+    SetGroupchatOwner(SetGroupchatOwner),
+    RemoveFromGroupchat(RemoveFromGroupchat),
 }
 
 pub enum ActionResponse {
@@ -310,6 +324,10 @@ pub enum ActionResponse {
     UpdateContactChannels(UpdateContactChannelsResponse),
     LeaveLounge(LeaveLoungeResponse),
     RemoveFromLounge(RemoveFromLoungeResponse),
+    AddToGroupchat(AddToGroupchatResponse),
+    CreateGroupchat(CreateGroupchatResponse),
+    SetGroupchatOwner(SetGroupchatOwnerResponse),
+    RemoveFromGroupchat(RemoveFromGroupchatResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -334,14 +352,14 @@ pub struct ActionRequest {
 
 impl ActionActor {
     pub fn require_system(&self) -> Result<(), ActionError> {
-        if matches!(self, ActionActor::System) {
+        if self.is_system() {
             Ok(())
         } else {
             Err(ActionError::InsufficientPermissions)
         }
     }
     pub fn player_only(&self) -> Result<(), ActionError> {
-        if matches!(self, ActionActor::Player(_)) {
+        if self.is_player() {
             Ok(())
         } else {
             Err(ActionError::ActorIsNotPlayer)
@@ -349,7 +367,7 @@ impl ActionActor {
     }
 
     pub fn org_only(&self) -> Result<(), ActionError> {
-        if matches!(self, ActionActor::Organization(_)) {
+        if self.is_org() {
             Ok(())
         } else {
             Err(ActionError::ActorIsNotOrg)
@@ -357,11 +375,31 @@ impl ActionActor {
     }
 
     pub fn require_not_system(&self) -> Result<(), ActionError> {
-        if matches!(self, ActionActor::System) {
+        if self.is_system() {
             Err(ActionError::ActorIsSystem)
         } else {
             Ok(())
         }
+    }
+
+    pub fn player_or_system(&self) -> Result<(), ActionError> {
+        if !self.is_player() && !self.is_system() {
+            Err(ActionError::InsufficientPermissions)
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn is_player(&self) -> bool {
+        matches!(self, ActionActor::Player(_))
+    }
+
+    pub fn is_system(&self) -> bool {
+        matches!(self, ActionActor::System)
+    }
+
+    pub fn is_org(&self) -> bool {
+        matches!(self, ActionActor::Organization(_))
     }
 }
 

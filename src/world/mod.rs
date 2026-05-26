@@ -17,6 +17,7 @@ use crate::{
     channel::Channel,
     chargepool::ChargePool,
     config::{actor::organization::OrganizationName, role::Role, world::WorldChargePoolName},
+    groupchat::Groupchat,
     lounge::Lounge,
     notebook::Notebook,
     passive::Passive,
@@ -36,6 +37,7 @@ pub struct World {
     pub polls: IndexMap<ID, Poll>,
     pub channels: IndexMap<ID, Channel>,
     pub lounges: IndexMap<ID, Lounge>,
+    pub groupchats: IndexMap<ID, Groupchat>,
     next_charge_pool_id: ID,
     next_actor_id: ID,
     next_notebook_id: ID,
@@ -44,6 +46,7 @@ pub struct World {
     next_poll_id: ID,
     next_channel_id: ID,
     next_lounge_id: ID,
+    next_groupchat_id: ID,
 }
 
 impl World {
@@ -60,6 +63,7 @@ impl World {
             polls: IndexMap::new(),
             channels: IndexMap::new(),
             lounges: IndexMap::new(),
+            groupchats: IndexMap::new(),
             next_charge_pool_id: 0,
             next_actor_id: 0,
             next_notebook_id: 0,
@@ -68,6 +72,7 @@ impl World {
             next_poll_id: 0,
             next_channel_id: 0,
             next_lounge_id: 0,
+            next_groupchat_id: 0,
         }
     }
 
@@ -267,5 +272,20 @@ impl World {
 
     pub fn get_lounge_mut(&mut self, id: ID) -> Option<&mut Lounge> {
         self.lounges.get_mut(&id)
+    }
+
+    pub fn add_groupchat(&mut self, gc: Groupchat) -> ID {
+        let id = self.next_groupchat_id;
+        self.next_groupchat_id += 1;
+        self.groupchats.insert(id, gc);
+        id
+    }
+
+    pub fn get_groupchat(&self, id: ID) -> Option<&Groupchat> {
+        self.groupchats.get(&id)
+    }
+
+    pub fn get_groupchat_mut(&mut self, id: ID) -> Option<&mut Groupchat> {
+        self.groupchats.get_mut(&id)
     }
 }

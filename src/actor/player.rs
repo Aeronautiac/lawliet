@@ -10,6 +10,7 @@ pub struct Player {
     pub true_name: Rc<str>,
     pub eyes: u32,
     pub lounges: IndexSet<ID>,
+    pub groupchats: IndexSet<ID>,
 }
 
 impl Player {
@@ -20,6 +21,7 @@ impl Player {
             true_name,
             eyes: 2,
             lounges: indexset![],
+            groupchats: indexset![],
         }
     }
 
@@ -29,5 +31,13 @@ impl Player {
 
     pub fn remove_lounge(&mut self, id: ID) {
         self.lounges.swap_remove(&id);
+    }
+
+    pub fn add_groupchat(&mut self, id: ID) {
+        self.groupchats.insert(id);
+    }
+
+    pub fn remove_groupchat(&mut self, id: ID) {
+        self.groupchats.swap_remove(&id);
     }
 }
