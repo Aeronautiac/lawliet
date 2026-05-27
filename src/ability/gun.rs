@@ -3,7 +3,7 @@ use crate::{
     ability::{AbilityInterface, AbilityResponse},
     action::{Action, ActionActor, ActionContext, ActionInterface, actor::player::kill::Kill},
     config::ability::AbilityName,
-    helpers::{actor_id, player_id},
+    helpers::player_id,
 };
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]
@@ -24,7 +24,7 @@ impl AbilityInterface for Gun {
         eng: &mut crate::engine::Engine,
         ctx: &mut ActionContext,
         actor: &crate::action::ActionActor,
-        ability: ID,
+        _: ID,
         version: u8,
         mutate: bool,
     ) -> super::AbilityResult {

@@ -17,7 +17,7 @@ pub mod use_ability;
 #[cfg(test)]
 mod ability_tests {
     use crate::{
-        ability::{AbilityBehaviour, AbilityPoolLink, gun::Gun, pseudocide::Pseudocide},
+        ability::{AbilityBehaviour, gun::Gun, pseudocide::Pseudocide},
         action::{
             ability::create_and_give_ability::CreateAndGiveAbility,
             chargepool::add_charge_pool::AddChargePool,

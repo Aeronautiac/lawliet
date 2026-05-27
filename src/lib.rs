@@ -34,7 +34,6 @@
 // depending on their properties
 // abilities have an ability type which is simply an identifier
 // abilities may have a variant to further narrow behaviour if necessary
-// abilities have a "category" which dictates which restrictions may apply to them
 //
 // a state is a simple identity with a set of restrictions associated with it
 // restrictions can be added without states, but adding a state will add the restrictions
@@ -89,6 +88,8 @@ pub use common::{ID, Time};
 // - Implement news (likely just a special channel within the world struct and dedicated abilities
 // designated to the news anchor)
 // - Implement prosecution and custody system
+// - Implement kidnapping
+// - Implement randomness (using a random seed)
 // - Implement world initialization and iteration progression
 // - Write the test cases that depend on the new systems being implemented
 // - Begin implementing every ability and write tests for them

@@ -3,9 +3,11 @@
 * Check all polls to see if they can be resolved. If they can, resolve them.
 */
 
+use smallvec::{SmallVec, smallvec};
+
 use crate::{
     ID,
-    action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    action::{Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
     helpers::get_poll,
     poll::PolicyResult,
 };
@@ -27,9 +29,9 @@ impl ActionInterface for UpdatePolls {
     ) -> ActionResult {
         actor.require_system()?;
 
-        let mut polls_to_cancel = vec![];
-        let mut polls_to_accept = vec![];
-        let mut polls_to_reject = vec![];
+        let mut polls_to_cancel: SmallVec<[ID; 8]> = smallvec![];
+        let mut polls_to_accept: SmallVec<[(ID, Action); 8]> = smallvec![];
+        let mut polls_to_reject: SmallVec<[ID; 8]> = smallvec![];
         let ids: Vec<ID> = eng.world.polls.keys().cloned().collect();
         for id in ids {
             let poll = get_poll(eng, id).unwrap();

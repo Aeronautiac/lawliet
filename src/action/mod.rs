@@ -428,8 +428,3 @@ impl Action {
         self.handle(eng, ctx, actor, version, false)
     }
 }
-
-#[cfg(test)]
-mod action_tests {
-    use super::*;
-}

@@ -36,4 +36,8 @@ impl Groupchat {
     pub fn contains_member(&self, id: ID) -> bool {
         self.members.contains(&id)
     }
+
+    pub fn set_owner(&mut self, owner: Option<ID>) {
+        self.owner = owner;
+    }
 }
