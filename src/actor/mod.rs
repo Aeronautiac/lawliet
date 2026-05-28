@@ -96,11 +96,8 @@ impl Actor {
     }
 
     pub fn has_modifier(&self, modifier: Modifier) -> bool {
-        let mut modifiers = Modifiers::empty();
-        for modifier in self.modifiers.values() {
-            modifiers |= *modifier;
-        }
-        modifiers.contains(modifier)
+        let mods = self.modifiers();
+        mods.contains(modifier)
     }
 
     pub fn has_state(&self, state: State) -> bool {
@@ -119,6 +116,14 @@ impl Actor {
     pub fn remove_state(&mut self, remove_state: State) {
         self.states.set(remove_state, false);
         self.remove_modifiers(Source::State(remove_state));
+    }
+
+    pub fn modifiers(&self) -> Modifiers {
+        let mut mods = Modifiers::EMPTY;
+        for modifier in self.modifiers.values() {
+            mods |= *modifier;
+        }
+        mods
     }
 
     pub fn add_link(&mut self, link: ActorLink) {

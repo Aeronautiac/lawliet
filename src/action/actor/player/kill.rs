@@ -190,17 +190,23 @@ impl ActionInterface for Kill {
         .handle(eng, ctx, actor, version, mutate)?;
 
         if !self.silent {
-            ctx.commands.push(Command::AnnounceDeath {
-                true_name: String::from(&*true_name),
-                death_message: if let Some(msg) = &self.death_message {
-                    msg.clone()
-                } else {
-                    eng.config.defaults.death_message.clone()
+            ctx.push_cmd(
+                Command::Death {
+                    true_name: String::from(&*true_name),
+                    death_message: if let Some(msg) = &self.death_message {
+                        msg.clone()
+                    } else {
+                        eng.config.defaults.death_message.clone()
+                    },
+                    role,
+                    notebook_transferred,
+                    ability_transferred,
                 },
-                role,
-                notebook_transferred,
-                ability_transferred,
-            });
+                // TODO:
+                // show this to everyone eligible
+                0,
+                eng.time,
+            );
         }
 
         Ok(ActionResponse::Kill(KillResponse {}))

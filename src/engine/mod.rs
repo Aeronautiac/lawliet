@@ -1,5 +1,6 @@
 use crate::Time;
 use crate::action::{ActionContext, ActionError, ActionRequest, ActionResponse, ActionResult};
+use crate::command::DeferredCommand;
 use crate::common::SequenceNumber;
 use crate::config::Config;
 use crate::world::World;
@@ -35,6 +36,7 @@ pub struct Engine {
     pub config: Config,
     pub time: Time,
     pub jobs: BinaryHeap<Job>,
+    pub deferred_commands: Vec<DeferredCommand>,
     next_job_id: SequenceNumber,
 }
 
@@ -46,6 +48,7 @@ impl Engine {
             world: World::new(),
             config: Config::new(),
             jobs: BinaryHeap::new(),
+            deferred_commands: vec![],
             time: 0,
             next_job_id: 0,
         }
@@ -63,6 +66,10 @@ impl Engine {
 
     pub fn is_future_timestamp(&self, timestamp: Time) -> bool {
         timestamp >= self.time
+    }
+
+    pub fn defer_cmd(&mut self, payload: DeferredCommand) {
+        self.deferred_commands.push(payload);
     }
 
     // attempt to execute an action atomically

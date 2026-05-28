@@ -1,7 +1,8 @@
 use enum_dispatch::enum_dispatch;
+use indexmap::IndexSet;
 
 use crate::{
-    ID,
+    ID, Time,
     action::{
         ability::{
             add_ability::{AddAbility, AddAbilityResponse},
@@ -68,6 +69,7 @@ use crate::{
             update_contact_channels::{UpdateContactChannels, UpdateContactChannelsResponse},
         },
         engine::{
+            deferred_cmds::{DeferredCmds, DeferredCmdsResponse},
             null::{Null, NullResponse},
             schedule_job::{ScheduleJob, ScheduleJobResponse},
         },
@@ -101,7 +103,7 @@ use crate::{
             update::{Update, UpdateResponse},
         },
     },
-    command::Command,
+    command::{Command, CommandPayload},
     common::Version,
     engine::Engine,
 };
@@ -172,7 +174,17 @@ pub enum ActionError {
 pub type ActionResult = Result<ActionResponse, ActionError>;
 
 pub struct ActionContext {
-    pub commands: Vec<Command>,
+    pub commands: Vec<CommandPayload>,
+}
+
+impl ActionContext {
+    pub fn push_cmd(&mut self, cmd: Command, recipient: ID, time: Time) {
+        self.commands.push(CommandPayload {
+            timestamp: time,
+            recipient,
+            cmd,
+        });
+    }
 }
 
 #[enum_dispatch]
@@ -258,6 +270,7 @@ pub enum Action {
     CreateGroupchat(CreateGroupchat),
     SetGroupchatOwner(SetGroupchatOwner),
     RemoveFromGroupchat(RemoveFromGroupchat),
+    DeferredCmds(DeferredCmds),
 }
 
 pub enum ActionResponse {
@@ -328,6 +341,7 @@ pub enum ActionResponse {
     CreateGroupchat(CreateGroupchatResponse),
     SetGroupchatOwner(SetGroupchatOwnerResponse),
     RemoveFromGroupchat(RemoveFromGroupchatResponse),
+    DeferredCmds(DeferredCmdsResponse),
 }
 
 #[derive(PartialEq, Eq, Clone)]

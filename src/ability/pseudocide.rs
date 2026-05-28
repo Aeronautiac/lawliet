@@ -1,3 +1,5 @@
+use indexmap::indexset;
+
 use crate::{
     ID,
     ability::{AbilityInterface, AbilityResponse},
@@ -7,7 +9,6 @@ use crate::{
     },
     config::{ability::AbilityName, role::Role},
 };
-
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]
 pub struct PseudocideResponse {}
 
@@ -46,13 +47,19 @@ impl AbilityInterface for Pseudocide {
         })
         .handle(eng, ctx, &ActionActor::System, version, mutate)?;
 
-        ctx.commands.push(crate::command::Command::AnnounceDeath {
-            true_name: self.true_name.to_lowercase(),
-            death_message: self.death_message.clone(),
-            role: self.role,
-            notebook_transferred: self.notebook_transferred,
-            ability_transferred: self.ability_transferred,
-        });
+        ctx.push_cmd(
+            crate::command::Command::Death {
+                true_name: self.true_name.to_lowercase(),
+                death_message: self.death_message.clone(),
+                role: self.role,
+                notebook_transferred: self.notebook_transferred,
+                ability_transferred: self.ability_transferred,
+            },
+            // TODO:
+            // show this to everyone eligible
+            0,
+            eng.time,
+        );
 
         Action::ScheduleRevive(ScheduleRevive {
             timestamp: eng.time + eng.config.defaults.pseudocide_duration,
@@ -61,7 +68,7 @@ impl AbilityInterface for Pseudocide {
                 target_id: self.target_id,
             },
         })
-        .handle(eng, ctx, &ActionActor::System, version, mutate)?;
+        .handle(eng, ctx, actor, version, mutate)?;
 
         Ok(AbilityResponse::Pseudocide(PseudocideResponse {}))
     }

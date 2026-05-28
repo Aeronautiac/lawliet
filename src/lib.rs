@@ -83,8 +83,7 @@ mod world;
 pub use common::{ID, Time};
 
 // TODO:
-// - Implement group chats
-// - Implement bugs (simple message relayers with channel context filtering)
+// - Go through everything and implement frontend commands
 // - Implement news (likely just a special channel within the world struct and dedicated abilities
 // designated to the news anchor)
 // - Implement prosecution and custody system
@@ -93,7 +92,7 @@ pub use common::{ID, Time};
 // - Implement world initialization and iteration progression
 // - Write the test cases that depend on the new systems being implemented
 // - Begin implementing every ability and write tests for them
-// - Go through everything and implement frontend commands
+// - Implement bugs (simple message relayers with channel context filtering)
 // - Write extensive integration tests
 // - Write yagami
 // - Write ryuk (ratatui)
