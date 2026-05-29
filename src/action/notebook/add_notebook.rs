@@ -5,7 +5,11 @@
 
 use crate::{
     ID,
-    action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    action::{
+        Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
+        comms::channel::create_channel::CreateChannel,
+    },
+    command::Command,
     common::Version,
     engine::Engine,
 };
@@ -26,16 +30,32 @@ impl ActionInterface for AddNotebook {
         eng: &mut Engine,
         ctx: &mut ActionContext,
         actor: &ActionActor,
-        _: Version,
+        version: Version,
         mutate: bool,
     ) -> ActionResult {
         actor.require_system()?;
 
+        let channel_response = Action::CreateChannel(CreateChannel { loggable: false })
+            .handle(eng, ctx, actor, version, mutate)?;
+        let ActionResponse::CreateChannel(data) = channel_response else {
+            unreachable!();
+        };
+        let channel_id = data.id;
+
         let id = if mutate {
-            eng.world.add_notebook(self.fake)
+            eng.world.add_notebook(channel_id, self.fake)
         } else {
             0
         };
+
+        ctx.push_cmd(
+            Command::MapNotebook {
+                notebook_id: id,
+                channel_id,
+            },
+            None,
+            eng.time,
+        );
 
         Ok(ActionResponse::AddNotebook(AddNotebookResponse { id }))
     }

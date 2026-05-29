@@ -4,10 +4,10 @@
 * On success, the command is pushed to the action context.
 */
 
-// TODO:
-// there may be a case where a host wishes to delete an actor. either forbid this entirely, or
-// handle the case of a missing actor in every spot in the codebase.
-// also, fix cases where action context is mutated in a validation pass. it shouldnt be.
+// deleting entities while a game is active is forbidden.
+// if you wish to do something like this (for instance, give a player a new actor), just kill the
+// old one and swap out the player's actor id
+// for channels, similarly just remove everyone's permissions
 
 use crate::{
     action::{ActionInterface, ActionResponse},

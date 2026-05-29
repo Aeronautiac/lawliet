@@ -26,6 +26,15 @@ pub struct CommandPayload {
     pub cmd: Command,
 }
 
+// TODO:
+// need more basic commands for updating the host view
+// should be stuff like
+// OrgUpdate {
+// ...
+// }
+// which contain everything needed for an updated view of whatever entity
+// targetted commands are more granular and are meant to enforce information hiding/reveal mechanics
+
 // problem:
 // how to handle commands which are supposed to be sent out to players immediately, but are
 // blocked by some condition and must be sent out later?
@@ -63,6 +72,10 @@ pub enum Command {
         duration: Time,
     },
 
+    // announce a kidnap reveal (this will either leak the kidnapper or show no kidnapper meaning it
+    // was anonymous)
+    KidnapReveal {},
+
     // display/announce a pseudocide revival. can be handled similarly to death.
     PseudocideRevival {
         target_id: ID,
@@ -96,10 +109,10 @@ pub enum Command {
 
     // all display instances of this actor must be updated
     // this is handled by the frontend
-    // ensure that clients cannot see the state of other actors
+    // ensure that clients cannot see the state of other actors which are not visible to them
     // a clean way to handle this is to construct a set of display "blueprint" type objects on the
-    // frontend server, map them to actors, and then send them out to every client (when necessary)
-    // who currently has permission to view that actor in some way
+    // frontend server, map them to actors, and then send them out to every client
+    // who currently has permission to view that actor in some way (when necessary)
     // the reason this isnt handled entirely on the engine level is because its irrelevant. there
     // are no deception mechanics regarding state displays.
     ActorState {
@@ -111,13 +124,13 @@ pub enum Command {
 
     // display a player as an org member
     // this includes dead players and such as they are still considered org members
-    AddMember {
+    AddOrgMember {
         player_id: ID,
         org_id: ID,
     },
 
     // remove from org member list
-    RemoveMember {
+    RemoveOrgMember {
         player_id: ID,
         org_id: ID,
     },
@@ -128,6 +141,8 @@ pub enum Command {
     // A player who is added to a channel after messages have already been sent should be allowed to
     // see the messages which have been sent in that channel previously if they have view
     // permissions. This must be handled by the frontend.
+    // Channel based object views are dependent on channel views. If channel access is lost, the
+    // object view must also be lost. (Notebooks, groupchats, lounges, etc...)
 
     /////=<NO RECIPIENT>=/////
 
@@ -196,36 +211,46 @@ pub enum Command {
     // to notebook usages which may be represented differently.
     //
     // Some modifiers block certain notebook actions. A frontend should take this into account.
+    //
+    // A write failure is not actually a failure to use an action. it is just the lack of a correct
+    // true name and leads to actual state modification. the player must be explicitly notified, and
+    // the usage must be logged.
 
     /////=<NO RECIPIENT>=/////
 
     // map a notebook id to its channel id
-    // the state of the display for a given player depends on that player's permissions in the
+    // the state of the display for a given player should depend on that player's permissions in the
     // notebook's channel
     MapNotebook {
         notebook_id: ID,
         channel_id: ID,
     },
 
-    // a write failure is not actually a failure to use an action. it is just the lack of a correct
-    // true name and leads to actual state modification. the player must be explicitly notified, and
-    // the usage must be logged.
-    NotebookWriteFailure {
+    // notebook writes encompass everything the frontend could possibly need
+    // the frontend should display all info when relevant
+    NotebookWrite {
         notebook_id: ID,
-        attempts_remaining: AttemptCount,
         user_id: ID,
+        message: Option<String>,
+        true_name: String,
+        delay: Time,
+        successes_remaining: AttemptCount,
+        attempts_remaining: AttemptCount,
+        success: bool,
+        target_saved: bool,
     },
 
-    // similar case to write failure
-    NotebookWriteSuccess {
-        notebook_id: ID,
-        attempts_remaining: AttemptCount,
-        user_id: ID,
+    /////=<TARGETTED>=/////
+
+    // show the player the notebook's borrower status (dont show who is lending it, just that it is
+    // being borrowed)
+    NotebookBorrowingStatus {
+        borrowed: bool,
     },
 
     ////////////////////////////////////////////////
-    // ABILITIES //
-    ///////////////
+    // ABILITIES & PASSIVES //
+    //////////////////////////
     // Clients may display some specific abilities differently from general abilities, but the
     // engine will have no knowledge of this. For instance, the contact ability should not be
     // treated as a normal ability on the frontend, but the engine sees it as no different than any
@@ -237,6 +262,17 @@ pub enum Command {
     // self-owned abilities.
     // For this reason, there will be an owner id in the ability view command. If it is the client's
     // id, it doesn't really matter. If it is the org's id, it does.
+
+    /////=<NO RECIPIENT>=/////
+
+    // similarly to channels, when someone gets access to a contact log passive, they should be able
+    // to see EVERYTHING previously logged by that specific passive.
+    // for this, use passive ids.
+    // contact logs include group chat additions and such as well
+    AddContactLog {
+        // log: ContactLog,
+        passive_id: ID,
+    },
 
     /////=<TARGETTED>=/////
 

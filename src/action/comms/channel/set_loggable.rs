@@ -34,6 +34,9 @@ impl ActionInterface for SetLoggable {
             channel.loggable = self.loggable
         }
 
+        // TODO:
+        // host command(s)
+
         Ok(ActionResponse::SetLoggable(SetLoggableResponse {}))
     }
 }

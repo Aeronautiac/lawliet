@@ -33,16 +33,30 @@ impl ActionInterface for SetMember {
         actor.require_system()?;
         get_player(eng, self.player_id)?;
 
+        let time = eng.time;
         let channel = get_channel_mut(eng, self.channel_id)?;
         if mutate {
             channel.set_member(self.player_id, self.settings.clone());
         }
 
-        // TODO:
-        // send add/remove member commands to every other member who is currently present (can see
-        // the org)
-
         if let Some(member) = &self.settings {
+            // note that the player is sent a member display command for their own displays as well
+            // this is just more convenient than having to derive it on the frontend + it would require
+            // extra backend logic
+            for (_, member) in channel.members.iter() {
+                for display in member.displays.iter() {
+                    ctx.push_cmd(
+                        Command::ShowChannelMember {
+                            channel_id: self.channel_id,
+                            display: *display,
+                            channel_perms: member.perms,
+                        },
+                        Some(self.player_id),
+                        time,
+                    );
+                }
+            }
+
             ctx.push_cmd(
                 Command::UpdateChannelView {
                     channel_id: self.channel_id,
@@ -53,6 +67,19 @@ impl ActionInterface for SetMember {
                 eng.time,
             );
         } else {
+            for (_, member) in channel.members.iter() {
+                for display in member.displays.iter() {
+                    ctx.push_cmd(
+                        Command::RemoveChannelMember {
+                            channel_id: self.channel_id,
+                            display: *display,
+                        },
+                        Some(self.player_id),
+                        time,
+                    );
+                }
+            }
+
             ctx.push_cmd(
                 Command::RemoveChannel {
                     channel_id: self.channel_id,

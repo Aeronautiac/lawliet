@@ -80,15 +80,6 @@ impl ActionInterface for AddToGroupchat {
             )?;
         }
 
-        ctx.push_cmd(
-            Command::MapGc {
-                gc_id: self.groupchat_id,
-                channel_id,
-            },
-            Some(self.player_id),
-            eng.time,
-        );
-
         Ok(ActionResponse::AddToGroupchat(AddToGroupchatResponse {}))
     }
 }

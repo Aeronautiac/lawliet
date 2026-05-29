@@ -85,8 +85,14 @@ mod world;
 
 pub use common::{ID, Time};
 
+// most of what remains are small tasks
+// the most difficult one here is defining and managing the communication protocol
+// a minimal frontend can likely be implemented with what has been written so far, but it is
+// probably best to finish the engine first
+
 // TODO:
 // - Go through everything and implement frontend commands
+// - Integrate passives into game logic
 // - Implement news (likely just a special channel within the world struct and dedicated abilities
 // designated to the news anchor)
 // - Implement prosecution and custody system

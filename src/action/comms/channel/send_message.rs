@@ -7,6 +7,7 @@ use crate::{
     ID,
     action::{ActionError, ActionInterface, ActionResponse},
     channel::{ChannelPermission, SenderDisplay},
+    command::Command,
     helpers::{get_channel, player_id},
 };
 
@@ -26,8 +27,8 @@ impl ActionInterface for SendMessage {
         eng: &mut crate::engine::Engine,
         ctx: &mut crate::action::ActionContext,
         actor: &crate::action::ActionActor,
-        version: crate::common::Version,
-        mutate: bool,
+        _version: crate::common::Version,
+        _mutate: bool,
     ) -> crate::action::ActionResult {
         actor.player_only()?;
         let id = player_id(actor).expect("expected valid player id");
@@ -44,11 +45,17 @@ impl ActionInterface for SendMessage {
             return Err(ActionError::DisplayNotOwned);
         }
 
-        // repeating
-        for player_id in channel.members.keys() {
-            // TODO:
-            // relay the message to everyone in the channel (including the sender) (frontend will likely handle the view context)
-        }
+        // this will tell the frontend to show the message to everyone who has view permissions for
+        // this channel
+        ctx.push_cmd(
+            Command::AddMessage {
+                content: self.content.clone(),
+                channel_id: self.channel_id,
+                sender_display: self.display,
+            },
+            None,
+            eng.time,
+        );
 
         // relays
         // TODO:

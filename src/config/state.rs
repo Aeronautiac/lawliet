@@ -30,6 +30,10 @@ pub fn default_state_modifiers() -> StateModifierMap {
         State::Custody,
         Modifier::NoNotebookPassage | Modifier::NoNotebookUsage,
     );
+    map.insert(
+        State::Ipp,
+        Modifier::StrengthenedPresence | Modifier::WriteImmunity,
+    );
 
     map
 }

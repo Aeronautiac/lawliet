@@ -143,10 +143,10 @@ impl World {
         id
     }
 
-    pub fn add_notebook(&mut self, fake: bool) -> ID {
+    pub fn add_notebook(&mut self, channel_id: ID, fake: bool) -> ID {
         let id = self.next_notebook_id;
         self.next_notebook_id += 1;
-        self.notebooks.insert(id, Notebook::new(fake));
+        self.notebooks.insert(id, Notebook::new(channel_id, fake));
         id
     }
 

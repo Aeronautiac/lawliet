@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use indexmap::IndexMap;
 
 use crate::{ID, common::AttemptCount};
@@ -24,10 +22,11 @@ pub struct Notebook {
     pub borrowed: Option<ID>, // the person the notebook is being borrowed from (if any)
     pub iteration_successes: IndexMap<ID, AttemptCount>, // success counts (correct names)
     pub iteration_failures: IndexMap<ID, AttemptCount>, // failed counts (wrong names)
+    pub channel_id: ID,
 }
 
 impl Notebook {
-    pub fn new(fake: bool) -> Self {
+    pub fn new(channel_id: ID, fake: bool) -> Self {
         Notebook {
             fake,
             volatile: false,
@@ -37,6 +36,7 @@ impl Notebook {
             borrowed: None,
             iteration_successes: IndexMap::new(),
             iteration_failures: IndexMap::new(),
+            channel_id,
         }
     }
 
@@ -128,6 +128,14 @@ impl Notebook {
             .entry(id)
             .and_modify(|count| *count += 1)
             .or_insert(1);
+    }
+
+    pub fn failures_remaining(&self, id: ID, limit: AttemptCount) -> AttemptCount {
+        limit - self.iteration_failures.get(&id).unwrap_or(&0)
+    }
+
+    pub fn successes_remaining(&self, id: ID, limit: AttemptCount) -> AttemptCount {
+        limit - self.iteration_successes.get(&id).unwrap_or(&0)
     }
 
     pub fn can_write(

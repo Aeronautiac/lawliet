@@ -8,6 +8,7 @@ use crate::{
     action::{
         Action, ActionInterface, ActionResponse, comms::channel::create_channel::CreateChannel,
     },
+    command::Command,
     groupchat::Groupchat,
 };
 
@@ -42,6 +43,15 @@ impl ActionInterface for CreateGroupchat {
         } else {
             0
         };
+
+        ctx.push_cmd(
+            Command::MapGc {
+                gc_id: id,
+                channel_id,
+            },
+            None,
+            eng.time,
+        );
 
         Ok(ActionResponse::CreateGroupchat(CreateGroupchatResponse {
             id,
