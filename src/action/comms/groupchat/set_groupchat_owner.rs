@@ -7,6 +7,7 @@ use crate::{
     ID,
     action::{ActionError, ActionInterface, ActionResponse},
     actor::modifier::Modifier,
+    command::Command,
     helpers::{actor_id, get_actor, get_gc_mut, get_player},
 };
 
@@ -25,7 +26,7 @@ impl ActionInterface for SetGroupchatOwner {
         eng: &mut crate::engine::Engine,
         ctx: &mut crate::action::ActionContext,
         actor: &crate::action::ActionActor,
-        version: crate::common::Version,
+        _version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
         actor.player_or_system()?;
@@ -46,12 +47,31 @@ impl ActionInterface for SetGroupchatOwner {
             }
         }
 
+        let old_owner = gc.owner;
         if mutate {
             gc.set_owner(self.owner);
         }
 
-        // TODO:
-        // alert owners of change
+        if let Some(old) = old_owner {
+            ctx.push_cmd(
+                Command::GcOwnerStatus {
+                    owner: false,
+                    gc_id: self.groupchat_id,
+                },
+                Some(old),
+                eng.time,
+            );
+        }
+        if let Some(new) = self.owner {
+            ctx.push_cmd(
+                Command::GcOwnerStatus {
+                    owner: true,
+                    gc_id: self.groupchat_id,
+                },
+                Some(new),
+                eng.time,
+            );
+        }
 
         Ok(ActionResponse::SetGroupchatOwner(
             SetGroupchatOwnerResponse {},

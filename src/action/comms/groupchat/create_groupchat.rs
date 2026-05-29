@@ -4,6 +4,7 @@
 */
 
 use crate::{
+    ID,
     action::{
         Action, ActionInterface, ActionResponse, comms::channel::create_channel::CreateChannel,
     },
@@ -11,7 +12,9 @@ use crate::{
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct CreateGroupchatResponse {}
+pub struct CreateGroupchatResponse {
+    pub id: ID,
+}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CreateGroupchat {}
@@ -40,6 +43,8 @@ impl ActionInterface for CreateGroupchat {
             0
         };
 
-        Ok(ActionResponse::CreateGroupchat(CreateGroupchatResponse {}))
+        Ok(ActionResponse::CreateGroupchat(CreateGroupchatResponse {
+            id,
+        }))
     }
 }

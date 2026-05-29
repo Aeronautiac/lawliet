@@ -6,7 +6,7 @@
 
 use crate::action::{
     Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
-    poll::update_polls::UpdatePolls,
+    engine::deferred_cmds::DeferredCmds, poll::update_polls::UpdatePolls,
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -26,6 +26,7 @@ impl ActionInterface for Update {
     ) -> ActionResult {
         actor.require_system()?;
 
+        Action::DeferredCmds(DeferredCmds {}).handle(eng, ctx, actor, version, mutate)?;
         Action::UpdatePolls(UpdatePolls {}).handle(eng, ctx, actor, version, mutate)?;
 
         Ok(ActionResponse::Update(UpdateResponse {}))

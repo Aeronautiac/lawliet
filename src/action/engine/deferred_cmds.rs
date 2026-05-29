@@ -9,8 +9,6 @@
 // handle the case of a missing actor in every spot in the codebase.
 // also, fix cases where action context is mutated in a validation pass. it shouldnt be.
 
-use smallvec::SmallVec;
-
 use crate::{
     action::{ActionInterface, ActionResponse},
     actor::modifier::Modifiers,
@@ -29,15 +27,15 @@ impl ActionInterface for DeferredCmds {
         eng: &mut crate::engine::Engine,
         ctx: &mut crate::action::ActionContext,
         actor: &crate::action::ActionActor,
-        version: crate::common::Version,
+        _: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
         actor.require_system()?;
 
         let mut def_cmds = eng.deferred_commands.clone();
-        let to_execute: SmallVec<[DeferredCommand; 8]> = def_cmds
+        let to_execute: Vec<DeferredCommand> = def_cmds
             .extract_if(.., |cmd| {
-                let target_data = get_actor(eng, cmd.payload.recipient)
+                let target_data = get_actor(eng, cmd.payload.recipient.expect("deferred commands should only refer to players. commands with no recipient are considered host commands."))
                     .expect("expected valid actor as a deferred command recipient");
                 target_data.modifiers() & cmd.blocking_modifiers == Modifiers::EMPTY
             })

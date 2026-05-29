@@ -52,6 +52,9 @@
 // full buffer, etc...) it flushes it to a postgres db.
 // yagami is a multithreaded process
 //
+// lawliet is designed to crash when state is inconsistent as it can easily be rebooted and rolled
+// back when necessary
+//
 // a frontend sends action requests to yagami, and yagami sends back the result. if the action
 // succeeded, a command buffer is sent back. a proper frontend uses these commands to render
 // the game state meant for that specific player.

@@ -20,6 +20,7 @@ use crate::{
         },
     },
     channel::{ChannelMember, ChannelPermissions, SenderDisplay},
+    command::Command,
     helpers::{get_player, get_player_mut},
     lounge::{Lounge, LoungeVariant},
 };
@@ -118,6 +119,15 @@ impl ActionInterface for CreateLounge {
                     player_id: participant.id,
                 })
                 .handle(eng, ctx, actor, version, mutate)?;
+
+                ctx.push_cmd(
+                    Command::MapLounge {
+                        lounge_id,
+                        channel_id,
+                    },
+                    Some(participant.id),
+                    eng.time,
+                );
             }
 
             lounge_id

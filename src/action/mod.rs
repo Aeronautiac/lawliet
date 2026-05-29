@@ -1,5 +1,4 @@
 use enum_dispatch::enum_dispatch;
-use indexmap::IndexSet;
 
 use crate::{
     ID, Time,
@@ -50,7 +49,6 @@ use crate::{
         comms::{
             channel::{
                 create_channel::{CreateChannel, CreateChannelResponse},
-                delete_channel::{DeleteChannel, DeleteChannelResponse},
                 send_message::{SendMessage, SendMessageResponse},
                 set_loggable::{SetLoggable, SetLoggableResponse},
                 set_member::{SetMember, SetMemberResponse},
@@ -97,10 +95,10 @@ use crate::{
             remove_vote::{RemoveVote, RemoveVoteResponse},
             update_polls::{UpdatePolls, UpdatePollsResponse},
         },
+        update::{Update, UpdateResponse},
         world::{
             create_orgs::{CreateOrgs, CreateOrgsResponse},
             initialize_world::{InitializeWorld, InitializeWorldResponse},
-            update::{Update, UpdateResponse},
         },
     },
     command::{Command, CommandPayload},
@@ -116,6 +114,7 @@ pub mod engine;
 pub mod notebook;
 pub mod passive;
 pub mod poll;
+pub mod update;
 pub mod world;
 
 #[derive(Debug)]
@@ -173,12 +172,13 @@ pub enum ActionError {
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
 
+#[derive(Clone)]
 pub struct ActionContext {
     pub commands: Vec<CommandPayload>,
 }
 
 impl ActionContext {
-    pub fn push_cmd(&mut self, cmd: Command, recipient: ID, time: Time) {
+    pub fn push_cmd(&mut self, cmd: Command, recipient: Option<ID>, time: Time) {
         self.commands.push(CommandPayload {
             timestamp: time,
             recipient,
@@ -259,7 +259,6 @@ pub enum Action {
     CreateAndGiveOrgAbility(CreateAndGiveOrgAbility),
     SendMessage(SendMessage),
     CreateChannel(CreateChannel),
-    DeleteChannel(DeleteChannel),
     SetMember(SetMember),
     SetLoggable(SetLoggable),
     CreateLounge(CreateLounge),
@@ -330,7 +329,6 @@ pub enum ActionResponse {
     CreateAndGiveOrgAbility(CreateAndGiveOrgAbilityResponse),
     SendMessage(SendMessageResponse),
     CreateChannel(CreateChannelResponse),
-    DeleteChannel(DeleteChannelResponse),
     SetMember(SetMemberResponse),
     SetLoggable(SetLoggableResponse),
     CreateLounge(CreateLoungeResponse),

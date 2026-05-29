@@ -35,7 +35,6 @@ pub enum SenderDisplay {
     Raw(ID),
     Role(Role),
     Mysterious,
-    System,
 }
 
 #[bitflags]

@@ -10,6 +10,7 @@ use crate::{
         comms::groupchat::set_groupchat_owner::SetGroupchatOwner,
     },
     actor::modifier::Modifier,
+    command::Command,
     helpers::{actor_id, get_actor, get_actor_mut, get_gc, get_gc_mut, get_player_mut},
 };
 
@@ -55,6 +56,7 @@ impl ActionInterface for AddToGroupchat {
         }
 
         let gc = get_gc_mut(eng, self.groupchat_id)?;
+        let channel_id = gc.channel_id;
         if mutate {
             gc.add_member(self.player_id);
         }
@@ -77,6 +79,15 @@ impl ActionInterface for AddToGroupchat {
                 mutate,
             )?;
         }
+
+        ctx.push_cmd(
+            Command::MapGc {
+                gc_id: self.groupchat_id,
+                channel_id,
+            },
+            Some(self.player_id),
+            eng.time,
+        );
 
         Ok(ActionResponse::AddToGroupchat(AddToGroupchatResponse {}))
     }

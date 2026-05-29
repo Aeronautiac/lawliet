@@ -20,11 +20,11 @@ use crate::{
         },
         passive::give_passive::GivePassive,
     },
-    actor::{ActorLinkType, ActorType, state::State},
+    actor::{ActorLinkType, ActorType, modifier::Modifier, state::State},
     command::Command,
     common::Version,
     engine::Engine,
-    helpers::{get_actor, get_actor_mut, get_notebook, require_alive},
+    helpers::{cmd_all_deferred, get_actor, get_actor_mut, get_notebook, require_alive},
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -190,7 +190,8 @@ impl ActionInterface for Kill {
         .handle(eng, ctx, actor, version, mutate)?;
 
         if !self.silent {
-            ctx.push_cmd(
+            cmd_all_deferred(
+                eng,
                 Command::Death {
                     true_name: String::from(&*true_name),
                     death_message: if let Some(msg) = &self.death_message {
@@ -202,10 +203,7 @@ impl ActionInterface for Kill {
                     notebook_transferred,
                     ability_transferred,
                 },
-                // TODO:
-                // show this to everyone eligible
-                0,
-                eng.time,
+                Modifier::NoPresence.into(),
             );
         }
 

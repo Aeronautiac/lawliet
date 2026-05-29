@@ -1,13 +1,15 @@
 use crate::{
     ID, Time,
     ability::Ability,
-    action::{ActionActor, ActionContext, ActionError},
+    action::{ActionActor, ActionError},
     actor::{
-        Actor, ActorLinkType, ActorType, Organization, Player, modifier::Modifier, state::State,
+        Actor, ActorLinkType, ActorType, Organization, Player,
+        modifier::{Modifier, Modifiers},
+        state::State,
     },
     channel::Channel,
     chargepool::ChargePool,
-    command::{Command, CommandPayload},
+    command::{Command, CommandPayload, DeferredCommand},
     common::PollWeight,
     config::{
         ability::{AbilityConfig, AbilityIdentifier},
@@ -67,6 +69,7 @@ pub fn require_time_not_passed(eng: &Engine, t: Time) -> Result<(), ActionError>
         Err(ActionError::TimeAlreadyPassed)
     }
 }
+
 pub fn require_alive(eng: &Engine, actor_id: ID) -> Result<(), ActionError> {
     require_player(eng, actor_id)?;
     let actor = get_actor(eng, actor_id)?;
@@ -75,6 +78,7 @@ pub fn require_alive(eng: &Engine, actor_id: ID) -> Result<(), ActionError> {
     }
     Ok(())
 }
+
 pub fn require_dead(eng: &Engine, actor_id: ID) -> Result<(), ActionError> {
     require_player(eng, actor_id)?;
     let actor = get_actor(eng, actor_id)?;
@@ -83,6 +87,7 @@ pub fn require_dead(eng: &Engine, actor_id: ID) -> Result<(), ActionError> {
     }
     Err(ActionError::ActorIsAlive)
 }
+
 pub fn get_ability_mut(eng: &mut Engine, ability_id: ID) -> Result<&mut Ability, ActionError> {
     let target = eng
         .world
@@ -326,5 +331,21 @@ pub fn get_gc_mut(eng: &mut Engine, id: ID) -> Result<&mut Groupchat, ActionErro
         Ok(data)
     } else {
         Err(ActionError::GroupchatDoesntExist)
+    }
+}
+
+pub fn cmd_all_deferred(eng: &mut Engine, cmd: Command, blocking_modifiers: Modifiers) {
+    for (id, _) in eng.world.actors.iter() {
+        let player = get_player(eng, *id);
+        if player.is_ok() {
+            eng.deferred_commands.push(DeferredCommand {
+                payload: CommandPayload {
+                    timestamp: eng.time,
+                    recipient: Some(*id),
+                    cmd: cmd.clone(),
+                },
+                blocking_modifiers,
+            });
+        }
     }
 }

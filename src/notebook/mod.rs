@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 
-use crate::ID;
+use indexmap::IndexMap;
+
+use crate::{ID, common::AttemptCount};
 
 #[derive(Debug)]
 pub enum NotebookError {
@@ -20,8 +22,8 @@ pub struct Notebook {
     // pseudocide will set it to the target's ID if applicable)
     pub owner: Option<ID>,    // the person this notebook currently belongs to
     pub borrowed: Option<ID>, // the person the notebook is being borrowed from (if any)
-    pub iteration_successes: BTreeMap<ID, u16>, // success counts (correct names)
-    pub iteration_failures: BTreeMap<ID, u16>, // failed counts (wrong names)
+    pub iteration_successes: IndexMap<ID, AttemptCount>, // success counts (correct names)
+    pub iteration_failures: IndexMap<ID, AttemptCount>, // failed counts (wrong names)
 }
 
 impl Notebook {
@@ -33,8 +35,8 @@ impl Notebook {
             original_owner: None,
             owner: None,
             borrowed: None,
-            iteration_successes: BTreeMap::new(),
-            iteration_failures: BTreeMap::new(),
+            iteration_successes: IndexMap::new(),
+            iteration_failures: IndexMap::new(),
         }
     }
 
@@ -107,8 +109,8 @@ impl Notebook {
     }
 
     pub fn iteration_reset(&mut self) {
-        self.iteration_successes = BTreeMap::new();
-        self.iteration_failures = BTreeMap::new();
+        self.iteration_successes = IndexMap::new();
+        self.iteration_failures = IndexMap::new();
         if let Some(true_owner) = self.borrowed {
             self.set_true_owner(true_owner, self.volatile);
         }

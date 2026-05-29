@@ -1,5 +1,3 @@
-use indexmap::indexset;
-
 use crate::{
     ID,
     ability::{AbilityInterface, AbilityResponse},
@@ -7,8 +5,12 @@ use crate::{
         Action, ActionActor, ActionContext, ActionInterface,
         actor::player::{kill::Kill, revive::Revive, schedule_revive::ScheduleRevive},
     },
+    actor::modifier::Modifier,
+    command::{Command, CommandPayload, DeferredCommand},
     config::{ability::AbilityName, role::Role},
+    helpers::{cmd_all_deferred, get_player},
 };
+
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]
 pub struct PseudocideResponse {}
 
@@ -32,7 +34,7 @@ impl AbilityInterface for Pseudocide {
         eng: &mut crate::engine::Engine,
         ctx: &mut ActionContext,
         actor: &crate::action::ActionActor,
-        ability: ID,
+        _ability: ID,
         version: u8,
         mutate: bool,
     ) -> super::AbilityResult {
@@ -47,20 +49,6 @@ impl AbilityInterface for Pseudocide {
         })
         .handle(eng, ctx, &ActionActor::System, version, mutate)?;
 
-        ctx.push_cmd(
-            crate::command::Command::Death {
-                true_name: self.true_name.to_lowercase(),
-                death_message: self.death_message.clone(),
-                role: self.role,
-                notebook_transferred: self.notebook_transferred,
-                ability_transferred: self.ability_transferred,
-            },
-            // TODO:
-            // show this to everyone eligible
-            0,
-            eng.time,
-        );
-
         Action::ScheduleRevive(ScheduleRevive {
             timestamp: eng.time + eng.config.defaults.pseudocide_duration,
             revive: Revive {
@@ -69,6 +57,18 @@ impl AbilityInterface for Pseudocide {
             },
         })
         .handle(eng, ctx, actor, version, mutate)?;
+
+        cmd_all_deferred(
+            eng,
+            Command::Death {
+                true_name: self.true_name.to_lowercase(),
+                death_message: self.death_message.clone(),
+                role: self.role,
+                notebook_transferred: self.notebook_transferred,
+                ability_transferred: self.ability_transferred,
+            },
+            Modifier::NoPresence.into(),
+        );
 
         Ok(AbilityResponse::Pseudocide(PseudocideResponse {}))
     }

@@ -86,7 +86,11 @@ impl Engine {
     ) -> ActionResult {
         let old_time = self.time;
         self.time = action.timestamp;
-        let dry_result = action.payload.validate(self, ctx, &action.actor, 0);
+        // prevent validation mutation on action context
+        let mut fake_ctx = ctx.clone();
+        let dry_result = action
+            .payload
+            .validate(self, &mut fake_ctx, &action.actor, 0);
         if dry_result.is_err() {
             self.time = old_time;
             return dry_result;
