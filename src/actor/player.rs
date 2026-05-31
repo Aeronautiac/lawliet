@@ -11,6 +11,7 @@ pub struct Player {
     pub eyes: u32,
     pub lounges: IndexSet<ID>,
     pub groupchats: IndexSet<ID>,
+    pub bugs: IndexSet<ID>,
 }
 
 impl Player {
@@ -22,6 +23,7 @@ impl Player {
             eyes: 2,
             lounges: indexset![],
             groupchats: indexset![],
+            bugs: indexset![],
         }
     }
 
@@ -39,5 +41,9 @@ impl Player {
 
     pub fn remove_groupchat(&mut self, id: ID) {
         self.groupchats.swap_remove(&id);
+    }
+
+    pub fn add_bug(&mut self, id: ID) {
+        self.bugs.insert(id);
     }
 }

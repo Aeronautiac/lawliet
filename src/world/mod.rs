@@ -14,6 +14,7 @@ use crate::{
     ID,
     ability::Ability,
     actor::{Actor, ActorType, Player, organization::LeadershipStruct},
+    bug::Bug,
     channel::Channel,
     chargepool::ChargePool,
     config::{actor::organization::OrganizationName, role::Role, world::WorldChargePoolName},
@@ -38,6 +39,7 @@ pub struct World {
     pub channels: IndexMap<ID, Channel>,
     pub lounges: IndexMap<ID, Lounge>,
     pub groupchats: IndexMap<ID, Groupchat>,
+    pub bugs: IndexMap<ID, Bug>,
     next_charge_pool_id: ID,
     next_actor_id: ID,
     next_notebook_id: ID,
@@ -47,6 +49,7 @@ pub struct World {
     next_channel_id: ID,
     next_lounge_id: ID,
     next_groupchat_id: ID,
+    next_bug_id: ID,
 }
 
 impl World {
@@ -64,6 +67,7 @@ impl World {
             channels: IndexMap::new(),
             lounges: IndexMap::new(),
             groupchats: IndexMap::new(),
+            bugs: IndexMap::new(),
             next_charge_pool_id: 0,
             next_actor_id: 0,
             next_notebook_id: 0,
@@ -73,6 +77,7 @@ impl World {
             next_channel_id: 0,
             next_lounge_id: 0,
             next_groupchat_id: 0,
+            next_bug_id: 0,
         }
     }
 
@@ -287,5 +292,20 @@ impl World {
 
     pub fn get_groupchat_mut(&mut self, id: ID) -> Option<&mut Groupchat> {
         self.groupchats.get_mut(&id)
+    }
+
+    pub fn add_bug(&mut self, bug: Bug) -> ID {
+        let id = self.next_bug_id;
+        self.next_bug_id += 1;
+        self.bugs.insert(id, bug);
+        id
+    }
+
+    pub fn get_bug(&self, id: ID) -> Option<&Bug> {
+        self.bugs.get(&id)
+    }
+
+    pub fn get_bug_mut(&mut self, id: ID) -> Option<&mut Bug> {
+        self.bugs.get_mut(&id)
     }
 }

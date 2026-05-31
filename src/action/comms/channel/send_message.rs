@@ -33,17 +33,20 @@ impl ActionInterface for SendMessage {
         actor.player_only()?;
         let id = player_id(actor).expect("expected valid player id");
 
-        let channel = get_channel(eng, self.channel_id)?;
-        let member = channel.get_member(id);
-        let Some(member_data) = member else {
-            return Err(ActionError::NotAChannelMember);
+        let loggable = {
+            let channel = get_channel(eng, self.channel_id)?;
+            let member = channel.get_member(id);
+            let Some(member_data) = member else {
+                return Err(ActionError::NotAChannelMember);
+            };
+            if !member_data.perms.contains(ChannelPermission::Send) {
+                return Err(ActionError::InsufficientPermissions);
+            }
+            if !member_data.displays.contains(&self.display) {
+                return Err(ActionError::DisplayNotOwned);
+            }
+            channel.loggable
         };
-        if !member_data.perms.contains(ChannelPermission::Send) {
-            return Err(ActionError::InsufficientPermissions);
-        }
-        if !member_data.displays.contains(&self.display) {
-            return Err(ActionError::DisplayNotOwned);
-        }
 
         // this will tell the frontend to show the message to everyone who has view permissions for
         // this channel
@@ -57,10 +60,24 @@ impl ActionInterface for SendMessage {
             eng.time,
         );
 
-        // relays
-        // TODO:
-        // loop through all bugs and relay the message to those as well if the channel is loggable and the bug
-        // applies to the person who sent the message
+        // relay to all active bugs targeting this player if the channel is loggable
+        if loggable {
+            let bug_ids: Vec<ID> = eng
+                .world
+                .get_player(id)
+                .expect("expected valid player")
+                .bugs
+                .iter()
+                .copied()
+                .collect();
+            for bug_id in bug_ids {
+                let bug = eng.world.get_bug(bug_id).expect("expected valid bug");
+                if bug.enabled {
+                    let _ = bug_id;
+                    // TODO: push BugRelay command once the bug log protocol is implemented
+                }
+            }
+        }
 
         Ok(ActionResponse::SendMessage(SendMessageResponse {}))
     }

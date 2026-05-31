@@ -7,6 +7,7 @@ use crate::{
         modifier::{Modifier, Modifiers},
         state::State,
     },
+    bug::Bug,
     channel::Channel,
     chargepool::ChargePool,
     command::{Command, CommandPayload, DeferredCommand},
@@ -332,6 +333,14 @@ pub fn get_gc_mut(eng: &mut Engine, id: ID) -> Result<&mut Groupchat, ActionErro
     } else {
         Err(ActionError::GroupchatDoesntExist)
     }
+}
+
+pub fn get_bug(eng: &Engine, id: ID) -> Result<&Bug, ActionError> {
+    eng.world.get_bug(id).ok_or(ActionError::BugNotFound)
+}
+
+pub fn get_bug_mut(eng: &mut Engine, id: ID) -> Result<&mut Bug, ActionError> {
+    eng.world.get_bug_mut(id).ok_or(ActionError::BugNotFound)
 }
 
 pub fn cmd_all_deferred(eng: &mut Engine, cmd: Command, blocking_modifiers: Modifiers) {

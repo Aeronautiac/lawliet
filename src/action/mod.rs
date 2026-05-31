@@ -47,6 +47,13 @@ use crate::{
             try_delete_charge_pool::{TryDeleteChargePool, TryDeleteChargePoolResponse},
         },
         comms::{
+            bug::{
+                archive_bug::{ArchiveBug, ArchiveBugResponse},
+                create_bug::{CreateBug, CreateBugResponse},
+                try_update_bug_visibility::{
+                    TryUpdateBugVisibility, TryUpdateBugVisibilityResponse,
+                },
+            },
             channel::{
                 create_channel::{CreateChannel, CreateChannelResponse},
                 send_message::{SendMessage, SendMessageResponse},
@@ -168,6 +175,7 @@ pub enum ActionError {
     CannotContact,
     NotTheOwner,
     NotInGroupchat,
+    BugNotFound,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -269,6 +277,9 @@ pub enum Action {
     CreateGroupchat(CreateGroupchat),
     SetGroupchatOwner(SetGroupchatOwner),
     RemoveFromGroupchat(RemoveFromGroupchat),
+    CreateBug(CreateBug),
+    ArchiveBug(ArchiveBug),
+    TryUpdateBugVisibility(TryUpdateBugVisibility),
     DeferredCmds(DeferredCmds),
 }
 
@@ -339,6 +350,9 @@ pub enum ActionResponse {
     CreateGroupchat(CreateGroupchatResponse),
     SetGroupchatOwner(SetGroupchatOwnerResponse),
     RemoveFromGroupchat(RemoveFromGroupchatResponse),
+    CreateBug(CreateBugResponse),
+    ArchiveBug(ArchiveBugResponse),
+    TryUpdateBugVisibility(TryUpdateBugVisibilityResponse),
     DeferredCmds(DeferredCmdsResponse),
 }
 

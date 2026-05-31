@@ -13,6 +13,7 @@ use crate::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
         ActionResult,
         ability::{add_link::AddLink, clear_volatile_links::ClearVolatileLinks},
+        comms::bug::try_update_bug_visibility::TryUpdateBugVisibility,
     },
     chargepool::PoolLink,
     config::ability::{AbilityIdentifier, ConfigPoolLinkDetails},
@@ -44,7 +45,8 @@ impl ActionInterface for GiveAbility {
         let ability = get_ability(eng, self.ability_id)?;
         let name = ability.ability_name;
         let variant = ability.variant;
-        if let Some(owner) = ability.ownership_struct.owner {
+        let old_owner = ability.ownership_struct.owner;
+        if let Some(owner) = old_owner {
             if owner == self.actor_id {
                 return Err(ActionError::ItemAlreadyOwned);
             }
@@ -103,6 +105,13 @@ impl ActionInterface for GiveAbility {
             let actor_data = get_actor_mut(eng, self.actor_id)?;
             actor_data.add_ability(self.ability_id);
         }
+
+        Action::TryUpdateBugVisibility(TryUpdateBugVisibility {
+            ability_id: self.ability_id,
+            old_owner,
+            new_owner: self.actor_id,
+        })
+        .handle(eng, ctx, actor, version, mutate)?;
 
         Ok(ActionResponse::GiveAbility(GiveAbilityResponse {}))
     }
