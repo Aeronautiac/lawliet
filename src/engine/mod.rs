@@ -1,4 +1,4 @@
-use crate::Time;
+use crate::{Time, common::Seed};
 use crate::action::{ActionContext, ActionError, ActionRequest, ActionResponse, ActionResult};
 use crate::command::DeferredCommand;
 use crate::common::SequenceNumber;
@@ -37,6 +37,7 @@ pub struct Engine {
     pub time: Time,
     pub jobs: BinaryHeap<Job>,
     pub deferred_commands: Vec<DeferredCommand>,
+    pub rng_state: Seed,
     next_job_id: SequenceNumber,
 }
 
@@ -50,6 +51,7 @@ impl Engine {
             jobs: BinaryHeap::new(),
             deferred_commands: vec![],
             time: 0,
+            rng_state: 0,
             next_job_id: 0,
         }
     }

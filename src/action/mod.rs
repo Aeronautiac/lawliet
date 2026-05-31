@@ -106,7 +106,9 @@ use crate::{
         world::{
             add_to_world_channels::{AddToWorldChannels, AddToWorldChannelsResponse},
             create_orgs::{CreateOrgs, CreateOrgsResponse},
+            initialize_engine::{InitializeEngine, InitializeEngineResponse},
             initialize_world::{InitializeWorld, InitializeWorldResponse},
+            set_random_seed::{SetRandomSeed, SetRandomSeedResponse},
             set_world_channel_override::{SetWorldChannelOverride, SetWorldChannelOverrideResponse},
             update_world_channel_perms::{UpdateWorldChannelPerms, UpdateWorldChannelPermsResponse},
         },
@@ -286,6 +288,8 @@ pub enum Action {
     AddToWorldChannels(AddToWorldChannels),
     UpdateWorldChannelPerms(UpdateWorldChannelPerms),
     SetWorldChannelOverride(SetWorldChannelOverride),
+    InitializeEngine(InitializeEngine),
+    SetRandomSeed(SetRandomSeed),
     DeferredCmds(DeferredCmds),
 }
 
@@ -362,6 +366,8 @@ pub enum ActionResponse {
     AddToWorldChannels(AddToWorldChannelsResponse),
     UpdateWorldChannelPerms(UpdateWorldChannelPermsResponse),
     SetWorldChannelOverride(SetWorldChannelOverrideResponse),
+    InitializeEngine(InitializeEngineResponse),
+    SetRandomSeed(SetRandomSeedResponse),
     DeferredCmds(DeferredCmdsResponse),
 }
 

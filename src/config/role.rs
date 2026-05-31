@@ -1,10 +1,17 @@
-use std::collections::BTreeMap;
+use indexmap::IndexMap;
 
 use crate::{
-    actor::ActorLinkType,
-    config::ability::{AbilityIdentifier, AbilityName},
+    actor::{ActorLinkType, player::WorldChannelOverride},
+    channel::{ChannelPermission, ChannelPermissions},
+    config::{ability::{AbilityIdentifier, AbilityName}, world::WorldChannelName},
     passive::{ContactLogType, PassiveType},
 };
+
+#[derive(PartialEq, Eq, Clone)]
+pub struct RoleWorldChannelOverride {
+    pub channel_name: WorldChannelName,
+    pub override_data: WorldChannelOverride,
+}
 
 // TODO:
 // - Add organization configurations. Certain roles spawn in organizations with certain permissions.
@@ -59,9 +66,10 @@ pub struct RoleConfig {
     pub passives: Vec<RolePassive>,
     pub notebooks: Vec<RoleNotebook>,
     pub actor_links: Vec<RoleLink>,
+    pub world_channel_overrides: Vec<RoleWorldChannelOverride>,
 }
 
-pub type RoleConfigMap = BTreeMap<Role, RoleConfig>;
+pub type RoleConfigMap = IndexMap<Role, RoleConfig>;
 
 pub fn default_role_config() -> RoleConfigMap {
     let mut map = RoleConfigMap::new();
@@ -88,6 +96,7 @@ pub fn default_role_config() -> RoleConfigMap {
             passives: vec![],
             notebooks: vec![RoleNotebook { fake: false }],
             actor_links: vec![],
+            world_channel_overrides: vec![],
         },
     );
 
@@ -137,6 +146,7 @@ pub fn default_role_config() -> RoleConfigMap {
             }],
             notebooks: vec![RoleNotebook { fake: false }],
             actor_links: vec![],
+            world_channel_overrides: vec![],
         },
     );
 
@@ -171,6 +181,7 @@ pub fn default_role_config() -> RoleConfigMap {
                     link_type: ActorLinkType::Passive,
                 },
             ],
+            world_channel_overrides: vec![],
         },
     );
 
@@ -199,6 +210,7 @@ pub fn default_role_config() -> RoleConfigMap {
             }],
             notebooks: vec![],
             actor_links: vec![],
+            world_channel_overrides: vec![],
         },
     );
 
@@ -234,6 +246,7 @@ pub fn default_role_config() -> RoleConfigMap {
             }],
             notebooks: vec![],
             actor_links: vec![],
+            world_channel_overrides: vec![],
         },
     );
 
@@ -259,6 +272,7 @@ pub fn default_role_config() -> RoleConfigMap {
             passives: vec![],
             notebooks: vec![],
             actor_links: vec![],
+            world_channel_overrides: vec![],
         },
     );
 
@@ -278,6 +292,13 @@ pub fn default_role_config() -> RoleConfigMap {
             }],
             notebooks: vec![],
             actor_links: vec![],
+            world_channel_overrides: vec![RoleWorldChannelOverride {
+                channel_name: WorldChannelName::News,
+                override_data: WorldChannelOverride {
+                    default_perms: ChannelPermission::Send | ChannelPermission::View,
+                    force_perms: ChannelPermissions::EMPTY,
+                },
+            }],
         },
     );
 
@@ -288,6 +309,7 @@ pub fn default_role_config() -> RoleConfigMap {
             passives: vec![],
             notebooks: vec![],
             actor_links: vec![],
+            world_channel_overrides: vec![],
         },
     );
 
@@ -298,6 +320,7 @@ pub fn default_role_config() -> RoleConfigMap {
             passives: vec![],
             notebooks: vec![RoleNotebook { fake: false }],
             actor_links: vec![],
+            world_channel_overrides: vec![],
         },
     );
 
@@ -323,6 +346,7 @@ pub fn default_role_config() -> RoleConfigMap {
             passives: vec![],
             notebooks: vec![],
             actor_links: vec![],
+            world_channel_overrides: vec![],
         },
     );
 
@@ -339,6 +363,7 @@ pub fn default_role_config() -> RoleConfigMap {
             passives: vec![],
             notebooks: vec![RoleNotebook { fake: true }],
             actor_links: vec![],
+            world_channel_overrides: vec![],
         },
     );
 
@@ -367,6 +392,7 @@ pub fn default_role_config() -> RoleConfigMap {
             }],
             notebooks: vec![],
             actor_links: vec![],
+            world_channel_overrides: vec![],
         },
     );
 
@@ -386,6 +412,7 @@ pub fn default_role_config() -> RoleConfigMap {
             }],
             notebooks: vec![RoleNotebook { fake: true }],
             actor_links: vec![],
+            world_channel_overrides: vec![],
         },
     );
 
@@ -405,6 +432,7 @@ pub fn default_role_config() -> RoleConfigMap {
             }],
             notebooks: vec![],
             actor_links: vec![],
+            world_channel_overrides: vec![],
         },
     );
 

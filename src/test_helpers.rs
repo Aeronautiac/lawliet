@@ -1,6 +1,7 @@
 use crate::{
     action::{
         actor::{add_state::AddState, remove_state::RemoveState},
+        actor::player::give_role::GiveRole,
         world::set_world_channel_override::SetWorldChannelOverride,
         comms::{
             channel::{
@@ -53,7 +54,7 @@ use crate::{
         },
         passive::create_and_give_passive::CreateAndGivePassive,
         poll::{add_vote::AddVote, create_poll::CreatePoll, remove_vote::RemoveVote},
-        world::initialize_world::InitializeWorld,
+        world::initialize_engine::InitializeEngine,
     },
     actor::organization::LeadershipTransferPolicies,
     chargepool::PoolLinkType,
@@ -334,11 +335,11 @@ pub fn quick_clear_links(eng: &mut Engine, time: Time, ability_id: ID) {
     .unwrap();
 }
 
-pub fn init_world(eng: &mut Engine) {
+pub fn init_engine(eng: &mut Engine) {
     eng.execute(ActionRequest {
         actor: ActionActor::System,
         timestamp: 0,
-        payload: Action::InitializeWorld(InitializeWorld {}),
+        payload: Action::InitializeEngine(InitializeEngine { seed: 0 }),
     })
     .unwrap();
 }
@@ -643,6 +644,15 @@ pub fn remove_from_lounge(
             player_id,
         }),
     })
+}
+
+pub fn give_role(eng: &mut Engine, time: Time, target_id: ID, role: Role) {
+    eng.execute(ActionRequest {
+        actor: ActionActor::System,
+        timestamp: time,
+        payload: Action::GiveRole(GiveRole { target_id, role }),
+    })
+    .unwrap();
 }
 
 pub fn set_world_channel_override(

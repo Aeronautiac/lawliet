@@ -10,3 +10,4 @@ pub type PollWeight = u16;
 pub type MemberCount = u16;
 pub type VoteAmplifier = u16;
 pub type AttemptCount = u16;
+pub type Seed = u64;

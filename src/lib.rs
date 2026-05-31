@@ -85,23 +85,23 @@ mod world;
 
 pub use common::{ID, Time};
 
-// most of what remains are small tasks
+// most of what remains within the engine are small tasks
 // the most difficult one here is defining and managing the communication protocol
 // a minimal frontend can likely be implemented with what has been written so far, but it is
 // probably best to finish the engine first
 
 // TODO:
+// - The world channel override system does not currently track the source of each override. It may
+//   be worth introducing a "source" mechanism similar to how actor modifiers track their sources
+//   (Source::State, Source::Manual), so that overrides from different origins can be added and
+//   removed independently without clobbering each other. GiveRole's explicit clear is sufficient
+//   for now. Low priority.
 // - Go through everything and implement frontend commands
-// - Integrate passives into game logic
-// - Implement news (likely just a special channel within the world struct and dedicated abilities
-// designated to the news anchor)
 // - Implement prosecution and custody system
 // - Implement kidnapping
-// - Implement randomness (using a random seed)
 // - Implement world initialization and iteration progression
 // - Write the test cases that depend on the new systems being implemented
 // - Begin implementing every ability and write tests for them
-// - Implement bugs (simple message relayers with channel context filtering)
 // - Write extensive integration tests
 // - Write yagami
 // - Write ryuk (ratatui)

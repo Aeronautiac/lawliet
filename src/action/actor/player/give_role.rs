@@ -16,6 +16,10 @@ use crate::{
         },
         notebook::create_and_give_notebook::CreateAndGiveNotebook,
         passive::create_and_give_passive::CreateAndGivePassive,
+        world::{
+            set_world_channel_override::SetWorldChannelOverride,
+            update_world_channel_perms::UpdateWorldChannelPerms,
+        },
     },
     config::role::Role,
     helpers::{get_player_mut, get_role_config},
@@ -41,9 +45,12 @@ impl ActionInterface for GiveRole {
     ) -> ActionResult {
         actor.require_system()?;
 
+        let role_config = get_role_config(eng, self.role)?.clone();
+
         let player = get_player_mut(eng, self.target_id)?;
         if mutate {
             player.role = self.role;
+            player.world_channel_overrides.clear();
         }
 
         Action::PurgeVolatiles(PurgeVolatiles {
@@ -56,7 +63,6 @@ impl ActionInterface for GiveRole {
         })
         .handle(eng, ctx, actor, version, mutate)?;
 
-        let role_config = get_role_config(eng, self.role)?.clone();
         for ability in &role_config.abilities {
             Action::CreateAndGiveAbility(CreateAndGiveAbility {
                 ability_name: ability.identifier.name,
@@ -88,6 +94,21 @@ impl ActionInterface for GiveRole {
         }
 
         Action::CreateActorLinks(CreateActorLinks {}).handle(eng, ctx, actor, version, mutate)?;
+
+        for entry in &role_config.world_channel_overrides {
+            Action::SetWorldChannelOverride(SetWorldChannelOverride {
+                player_id: self.target_id,
+                channel_name: entry.channel_name,
+                override_data: Some(entry.override_data.clone()),
+            })
+            .handle(eng, ctx, actor, version, mutate)?;
+        }
+
+        // re-evaluate after clearing overrides (covers roles with no channel overrides)
+        Action::UpdateWorldChannelPerms(UpdateWorldChannelPerms {
+            player_id: self.target_id,
+        })
+        .handle(eng, ctx, actor, version, mutate)?;
 
         Ok(ActionResponse::GiveRole(GiveRoleResponse {}))
     }

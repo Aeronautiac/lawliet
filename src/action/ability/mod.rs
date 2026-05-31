@@ -340,7 +340,7 @@ mod ability_tests {
     #[test]
     fn link_weights() {
         let mut eng = Engine::new();
-        init_world(&mut eng);
+        init_engine(&mut eng);
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
 
         let a1 = quick_ability(
@@ -429,7 +429,7 @@ mod ability_tests {
     #[test]
     fn pool_and_limit_links() {
         let mut eng = Engine::new();
-        init_world(&mut eng);
+        init_engine(&mut eng);
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
 
         let a1 = quick_ability(
