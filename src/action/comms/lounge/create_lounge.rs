@@ -125,7 +125,7 @@ impl ActionInterface for CreateLounge {
                         lounge_id,
                         channel_id,
                     },
-                    Some(participant.id),
+                    None,
                     eng.time,
                 );
             }

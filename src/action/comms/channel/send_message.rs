@@ -33,7 +33,7 @@ impl ActionInterface for SendMessage {
         actor.player_only()?;
         let id = player_id(actor).expect("expected valid player id");
 
-        let channel = get_channel(eng, id)?;
+        let channel = get_channel(eng, self.channel_id)?;
         let member = channel.get_member(id);
         let Some(member_data) = member else {
             return Err(ActionError::NotAChannelMember);

@@ -10,7 +10,6 @@ use crate::{
         comms::groupchat::set_groupchat_owner::SetGroupchatOwner,
     },
     actor::modifier::Modifier,
-    command::Command,
     helpers::{actor_id, get_actor, get_actor_mut, get_gc, get_gc_mut, get_player_mut},
 };
 

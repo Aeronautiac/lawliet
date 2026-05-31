@@ -1,4 +1,31 @@
 use crate::{
+    action::{
+        actor::{add_state::AddState, remove_state::RemoveState},
+        comms::{
+            channel::{
+                create_channel::CreateChannel,
+                send_message::SendMessage,
+                set_member::SetMember,
+            },
+            groupchat::{
+                add_to_groupchat::AddToGroupchat,
+                create_groupchat::CreateGroupchat,
+                remove_from_groupchat::RemoveFromGroupchat,
+                set_groupchat_owner::SetGroupchatOwner,
+            },
+            lounge::{
+                create_lounge::CreateLounge,
+                leave_lounge::LeaveLounge,
+                remove_from_lounge::RemoveFromLounge,
+            },
+        },
+    },
+    actor::state::State,
+    channel::{ChannelMember, SenderDisplay},
+    lounge::LoungeVariant,
+};
+
+use crate::{
     ID, Time,
     ability::AbilityBehaviour,
     action::{
@@ -432,4 +459,186 @@ pub fn force_charges(eng: &mut Engine, time: Time, ability_id: ID, charges: Char
             base_reset_time: 1,
         },
     );
+}
+
+pub fn add_state(eng: &mut Engine, time: Time, actor_id: ID, state: State) {
+    eng.execute(ActionRequest {
+        actor: ActionActor::System,
+        timestamp: time,
+        payload: Action::AddState(AddState { actor_id, state }),
+    })
+    .unwrap();
+}
+
+pub fn remove_state(eng: &mut Engine, time: Time, actor_id: ID, state: State) {
+    eng.execute(ActionRequest {
+        actor: ActionActor::System,
+        timestamp: time,
+        payload: Action::RemoveState(RemoveState { actor_id, state }),
+    })
+    .unwrap();
+}
+
+pub fn create_channel(eng: &mut Engine, time: Time, loggable: bool) -> ID {
+    let data = eng
+        .execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: time,
+            payload: Action::CreateChannel(CreateChannel { loggable }),
+        })
+        .unwrap()
+        .0;
+    let ActionResponse::CreateChannel(response) = data else {
+        unreachable!()
+    };
+    response.id
+}
+
+pub fn set_member(
+    eng: &mut Engine,
+    time: Time,
+    player_id: ID,
+    channel_id: ID,
+    settings: Option<ChannelMember>,
+) -> ExecutionResult {
+    eng.execute(ActionRequest {
+        actor: ActionActor::System,
+        timestamp: time,
+        payload: Action::SetMember(SetMember {
+            player_id,
+            channel_id,
+            settings,
+        }),
+    })
+}
+
+pub fn send_message(
+    eng: &mut Engine,
+    time: Time,
+    player_id: ID,
+    channel_id: ID,
+    display: SenderDisplay,
+    content: &str,
+) -> ExecutionResult {
+    eng.execute(ActionRequest {
+        actor: ActionActor::Player(player_id),
+        timestamp: time,
+        payload: Action::SendMessage(SendMessage {
+            channel_id,
+            display,
+            content: content.into(),
+        }),
+    })
+}
+
+pub fn create_gc(eng: &mut Engine, time: Time) -> ID {
+    let data = eng
+        .execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: time,
+            payload: Action::CreateGroupchat(CreateGroupchat {}),
+        })
+        .unwrap()
+        .0;
+    let ActionResponse::CreateGroupchat(response) = data else {
+        unreachable!()
+    };
+    response.id
+}
+
+pub fn add_to_gc(
+    eng: &mut Engine,
+    time: Time,
+    actor: ActionActor,
+    gc_id: ID,
+    player_id: ID,
+    owner: bool,
+) -> ExecutionResult {
+    eng.execute(ActionRequest {
+        actor,
+        timestamp: time,
+        payload: Action::AddToGroupchat(AddToGroupchat {
+            groupchat_id: gc_id,
+            player_id,
+            owner,
+        }),
+    })
+}
+
+pub fn remove_from_gc(
+    eng: &mut Engine,
+    time: Time,
+    actor: ActionActor,
+    gc_id: ID,
+    player_id: ID,
+) -> ExecutionResult {
+    eng.execute(ActionRequest {
+        actor,
+        timestamp: time,
+        payload: Action::RemoveFromGroupchat(RemoveFromGroupchat {
+            groupchat_id: gc_id,
+            player_id,
+        }),
+    })
+}
+
+pub fn set_gc_owner(
+    eng: &mut Engine,
+    time: Time,
+    actor: ActionActor,
+    gc_id: ID,
+    owner: Option<ID>,
+) -> ExecutionResult {
+    eng.execute(ActionRequest {
+        actor,
+        timestamp: time,
+        payload: Action::SetGroupchatOwner(SetGroupchatOwner {
+            groupchat_id: gc_id,
+            owner,
+        }),
+    })
+}
+
+pub fn create_lounge(eng: &mut Engine, time: Time, variant: LoungeVariant) -> (ID, ID) {
+    let data = eng
+        .execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: time,
+            payload: Action::CreateLounge(CreateLounge { variant }),
+        })
+        .unwrap()
+        .0;
+    let ActionResponse::CreateLounge(response) = data else {
+        unreachable!()
+    };
+    (response.lounge_id, response.channel_id)
+}
+
+pub fn leave_lounge(
+    eng: &mut Engine,
+    time: Time,
+    player_id: ID,
+    lounge_id: ID,
+) -> ExecutionResult {
+    eng.execute(ActionRequest {
+        actor: ActionActor::Player(player_id),
+        timestamp: time,
+        payload: Action::LeaveLounge(LeaveLounge { lounge_id }),
+    })
+}
+
+pub fn remove_from_lounge(
+    eng: &mut Engine,
+    time: Time,
+    player_id: ID,
+    lounge_id: ID,
+) -> ExecutionResult {
+    eng.execute(ActionRequest {
+        actor: ActionActor::System,
+        timestamp: time,
+        payload: Action::RemoveFromLounge(RemoveFromLounge {
+            lounge_id,
+            player_id,
+        }),
+    })
 }

@@ -48,7 +48,7 @@ pub struct CommandPayload {
 pub enum Command {
     ////////////////////////////////////////////////
     // WORLD //
-    ///////////
+    ////////////////////////////////////////////////
     // if doing something like sending as a message in the news channel, ensure that it is placed
     // into the proper slot and treated as a historical event if it wasn't sent immediately.
 
@@ -83,7 +83,7 @@ pub enum Command {
 
     ////////////////////////////////////////////////
     // Actors //
-    ////////////
+    ////////////////////////////////////////////////
     // Actors will often have their state modified. Views of that actor should reflect
     // their current state(s).
     // Furthermore, there needs to be a way to address the underlying actor object of a player or org from
@@ -137,7 +137,7 @@ pub enum Command {
 
     ////////////////////////////////////////////////
     // COMMS //
-    ///////////
+    ////////////////////////////////////////////////
     // A player who is added to a channel after messages have already been sent should be allowed to
     // see the messages which have been sent in that channel previously if they have view
     // permissions. This must be handled by the frontend.
@@ -200,7 +200,7 @@ pub enum Command {
 
     ////////////////////////////////////////////////
     // NOTEBOOKS //
-    ///////////////
+    ////////////////////////////////////////////////
     // Any notebook attempt should be shown to anybody who currently possesses the notebook.
     // The way this is handled doesn't matter.
     // This means that while one player may receive immediate feedback, other players should see
@@ -210,7 +210,7 @@ pub enum Command {
     // Note that messages sent in a notebook channel are handled by design. This specifically refers
     // to notebook usages which may be represented differently.
     //
-    // Some modifiers block certain notebook actions. A frontend should take this into account.
+    // Some modifiers block certain notebook actions. A frontend can take this into account.
     //
     // A write failure is not actually a failure to use an action. it is just the lack of a correct
     // true name and leads to actual state modification. the player must be explicitly notified, and
@@ -250,7 +250,7 @@ pub enum Command {
 
     ////////////////////////////////////////////////
     // ABILITIES & PASSIVES //
-    //////////////////////////
+    ////////////////////////////////////////////////
     // Clients may display some specific abilities differently from general abilities, but the
     // engine will have no knowledge of this. For instance, the contact ability should not be
     // treated as a normal ability on the frontend, but the engine sees it as no different than any
@@ -297,4 +297,7 @@ pub enum Command {
         range: Time, // ms
         redact_names: bool,
     },
+    ////////////////////////////////////////////////
+    // POLLS //
+    ////////////////////////////////////////////////
 }
