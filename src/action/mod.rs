@@ -104,8 +104,11 @@ use crate::{
         },
         update::{Update, UpdateResponse},
         world::{
+            add_to_world_channels::{AddToWorldChannels, AddToWorldChannelsResponse},
             create_orgs::{CreateOrgs, CreateOrgsResponse},
             initialize_world::{InitializeWorld, InitializeWorldResponse},
+            set_world_channel_override::{SetWorldChannelOverride, SetWorldChannelOverrideResponse},
+            update_world_channel_perms::{UpdateWorldChannelPerms, UpdateWorldChannelPermsResponse},
         },
     },
     command::{Command, CommandPayload},
@@ -280,6 +283,9 @@ pub enum Action {
     CreateBug(CreateBug),
     ArchiveBug(ArchiveBug),
     TryUpdateBugVisibility(TryUpdateBugVisibility),
+    AddToWorldChannels(AddToWorldChannels),
+    UpdateWorldChannelPerms(UpdateWorldChannelPerms),
+    SetWorldChannelOverride(SetWorldChannelOverride),
     DeferredCmds(DeferredCmds),
 }
 
@@ -353,6 +359,9 @@ pub enum ActionResponse {
     CreateBug(CreateBugResponse),
     ArchiveBug(ArchiveBugResponse),
     TryUpdateBugVisibility(TryUpdateBugVisibilityResponse),
+    AddToWorldChannels(AddToWorldChannelsResponse),
+    UpdateWorldChannelPerms(UpdateWorldChannelPermsResponse),
+    SetWorldChannelOverride(SetWorldChannelOverrideResponse),
     DeferredCmds(DeferredCmdsResponse),
 }
 

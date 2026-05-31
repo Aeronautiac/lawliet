@@ -1,6 +1,7 @@
 use crate::{
     action::{
         actor::{add_state::AddState, remove_state::RemoveState},
+        world::set_world_channel_override::SetWorldChannelOverride,
         comms::{
             channel::{
                 create_channel::CreateChannel,
@@ -20,8 +21,9 @@ use crate::{
             },
         },
     },
-    actor::state::State,
+    actor::{player::WorldChannelOverride, state::State},
     channel::{ChannelMember, SenderDisplay},
+    config::world::WorldChannelName,
     lounge::LoungeVariant,
 };
 
@@ -639,6 +641,24 @@ pub fn remove_from_lounge(
         payload: Action::RemoveFromLounge(RemoveFromLounge {
             lounge_id,
             player_id,
+        }),
+    })
+}
+
+pub fn set_world_channel_override(
+    eng: &mut Engine,
+    time: Time,
+    player_id: ID,
+    channel_name: WorldChannelName,
+    override_data: Option<WorldChannelOverride>,
+) -> ExecutionResult {
+    eng.execute(ActionRequest {
+        actor: ActionActor::System,
+        timestamp: time,
+        payload: Action::SetWorldChannelOverride(SetWorldChannelOverride {
+            player_id,
+            channel_name,
+            override_data,
         }),
     })
 }

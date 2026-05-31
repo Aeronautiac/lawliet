@@ -8,6 +8,7 @@ use crate::{
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         comms::update_contact_channels::UpdateContactChannels,
+        world::update_world_channel_perms::UpdateWorldChannelPerms,
     },
     actor::state::State,
     common::Version,
@@ -53,6 +54,11 @@ impl ActionInterface for AddState {
 
         if get_player(eng, self.actor_id).is_ok() {
             Action::UpdateContactChannels(UpdateContactChannels {
+                player_id: self.actor_id,
+            })
+            .handle(eng, ctx, actor, version, mutate)?;
+
+            Action::UpdateWorldChannelPerms(UpdateWorldChannelPerms {
                 player_id: self.actor_id,
             })
             .handle(eng, ctx, actor, version, mutate)?;

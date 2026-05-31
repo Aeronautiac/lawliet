@@ -1,0 +1,48 @@
+The world shall now have built in channels similar to the global charge pool implementation.
+
+Every player is automatically registered as a member of every one of these channels on creation.
+By default, they are given no permissions for the channel.
+(create a new action which adds them to world channels and call it on player creation)
+
+Default channels have a set of blocking modifiers for every permission.
+These modifiers are applied regardless of the default for that permission.
+This will be useful for default overrides.
+Create a new action which re-evaluates a player's permissions in world channels based on their modifiers.
+Call it when modifiers are changed (i.e., a state is added/removed)
+
+Players have an IndexMap of "override" permissions for world channels. (world channel name to channel permission bitset)
+There are "force" permissions, and there are "default" permissions.
+Force permissions take priority over blocking modifiers. They can be implemented as a simple bitwise operation.
+Default permissions take priority of world specific defaults.
+
+If at least one blocking modifier is present, that permission is removed. If none are present,
+the permission is reset to the default
+
+Default override solves this class of problem:
+1. News anchor adds player to the news
+2. Player's state changes, but is not given a blocking modifier
+3. Player's permissions are reset to the "default" and they are kicked off of the news regardless
+4. News anchor did not intend for this to occur
+
+And force override:
+1. Host explicitly gives a player access to a hidden channel and never wants them to lose access
+2. Player's state changes
+3. Player is kicked out because of world defaults
+
+Use bitwise logic for the conditional checks when possible. Think about the correctness of the math performed.
+
+Config is largely the same as world charge pool config but there are some context specific differences (more complexity).
+
+There are three default channels: News, Courtroom, General
+
+News defaults:
+No send, blocked by NoContact
+View, blocked by NoPresence
+
+Courtroom defaults:
+No send, blocked by NoContact
+View, blocked by NoPresence
+
+General defaults:
+Send, blocked by NoContact
+View, blocked by NoContact

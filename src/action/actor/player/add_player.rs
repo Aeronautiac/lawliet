@@ -9,6 +9,7 @@ use crate::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
         ActionResult, ability::create_and_give_ability::CreateAndGiveAbility,
         actor::player::give_role::GiveRole, chargepool::add_charge_pool::AddChargePool,
+        world::add_to_world_channels::AddToWorldChannels,
     },
     common::Version,
     config::role::Role,
@@ -81,6 +82,9 @@ impl ActionInterface for AddPlayer {
                 })
                 .handle(eng, ctx, actor, version, mutate)?;
             }
+
+            Action::AddToWorldChannels(AddToWorldChannels { player_id })
+                .handle(eng, ctx, actor, version, mutate)?;
 
             Action::GiveRole(GiveRole {
                 target_id: player_id,

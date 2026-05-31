@@ -7,6 +7,7 @@ use crate::{
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         chargepool::add_charge_pool::AddChargePool,
+        comms::channel::create_channel::CreateChannel,
     },
     helpers::get_charge_pool_mut,
 };
@@ -42,6 +43,18 @@ impl ActionInterface for InitializeWorld {
                 let pool = get_charge_pool_mut(eng, data.id)?;
                 pool.on_link();
                 eng.world.pool_map.insert(name, data.id);
+            }
+        }
+
+        let channel_names: Vec<_> = eng.config.world_config.world_channels.keys().copied().collect();
+        for name in channel_names {
+            let response = Action::CreateChannel(CreateChannel { loggable: true })
+                .handle(eng, ctx, actor, version, mutate)?;
+            if mutate {
+                let ActionResponse::CreateChannel(data) = response else {
+                    unreachable!()
+                };
+                eng.world.world_channel_map.insert(name, data.id);
             }
         }
 

@@ -1,8 +1,14 @@
 use std::rc::Rc;
 
-use indexmap::{IndexSet, indexset};
+use indexmap::{IndexMap, IndexSet, indexset};
 
-use crate::{ID, config::role::Role};
+use crate::{ID, channel::ChannelPermissions, config::{role::Role, world::WorldChannelName}};
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct WorldChannelOverride {
+    pub default_perms: ChannelPermissions,
+    pub force_perms: ChannelPermissions,
+}
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Player {
@@ -12,6 +18,7 @@ pub struct Player {
     pub lounges: IndexSet<ID>,
     pub groupchats: IndexSet<ID>,
     pub bugs: IndexSet<ID>,
+    pub world_channel_overrides: IndexMap<WorldChannelName, WorldChannelOverride>,
 }
 
 impl Player {
@@ -24,6 +31,7 @@ impl Player {
             lounges: indexset![],
             groupchats: indexset![],
             bugs: indexset![],
+            world_channel_overrides: IndexMap::new(),
         }
     }
 
