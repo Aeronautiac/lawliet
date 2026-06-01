@@ -11,6 +11,7 @@ use crate::{
         Action, ActionInterface, ActionResponse,
         comms::channel::set_member::SetMember,
     },
+    actor::player::OverrideResolver,
     channel::{ChannelMember, ChannelPermission, ChannelPermissions, SenderDisplay},
     helpers::{get_actor, get_player},
 };
@@ -45,10 +46,10 @@ impl ActionInterface for UpdateWorldChannelPerms {
                 .iter()
                 .filter_map(|(name, &channel_id)| {
                     let config = eng.config.world_config.world_channels.get(name)?;
-                    let over = player.world_channel_overrides.get(name);
+                    let over = player.get_world_channel_override(*name, OverrideResolver::Positive);
 
-                    let base = over.map_or(config.default_perms, |o| o.default_perms);
-                    let force = over.map_or(ChannelPermissions::EMPTY, |o| o.force_perms);
+                    let base = over.as_ref().map_or(config.default_perms, |o| o.default_perms);
+                    let force = over.as_ref().map_or(ChannelPermissions::EMPTY, |o| o.force_perms);
 
                     let mut blocked = ChannelPermissions::EMPTY;
                     if !(player_modifiers & config.send_blocking).is_empty() {

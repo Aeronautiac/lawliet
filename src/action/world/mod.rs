@@ -10,11 +10,11 @@ pub mod update_world_channel_perms;
 #[cfg(test)]
 mod world_tests {
     use crate::{
-        actor::{player::WorldChannelOverride, state::State},
+        actor::{player::{OverrideResolver, OverrideSource, WorldChannelOverride}, state::State},
         channel::{ChannelPermission, ChannelPermissions},
         config::{role::Role, world::WorldChannelName},
         engine::Engine,
-        helpers::get_channel,
+        helpers::{get_channel, get_player},
         test_helpers::*,
     };
 
@@ -38,21 +38,8 @@ mod world_tests {
         let mut eng = Engine::new();
         init_engine(&mut eng);
 
-        assert!(
-            eng.world
-                .world_channel_map
-                .contains_key(&WorldChannelName::News)
-        );
-        assert!(
-            eng.world
-                .world_channel_map
-                .contains_key(&WorldChannelName::Courtroom)
-        );
-        assert!(
-            eng.world
-                .world_channel_map
-                .contains_key(&WorldChannelName::General)
-        );
+        assert!(eng.world.world_channel_map.contains_key(&WorldChannelName::News));
+        assert!(eng.world.world_channel_map.contains_key(&WorldChannelName::General));
     }
 
     #[test]
@@ -107,10 +94,6 @@ mod world_tests {
         assert!(news_perms.contains(ChannelPermission::View));
         assert!(!news_perms.contains(ChannelPermission::Send));
 
-        let court_perms = world_channel_perms(&eng, WorldChannelName::Courtroom, p1);
-        assert!(court_perms.contains(ChannelPermission::View));
-        assert!(!court_perms.contains(ChannelPermission::Send));
-
         let gen_perms = world_channel_perms(&eng, WorldChannelName::General, p1);
         assert!(gen_perms.contains(ChannelPermission::Send));
         assert!(gen_perms.contains(ChannelPermission::View));
@@ -131,7 +114,7 @@ mod world_tests {
     }
 
     #[test]
-    fn no_presence_removes_view_from_news_and_courtroom() {
+    fn no_presence_removes_view_from_news() {
         let mut eng = Engine::new();
         init_engine(&mut eng);
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
@@ -140,10 +123,6 @@ mod world_tests {
 
         assert!(
             !world_channel_perms(&eng, WorldChannelName::News, p1)
-                .contains(ChannelPermission::View)
-        );
-        assert!(
-            !world_channel_perms(&eng, WorldChannelName::Courtroom, p1)
                 .contains(ChannelPermission::View)
         );
     }
@@ -175,6 +154,8 @@ mod world_tests {
             0,
             p1,
             WorldChannelName::News,
+            OverrideSource::Manual(0),
+            0,
             Some(WorldChannelOverride {
                 default_perms: ChannelPermission::Send | ChannelPermission::View,
                 force_perms: ChannelPermissions::EMPTY,
@@ -198,6 +179,8 @@ mod world_tests {
             0,
             p1,
             WorldChannelName::News,
+            OverrideSource::Manual(0),
+            0,
             Some(WorldChannelOverride {
                 default_perms: ChannelPermission::Send | ChannelPermission::View,
                 force_perms: ChannelPermissions::EMPTY,
@@ -220,6 +203,8 @@ mod world_tests {
             0,
             p1,
             WorldChannelName::News,
+            OverrideSource::Manual(0),
+            0,
             Some(WorldChannelOverride {
                 default_perms: ChannelPermissions::EMPTY,
                 force_perms: ChannelPermission::Send | ChannelPermission::View,
@@ -244,13 +229,24 @@ mod world_tests {
             0,
             p1,
             WorldChannelName::News,
+            OverrideSource::Manual(0),
+            0,
             Some(WorldChannelOverride {
                 default_perms: ChannelPermission::Send | ChannelPermission::View,
                 force_perms: ChannelPermissions::EMPTY,
             }),
         )
         .unwrap();
-        set_world_channel_override(&mut eng, 0, p1, WorldChannelName::News, None).unwrap();
+        set_world_channel_override(
+            &mut eng,
+            0,
+            p1,
+            WorldChannelName::News,
+            OverrideSource::Manual(0),
+            0,
+            None,
+        )
+        .unwrap();
 
         let perms = world_channel_perms(&eng, WorldChannelName::News, p1);
         assert!(perms.contains(ChannelPermission::View));
@@ -315,6 +311,8 @@ mod world_tests {
             0,
             p1,
             WorldChannelName::News,
+            OverrideSource::Manual(0),
+            0,
             Some(WorldChannelOverride {
                 default_perms: ChannelPermissions::EMPTY,
                 force_perms: ChannelPermission::Send | ChannelPermission::View,
@@ -327,7 +325,139 @@ mod world_tests {
         assert!(!world_channel_perms(&eng, WorldChannelName::News, p1).is_empty());
 
         // clearing the override exposes the blocking state
-        set_world_channel_override(&mut eng, 0, p1, WorldChannelName::News, None).unwrap();
+        set_world_channel_override(
+            &mut eng,
+            0,
+            p1,
+            WorldChannelName::News,
+            OverrideSource::Manual(0),
+            0,
+            None,
+        )
+        .unwrap();
         assert!(world_channel_perms(&eng, WorldChannelName::News, p1).is_empty());
+    }
+
+    // higher-priority source wins over lower-priority source
+    #[test]
+    fn higher_priority_override_wins() {
+        let mut eng = Engine::new();
+        init_engine(&mut eng);
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        set_world_channel_override(
+            &mut eng,
+            0,
+            p1,
+            WorldChannelName::News,
+            OverrideSource::Manual(0),
+            0,
+            Some(WorldChannelOverride {
+                default_perms: ChannelPermission::View.into(),
+                force_perms: ChannelPermissions::EMPTY,
+            }),
+        )
+        .unwrap();
+
+        set_world_channel_override(
+            &mut eng,
+            0,
+            p1,
+            WorldChannelName::News,
+            OverrideSource::Manual(1),
+            1,
+            Some(WorldChannelOverride {
+                default_perms: ChannelPermission::Send | ChannelPermission::View,
+                force_perms: ChannelPermissions::EMPTY,
+            }),
+        )
+        .unwrap();
+
+        assert!(world_channel_perms(&eng, WorldChannelName::News, p1)
+            .contains(ChannelPermission::Send));
+    }
+
+    // equal-priority tie with positive resolver: on wins
+    #[test]
+    fn tied_priority_positive_resolver_grants_send() {
+        let mut eng = Engine::new();
+        init_engine(&mut eng);
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        set_world_channel_override(
+            &mut eng,
+            0,
+            p1,
+            WorldChannelName::News,
+            OverrideSource::Manual(0),
+            1,
+            Some(WorldChannelOverride {
+                default_perms: ChannelPermission::View.into(),
+                force_perms: ChannelPermissions::EMPTY,
+            }),
+        )
+        .unwrap();
+
+        set_world_channel_override(
+            &mut eng,
+            0,
+            p1,
+            WorldChannelName::News,
+            OverrideSource::Manual(1),
+            1,
+            Some(WorldChannelOverride {
+                default_perms: ChannelPermission::Send | ChannelPermission::View,
+                force_perms: ChannelPermissions::EMPTY,
+            }),
+        )
+        .unwrap();
+
+        // positive resolver (used by UpdateWorldChannelPerms): send wins
+        assert!(world_channel_perms(&eng, WorldChannelName::News, p1)
+            .contains(ChannelPermission::Send));
+    }
+
+    // equal-priority tie with negative resolver: all must agree, so send is absent
+    #[test]
+    fn tied_priority_negative_resolver_requires_consensus() {
+        let mut eng = Engine::new();
+        init_engine(&mut eng);
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        set_world_channel_override(
+            &mut eng,
+            0,
+            p1,
+            WorldChannelName::News,
+            OverrideSource::Manual(0),
+            1,
+            Some(WorldChannelOverride {
+                default_perms: ChannelPermission::Send | ChannelPermission::View,
+                force_perms: ChannelPermissions::EMPTY,
+            }),
+        )
+        .unwrap();
+
+        set_world_channel_override(
+            &mut eng,
+            0,
+            p1,
+            WorldChannelName::News,
+            OverrideSource::Manual(1),
+            1,
+            Some(WorldChannelOverride {
+                default_perms: ChannelPermission::View.into(),
+                force_perms: ChannelPermissions::EMPTY,
+            }),
+        )
+        .unwrap();
+
+        let result = get_player(&eng, p1)
+            .unwrap()
+            .get_world_channel_override(WorldChannelName::News, OverrideResolver::Negative)
+            .unwrap();
+
+        assert!(!result.default_perms.contains(ChannelPermission::Send));
+        assert!(result.default_perms.contains(ChannelPermission::View));
     }
 }

@@ -14,7 +14,6 @@ pub enum WorldChargePoolName {
 #[derive(Hash, Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 pub enum WorldChannelName {
     News,
-    Courtroom,
     General,
 }
 
@@ -43,14 +42,6 @@ impl WorldConfig {
         let mut channels = IndexMap::new();
         channels.insert(
             WorldChannelName::News,
-            WorldChannelConfig {
-                default_perms: ChannelPermission::View.into(),
-                send_blocking: Modifier::NoContact.into(),
-                view_blocking: Modifier::NoPresence.into(),
-            },
-        );
-        channels.insert(
-            WorldChannelName::Courtroom,
             WorldChannelConfig {
                 default_perms: ChannelPermission::View.into(),
                 send_blocking: Modifier::NoContact.into(),

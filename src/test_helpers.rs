@@ -22,7 +22,7 @@ use crate::{
             },
         },
     },
-    actor::{player::WorldChannelOverride, state::State},
+    actor::{player::{OverrideSource, WorldChannelOverride}, state::State},
     channel::{ChannelMember, SenderDisplay},
     config::world::WorldChannelName,
     lounge::LoungeVariant,
@@ -660,6 +660,8 @@ pub fn set_world_channel_override(
     time: Time,
     player_id: ID,
     channel_name: WorldChannelName,
+    source: OverrideSource,
+    priority: u8,
     override_data: Option<WorldChannelOverride>,
 ) -> ExecutionResult {
     eng.execute(ActionRequest {
@@ -668,6 +670,8 @@ pub fn set_world_channel_override(
         payload: Action::SetWorldChannelOverride(SetWorldChannelOverride {
             player_id,
             channel_name,
+            source,
+            priority,
             override_data,
         }),
     })

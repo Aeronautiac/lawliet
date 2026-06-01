@@ -1,8 +1,10 @@
 /*
 * SYSTEM ACTION
-* Set or clear a player's per-channel override (default and/or force permissions) for a
-* world channel, then re-evaluate their effective permissions.
+* Set or clear a player's per-channel override for a specific source, then re-evaluate
+* their effective permissions. Each source may hold at most one override per channel.
 */
+
+use indexmap::IndexMap;
 
 use crate::{
     ID,
@@ -10,7 +12,7 @@ use crate::{
         Action, ActionInterface, ActionResponse,
         world::update_world_channel_perms::UpdateWorldChannelPerms,
     },
-    actor::player::WorldChannelOverride,
+    actor::player::{OverrideSource, SourcedWorldChannelOverride, WorldChannelOverride},
     config::world::WorldChannelName,
     helpers::get_player_mut,
 };
@@ -22,7 +24,9 @@ pub struct SetWorldChannelOverrideResponse {}
 pub struct SetWorldChannelOverride {
     pub player_id: ID,
     pub channel_name: WorldChannelName,
-    pub override_data: Option<WorldChannelOverride>, // None clears the override
+    pub source: OverrideSource,
+    pub priority: u8,
+    pub override_data: Option<WorldChannelOverride>, // None clears the override for this source
 }
 
 impl ActionInterface for SetWorldChannelOverride {
@@ -39,15 +43,23 @@ impl ActionInterface for SetWorldChannelOverride {
         let player = get_player_mut(eng, self.player_id)?;
         if mutate {
             match &self.override_data {
-                Some(over) => {
+                Some(data) => {
                     player
                         .world_channel_overrides
-                        .insert(self.channel_name, over.clone());
+                        .entry(self.channel_name)
+                        .or_insert_with(IndexMap::new)
+                        .insert(self.source.clone(), SourcedWorldChannelOverride {
+                            priority: self.priority,
+                            data: data.clone(),
+                        });
                 }
                 None => {
-                    player
+                    if let Some(channel_overrides) = player
                         .world_channel_overrides
-                        .swap_remove(&self.channel_name);
+                        .get_mut(&self.channel_name)
+                    {
+                        channel_overrides.swap_remove(&self.source);
+                    }
                 }
             }
         }

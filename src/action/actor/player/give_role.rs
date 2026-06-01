@@ -21,6 +21,7 @@ use crate::{
             update_world_channel_perms::UpdateWorldChannelPerms,
         },
     },
+    actor::player::OverrideSource,
     config::role::Role,
     helpers::{get_player_mut, get_role_config},
 };
@@ -50,7 +51,10 @@ impl ActionInterface for GiveRole {
         let player = get_player_mut(eng, self.target_id)?;
         if mutate {
             player.role = self.role;
-            player.world_channel_overrides.clear();
+            for channel_overrides in player.world_channel_overrides.values_mut() {
+                channel_overrides.retain(|source, _| !matches!(source, OverrideSource::Role(_)));
+            }
+            player.world_channel_overrides.retain(|_, v| !v.is_empty());
         }
 
         Action::PurgeVolatiles(PurgeVolatiles {
@@ -99,6 +103,8 @@ impl ActionInterface for GiveRole {
             Action::SetWorldChannelOverride(SetWorldChannelOverride {
                 player_id: self.target_id,
                 channel_name: entry.channel_name,
+                source: OverrideSource::Role(self.role),
+                priority: 0,
                 override_data: Some(entry.override_data.clone()),
             })
             .handle(eng, ctx, actor, version, mutate)?;
