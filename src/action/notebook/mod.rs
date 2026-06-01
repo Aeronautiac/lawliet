@@ -1,4 +1,5 @@
 pub mod add_notebook;
+pub mod destroy_notebook;
 pub mod create_and_give_notebook;
 pub mod give_notebook;
 pub mod lend_notebook;

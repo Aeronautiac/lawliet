@@ -5,7 +5,12 @@
 
 use crate::{
     ID,
-    action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    action::{
+        Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
+        ability::destroy_ability::DestroyAbility,
+        notebook::destroy_notebook::DestroyNotebook,
+        passive::destroy_passive::DestroyPassive,
+    },
     helpers::{get_ability, get_actor, get_notebook, get_passive},
 };
 
@@ -28,41 +33,40 @@ impl ActionInterface for PurgeVolatiles {
     ) -> ActionResult {
         actor.require_system()?;
 
-        // if the actor struct contains a reference to an object that doesn't exist, there is
-        // something wrong with the engine, and the engine should crash.
         let target_actor = get_actor(eng, self.actor_id)?;
         let mut remove_abilities: Vec<ID> = vec![];
         let mut remove_passives: Vec<ID> = vec![];
         let mut remove_notebooks: Vec<ID> = vec![];
         for id in target_actor.abilities.iter() {
-            let ability = get_ability(eng, *id).unwrap();
+            let ability = get_ability(eng, *id).expect("actor references non-existent ability: engine invariant violated");
             if ability.ownership_struct.volatile {
                 remove_abilities.push(*id);
             }
         }
         for id in target_actor.passives.iter() {
-            let passive = get_passive(eng, *id).unwrap();
+            let passive = get_passive(eng, *id).expect("actor references non-existent passive: engine invariant violated");
             if passive.ownership_struct.volatile {
                 remove_passives.push(*id);
             }
         }
         for id in target_actor.notebooks.iter() {
-            let notebook = get_notebook(eng, *id).unwrap();
+            let notebook = get_notebook(eng, *id).expect("actor references non-existent notebook: engine invariant violated");
             if notebook.volatile {
                 remove_notebooks.push(*id);
             }
         }
 
-        if mutate {
-            for id in remove_abilities {
-                eng.world.remove_ability(id);
-            }
-            for id in remove_passives {
-                eng.world.remove_passive(id);
-            }
-            for id in remove_notebooks {
-                eng.world.remove_notebook(id);
-            }
+        for id in remove_abilities {
+            Action::DestroyAbility(DestroyAbility { ability_id: id })
+                .handle(eng, ctx, actor, version, mutate)?;
+        }
+        for id in remove_passives {
+            Action::DestroyPassive(DestroyPassive { passive_id: id })
+                .handle(eng, ctx, actor, version, mutate)?;
+        }
+        for id in remove_notebooks {
+            Action::DestroyNotebook(DestroyNotebook { notebook_id: id })
+                .handle(eng, ctx, actor, version, mutate)?;
         }
 
         Ok(ActionResponse::PurgeVolatiles(PurgeVolatilesResponse {}))

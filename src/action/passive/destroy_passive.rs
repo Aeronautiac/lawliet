@@ -1,0 +1,49 @@
+/*
+* SYSTEM ACTION
+* Fully destroy a passive: remove from the owning actor's cache, then remove from the world.
+*/
+
+use crate::{
+    ID,
+    action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    helpers::{get_passive, get_actor, get_actor_mut},
+};
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct DestroyPassiveResponse {}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct DestroyPassive {
+    pub passive_id: ID,
+}
+
+impl ActionInterface for DestroyPassive {
+    fn handle(
+        &mut self,
+        eng: &mut crate::engine::Engine,
+        _ctx: &mut ActionContext,
+        actor: &ActionActor,
+        _version: crate::common::Version,
+        mutate: bool,
+    ) -> ActionResult {
+        actor.require_system()?;
+
+        let passive = get_passive(eng, self.passive_id)?;
+        let owner = passive.ownership_struct.owner;
+
+        if let Some(owner_id) = owner {
+            get_actor(eng, owner_id)?;
+        }
+
+        if mutate {
+            if let Some(owner_id) = owner {
+                get_actor_mut(eng, owner_id)
+                    .expect("passive owner does not exist: engine invariant violated")
+                    .remove_passive(self.passive_id);
+            }
+            eng.world.remove_passive(self.passive_id);
+        }
+
+        Ok(ActionResponse::DestroyPassive(DestroyPassiveResponse {}))
+    }
+}

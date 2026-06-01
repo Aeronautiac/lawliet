@@ -1,4 +1,5 @@
 pub mod add_ability;
+pub mod destroy_ability;
 pub mod add_link;
 pub mod clear_links;
 pub mod clear_volatile_links;

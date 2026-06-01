@@ -5,6 +5,13 @@
 * No-op if the ability is not a bug ability.
 */
 
+// TODO:
+// Handle the case where a player bugged someone, but then the associated
+// ability is destroyed
+//
+// The bug should be immediately destroyed (rather than archived) and visibility
+// should be hidden from the previous owner
+
 use crate::{
     ID,
     action::{ActionInterface, ActionResponse},
