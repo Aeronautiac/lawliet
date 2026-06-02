@@ -40,7 +40,7 @@ impl ActionInterface for AddAbility {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let Some(config) = eng.config.abilities.get(&AbilityIdentifier {
             name: self.ability_name,

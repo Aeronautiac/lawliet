@@ -28,7 +28,7 @@ impl ActionInterface for UpdateContactChannels {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let actor_data = get_actor(eng, self.player_id)?;
         let no_contact = actor_data.has_modifier(Modifier::NoContact);

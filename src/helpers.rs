@@ -49,7 +49,7 @@ pub fn require_player(eng: &Engine, actor_id: ID) -> Result<(), ActionError> {
 
 pub fn actor_id(actor: &ActionActor) -> Option<ID> {
     match actor {
-        ActionActor::System => None,
+        ActionActor::System | ActionActor::Admin => None,
         ActionActor::Player(id) => Some(*id),
         ActionActor::Organization(org_info) => Some(org_info.org_id),
     }
@@ -57,7 +57,7 @@ pub fn actor_id(actor: &ActionActor) -> Option<ID> {
 
 pub fn player_id(actor: &ActionActor) -> Option<ID> {
     match actor {
-        ActionActor::System => None,
+        ActionActor::System | ActionActor::Admin => None,
         ActionActor::Player(id) => Some(*id),
         ActionActor::Organization(org_info) => Some(org_info.player_id),
     }

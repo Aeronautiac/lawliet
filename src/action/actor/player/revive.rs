@@ -33,7 +33,7 @@ impl ActionInterface for Revive {
         version: Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         require_dead(eng, self.target_id)?;
 
         Action::RemoveState(RemoveState {

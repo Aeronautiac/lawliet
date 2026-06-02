@@ -31,7 +31,7 @@ impl ActionInterface for ChangeOrgLeader {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let org = get_org(eng, self.org_id)?;
         if let Some(new_leader) = self.new_leader {

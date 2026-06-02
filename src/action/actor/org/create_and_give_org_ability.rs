@@ -36,7 +36,7 @@ impl ActionInterface for CreateAndGiveOrgAbility {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let add_response = Action::AddAbility(AddAbility {
             ability_name: self.ability_name,

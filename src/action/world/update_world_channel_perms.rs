@@ -35,7 +35,7 @@ impl ActionInterface for UpdateWorldChannelPerms {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         get_player(eng, self.player_id)?;
 
         let player_modifiers = get_actor(eng, self.player_id)?.modifiers();

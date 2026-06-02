@@ -38,7 +38,7 @@ impl ActionInterface for AddState {
         version: Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let restrictions = eng
             .config

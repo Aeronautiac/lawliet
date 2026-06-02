@@ -27,7 +27,7 @@ impl ActionInterface for UpdatePolls {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let mut polls_to_cancel: SmallVec<[ID; 8]> = smallvec![];
         let mut polls_to_accept: SmallVec<[(ID, Action); 8]> = smallvec![];

@@ -30,7 +30,7 @@ impl ActionInterface for AddPassive {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let id = if mutate {
             let passive = Passive {

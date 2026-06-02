@@ -34,7 +34,7 @@ impl ActionInterface for RemoveState {
         version: Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let target = get_actor_mut(eng, self.actor_id)?;
         if mutate {

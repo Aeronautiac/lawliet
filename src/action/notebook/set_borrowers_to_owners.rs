@@ -30,7 +30,7 @@ impl ActionInterface for SetBorrowersToOwners {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         get_actor(eng, self.actor_id)?;
 
         let mut next_actions = vec![];

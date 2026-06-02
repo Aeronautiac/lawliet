@@ -30,7 +30,7 @@ impl ActionInterface for CreateBug {
         _version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         get_player_mut(eng, self.target_id)?;
         get_ability(eng, self.ability_id)?;
 

@@ -58,6 +58,7 @@ use crate::{
             },
             channel::{
                 create_channel::{CreateChannel, CreateChannelResponse},
+                destroy_channel::{DestroyChannel, DestroyChannelResponse},
                 send_message::{SendMessage, SendMessageResponse},
                 set_loggable::{SetLoggable, SetLoggableResponse},
                 set_member::{SetMember, SetMemberResponse},
@@ -113,8 +114,12 @@ use crate::{
             initialize_engine::{InitializeEngine, InitializeEngineResponse},
             initialize_world::{InitializeWorld, InitializeWorldResponse},
             set_random_seed::{SetRandomSeed, SetRandomSeedResponse},
-            set_world_channel_override::{SetWorldChannelOverride, SetWorldChannelOverrideResponse},
-            update_world_channel_perms::{UpdateWorldChannelPerms, UpdateWorldChannelPermsResponse},
+            set_world_channel_override::{
+                SetWorldChannelOverride, SetWorldChannelOverrideResponse,
+            },
+            update_world_channel_perms::{
+                UpdateWorldChannelPerms, UpdateWorldChannelPermsResponse,
+            },
         },
     },
     command::{Command, CommandPayload},
@@ -279,6 +284,7 @@ pub enum Action {
     CreateAndGiveOrgAbility(CreateAndGiveOrgAbility),
     SendMessage(SendMessage),
     CreateChannel(CreateChannel),
+    DestroyChannel(DestroyChannel),
     SetMember(SetMember),
     SetLoggable(SetLoggable),
     CreateLounge(CreateLounge),
@@ -361,6 +367,7 @@ pub enum ActionResponse {
     CreateAndGiveOrgAbility(CreateAndGiveOrgAbilityResponse),
     SendMessage(SendMessageResponse),
     CreateChannel(CreateChannelResponse),
+    DestroyChannel(DestroyChannelResponse),
     SetMember(SetMemberResponse),
     SetLoggable(SetLoggableResponse),
     CreateLounge(CreateLoungeResponse),
@@ -391,6 +398,7 @@ pub struct OrgActorInfo {
 
 #[derive(PartialEq, Eq, Clone)]
 pub enum ActionActor {
+    Admin,
     System,
     Player(crate::ID),
     Organization(OrgActorInfo),
@@ -411,6 +419,15 @@ impl ActionActor {
             Err(ActionError::InsufficientPermissions)
         }
     }
+
+    pub fn admin_or_system(&self) -> Result<(), ActionError> {
+        if self.is_admin() || self.is_system() {
+            Ok(())
+        } else {
+            Err(ActionError::InsufficientPermissions)
+        }
+    }
+
     pub fn player_only(&self) -> Result<(), ActionError> {
         if self.is_player() {
             Ok(())
@@ -443,12 +460,28 @@ impl ActionActor {
         }
     }
 
+    pub fn player_or_authoritative(&self) -> Result<(), ActionError> {
+        if !self.is_player() && !self.is_authoritative() {
+            Err(ActionError::InsufficientPermissions)
+        } else {
+            Ok(())
+        }
+    }
+
     pub fn is_player(&self) -> bool {
         matches!(self, ActionActor::Player(_))
     }
 
     pub fn is_system(&self) -> bool {
         matches!(self, ActionActor::System)
+    }
+
+    pub fn is_admin(&self) -> bool {
+        matches!(self, ActionActor::Admin)
+    }
+
+    pub fn is_authoritative(&self) -> bool {
+        self.is_admin() || self.is_system()
     }
 
     pub fn is_org(&self) -> bool {

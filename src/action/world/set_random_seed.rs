@@ -25,7 +25,7 @@ impl ActionInterface for SetRandomSeed {
         _version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         if mutate {
             eng.rng_state = self.seed;
         }

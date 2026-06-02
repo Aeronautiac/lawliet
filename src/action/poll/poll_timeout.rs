@@ -28,7 +28,7 @@ impl ActionInterface for PollTimeout {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let poll = get_poll(eng, self.poll_id)?;
         let mut payload = poll.payload.clone();

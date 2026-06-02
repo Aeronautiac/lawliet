@@ -34,7 +34,7 @@ impl ActionInterface for ScheduleKill {
         version: Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         require_time_not_passed(eng, self.timestamp)?;
 
         if mutate {

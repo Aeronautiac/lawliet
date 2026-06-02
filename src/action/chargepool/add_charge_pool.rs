@@ -30,7 +30,7 @@ impl ActionInterface for AddChargePool {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let id = if mutate {
             let pool = ChargePool::new(self.base_charges, self.base_reset_time);

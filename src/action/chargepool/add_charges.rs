@@ -28,7 +28,7 @@ impl ActionInterface for AddCharges {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let pool = get_charge_pool_mut(eng, self.id)?;
         if mutate {

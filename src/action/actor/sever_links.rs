@@ -25,7 +25,7 @@ impl ActionInterface for SeverLinks {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         for (_, actor) in eng.world.actors.iter_mut() {
             let links = actor.actor_links.clone();

@@ -31,7 +31,7 @@ impl ActionInterface for DestroyAbility {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let ability = get_ability(eng, self.ability_id)?;
         let owner = ability.ownership_struct.owner;

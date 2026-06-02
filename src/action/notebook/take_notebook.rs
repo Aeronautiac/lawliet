@@ -28,7 +28,7 @@ impl ActionInterface for TakeNotebook {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let notebook = get_notebook(eng, self.notebook_id)?;
         if notebook.get_true_owner().is_none() {

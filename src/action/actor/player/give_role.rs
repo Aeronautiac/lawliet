@@ -44,7 +44,7 @@ impl ActionInterface for GiveRole {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let role_config = get_role_config(eng, self.role)?.clone();
 

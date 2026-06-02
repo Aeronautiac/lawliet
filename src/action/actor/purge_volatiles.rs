@@ -31,7 +31,7 @@ impl ActionInterface for PurgeVolatiles {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let target_actor = get_actor(eng, self.actor_id)?;
         let mut remove_abilities: Vec<ID> = vec![];

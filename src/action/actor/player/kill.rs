@@ -50,7 +50,7 @@ impl ActionInterface for Kill {
         version: Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         require_alive(eng, self.target_id)?;
 
         let target = get_actor(eng, self.target_id)?;

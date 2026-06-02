@@ -91,6 +91,7 @@ pub use common::{ID, Time};
 // probably best to finish the engine first
 
 // TODO:
+// - Add destroy actions for the different kinds of objects (actors will be the final destroyable objects. they may get very messy.)
 // - Go through everything and implement frontend commands
 // - Implement prosecution and custody system
 // - Implement kidnapping
@@ -121,18 +122,24 @@ mod tests {
         let mut eng = Engine::new();
         let p1 = add_player(&mut eng, 0, Role::NewsAnchor, "p1"); // gains ability + passive
 
-        give_role(&mut eng, 0, p1, Role::Civilian);   // purges NewsAnchor volatiles
+        give_role(&mut eng, 0, p1, Role::Civilian); // purges NewsAnchor volatiles
         give_role(&mut eng, 0, p1, Role::NewsAnchor); // would panic before the fix
 
         let actor = get_actor(&eng, p1).unwrap();
 
         // all IDs in actor.abilities must resolve in the world
         for &id in &actor.abilities {
-            assert!(get_ability(&eng, id).is_ok(), "stale ability id {id} in actor cache");
+            assert!(
+                get_ability(&eng, id).is_ok(),
+                "stale ability id {id} in actor cache"
+            );
         }
         // all IDs in actor.passives must resolve in the world
         for &id in &actor.passives {
-            assert!(get_passive(&eng, id).is_ok(), "stale passive id {id} in actor cache");
+            assert!(
+                get_passive(&eng, id).is_ok(),
+                "stale passive id {id} in actor cache"
+            );
         }
     }
 

@@ -39,7 +39,7 @@ impl ActionInterface for GiveAbility {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         get_actor(eng, self.actor_id)?;
 
         let ability = get_ability(eng, self.ability_id)?;

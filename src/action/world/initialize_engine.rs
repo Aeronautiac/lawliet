@@ -32,7 +32,7 @@ impl ActionInterface for InitializeEngine {
         version: Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         Action::SetRandomSeed(SetRandomSeed { seed: self.seed })
             .handle(eng, ctx, actor, version, mutate)?;

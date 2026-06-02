@@ -30,7 +30,7 @@ impl ActionInterface for DeferredCmds {
         _: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let mut def_cmds = eng.deferred_commands.clone();
         let to_execute: Vec<DeferredCommand> = def_cmds

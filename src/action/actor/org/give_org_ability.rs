@@ -32,7 +32,7 @@ impl ActionInterface for GiveOrgAbility {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         get_org(eng, self.org_id)?;
 
         Action::GiveAbility(GiveAbility {

@@ -6,7 +6,7 @@
 use crate::{
     ID,
     action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
-    helpers::{get_notebook, get_actor, get_actor_mut},
+    helpers::{get_actor, get_actor_mut, get_notebook},
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -26,9 +26,10 @@ impl ActionInterface for DestroyNotebook {
         _version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let notebook = get_notebook(eng, self.notebook_id)?;
+        let channel_id = notebook.channel_id;
         let owner = notebook.owner;
 
         if let Some(owner_id) = owner {
@@ -42,6 +43,7 @@ impl ActionInterface for DestroyNotebook {
                     .remove_notebook(self.notebook_id);
             }
             eng.world.remove_notebook(self.notebook_id);
+            eng.world.remove_channel(channel_id);
         }
 
         Ok(ActionResponse::DestroyNotebook(DestroyNotebookResponse {}))

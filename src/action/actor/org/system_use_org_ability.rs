@@ -42,7 +42,7 @@ impl ActionInterface for SystemUseOrgAbility {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let mut id = None;
         if let Ok(org_data) = get_org(eng, self.org_id) {

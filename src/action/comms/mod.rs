@@ -12,8 +12,7 @@ mod comms_tests {
         action::{
             Action, ActionActor, ActionRequest, ActionResponse,
             comms::{
-                channel::set_loggable::SetLoggable,
-                groupchat::create_groupchat::CreateGroupchat,
+                channel::set_loggable::SetLoggable, groupchat::create_groupchat::CreateGroupchat,
                 lounge::create_lounge::CreateLounge,
             },
         },
@@ -35,10 +34,17 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let ch = create_channel(&mut eng, 0, false);
 
-        set_member(&mut eng, 0, p1, ch, Some(ChannelMember {
-            perms: ChannelPermission::Send | ChannelPermission::View,
-            displays: indexset![SenderDisplay::Raw(p1)],
-        })).unwrap();
+        set_member(
+            &mut eng,
+            0,
+            p1,
+            ch,
+            Some(ChannelMember {
+                perms: ChannelPermission::Send | ChannelPermission::View,
+                displays: indexset![SenderDisplay::Raw(p1)],
+            }),
+        )
+        .unwrap();
 
         assert!(get_channel(&eng, ch).unwrap().get_member(p1).is_some());
     }
@@ -49,10 +55,17 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let ch = create_channel(&mut eng, 0, false);
 
-        set_member(&mut eng, 0, p1, ch, Some(ChannelMember {
-            perms: ChannelPermission::Send | ChannelPermission::View,
-            displays: indexset![SenderDisplay::Raw(p1)],
-        })).unwrap();
+        set_member(
+            &mut eng,
+            0,
+            p1,
+            ch,
+            Some(ChannelMember {
+                perms: ChannelPermission::Send | ChannelPermission::View,
+                displays: indexset![SenderDisplay::Raw(p1)],
+            }),
+        )
+        .unwrap();
         set_member(&mut eng, 0, p1, ch, None).unwrap();
 
         assert!(get_channel(&eng, ch).unwrap().get_member(p1).is_none());
@@ -64,10 +77,17 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let ch = create_channel(&mut eng, 0, false);
 
-        let (_, ctx) = set_member(&mut eng, 0, p1, ch, Some(ChannelMember {
-            perms: ChannelPermission::Send | ChannelPermission::View,
-            displays: indexset![SenderDisplay::Raw(p1)],
-        })).unwrap();
+        let (_, ctx) = set_member(
+            &mut eng,
+            0,
+            p1,
+            ch,
+            Some(ChannelMember {
+                perms: ChannelPermission::Send | ChannelPermission::View,
+                displays: indexset![SenderDisplay::Raw(p1)],
+            }),
+        )
+        .unwrap();
 
         assert!(ctx.commands.iter().any(|p| {
             p.recipient == Some(p1)
@@ -81,10 +101,17 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let ch = create_channel(&mut eng, 0, false);
 
-        set_member(&mut eng, 0, p1, ch, Some(ChannelMember {
-            perms: ChannelPermission::Send | ChannelPermission::View,
-            displays: indexset![SenderDisplay::Raw(p1)],
-        })).unwrap();
+        set_member(
+            &mut eng,
+            0,
+            p1,
+            ch,
+            Some(ChannelMember {
+                perms: ChannelPermission::Send | ChannelPermission::View,
+                displays: indexset![SenderDisplay::Raw(p1)],
+            }),
+        )
+        .unwrap();
 
         let (_, ctx) = set_member(&mut eng, 0, p1, ch, None).unwrap();
 
@@ -104,8 +131,12 @@ mod comms_tests {
         eng.execute(ActionRequest {
             actor: ActionActor::System,
             timestamp: 0,
-            payload: Action::SetLoggable(SetLoggable { channel_id: ch, loggable: true }),
-        }).unwrap();
+            payload: Action::SetLoggable(SetLoggable {
+                channel_id: ch,
+                loggable: true,
+            }),
+        })
+        .unwrap();
 
         assert!(get_channel(&eng, ch).unwrap().loggable);
     }
@@ -116,10 +147,17 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let ch = create_channel(&mut eng, 0, false);
 
-        set_member(&mut eng, 0, p1, ch, Some(ChannelMember {
-            perms: ChannelPermission::Send | ChannelPermission::View,
-            displays: indexset![SenderDisplay::Raw(p1)],
-        })).unwrap();
+        set_member(
+            &mut eng,
+            0,
+            p1,
+            ch,
+            Some(ChannelMember {
+                perms: ChannelPermission::Send | ChannelPermission::View,
+                displays: indexset![SenderDisplay::Raw(p1)],
+            }),
+        )
+        .unwrap();
 
         let (_, ctx) = send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p1), "hello").unwrap();
 
@@ -146,10 +184,17 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let ch = create_channel(&mut eng, 0, false);
 
-        set_member(&mut eng, 0, p1, ch, Some(ChannelMember {
-            perms: ChannelPermission::View.into(),
-            displays: indexset![SenderDisplay::Raw(p1)],
-        })).unwrap();
+        set_member(
+            &mut eng,
+            0,
+            p1,
+            ch,
+            Some(ChannelMember {
+                perms: ChannelPermission::View.into(),
+                displays: indexset![SenderDisplay::Raw(p1)],
+            }),
+        )
+        .unwrap();
 
         assert!(send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p1), "hello").is_err());
     }
@@ -161,10 +206,17 @@ mod comms_tests {
         let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
         let ch = create_channel(&mut eng, 0, false);
 
-        set_member(&mut eng, 0, p1, ch, Some(ChannelMember {
-            perms: ChannelPermission::Send | ChannelPermission::View,
-            displays: indexset![SenderDisplay::Raw(p1)],
-        })).unwrap();
+        set_member(
+            &mut eng,
+            0,
+            p1,
+            ch,
+            Some(ChannelMember {
+                perms: ChannelPermission::Send | ChannelPermission::View,
+                displays: indexset![SenderDisplay::Raw(p1)],
+            }),
+        )
+        .unwrap();
 
         // p1 tries to send as p2 which they do not own
         assert!(send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p2), "hello").is_err());
@@ -176,12 +228,23 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let ch = create_channel(&mut eng, 0, false);
 
-        let (_, ctx) = set_member(&mut eng, 0, p1, ch, Some(ChannelMember {
-            perms: ChannelPermission::Send | ChannelPermission::View,
-            displays: indexset![SenderDisplay::Raw(p1)],
-        })).unwrap();
+        let (_, ctx) = set_member(
+            &mut eng,
+            0,
+            p1,
+            ch,
+            Some(ChannelMember {
+                perms: ChannelPermission::Send | ChannelPermission::View,
+                displays: indexset![SenderDisplay::Raw(p1)],
+            }),
+        )
+        .unwrap();
 
-        assert!(!ctx.commands.iter().any(|p| matches!(&p.cmd, Command::RemoveChannel { .. })));
+        assert!(
+            !ctx.commands
+                .iter()
+                .any(|p| matches!(&p.cmd, Command::RemoveChannel { .. }))
+        );
     }
 
     #[test]
@@ -190,14 +253,25 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let ch = create_channel(&mut eng, 0, false);
 
-        set_member(&mut eng, 0, p1, ch, Some(ChannelMember {
-            perms: ChannelPermission::Send | ChannelPermission::View,
-            displays: indexset![SenderDisplay::Raw(p1)],
-        })).unwrap();
+        set_member(
+            &mut eng,
+            0,
+            p1,
+            ch,
+            Some(ChannelMember {
+                perms: ChannelPermission::Send | ChannelPermission::View,
+                displays: indexset![SenderDisplay::Raw(p1)],
+            }),
+        )
+        .unwrap();
 
         let (_, ctx) = set_member(&mut eng, 0, p1, ch, None).unwrap();
 
-        assert!(!ctx.commands.iter().any(|p| matches!(&p.cmd, Command::UpdateChannelView { .. })));
+        assert!(
+            !ctx.commands
+                .iter()
+                .any(|p| matches!(&p.cmd, Command::UpdateChannelView { .. }))
+        );
     }
 
     // ---- groupchat ----
@@ -206,13 +280,17 @@ mod comms_tests {
     fn create_groupchat_emits_map_gc() {
         let mut eng = Engine::new();
 
-        let (response, ctx) = eng.execute(ActionRequest {
-            actor: ActionActor::System,
-            timestamp: 0,
-            payload: Action::CreateGroupchat(CreateGroupchat {}),
-        }).unwrap();
+        let (response, ctx) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateGroupchat(CreateGroupchat {}),
+            })
+            .unwrap();
 
-        let ActionResponse::CreateGroupchat(data) = response else { unreachable!() };
+        let ActionResponse::CreateGroupchat(data) = response else {
+            unreachable!()
+        };
         let channel_id = get_gc(&eng, data.id).unwrap().channel_id;
 
         assert!(ctx.commands.iter().any(|p| {
@@ -233,7 +311,11 @@ mod comms_tests {
         let (_, ctx) = add_to_gc(&mut eng, 0, ActionActor::System, gc, p1, false).unwrap();
         assert!(get_gc(&eng, gc).unwrap().contains_member(p1));
         assert!(get_player(&eng, p1).unwrap().groupchats.contains(&gc));
-        assert!(!ctx.commands.iter().any(|p| matches!(&p.cmd, Command::GcOwnerStatus { .. })));
+        assert!(
+            !ctx.commands
+                .iter()
+                .any(|p| matches!(&p.cmd, Command::GcOwnerStatus { .. }))
+        );
 
         // with owner flag: GcOwnerStatus{owner: true} emitted to new owner
         let (_, ctx) = add_to_gc(&mut eng, 0, ActionActor::System, gc, p2, true).unwrap();
@@ -330,10 +412,14 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
 
-        let (_, ch) = create_lounge(&mut eng, 0, LoungeVariant::Basic {
-            contactor_id: p1,
-            contacted_id: p2,
-        });
+        let (_, ch) = create_lounge(
+            &mut eng,
+            0,
+            LoungeVariant::Basic {
+                contactor_id: p1,
+                contacted_id: p2,
+            },
+        );
 
         let channel = get_channel(&eng, ch).unwrap();
         assert!(channel.get_member(p1).is_some());
@@ -346,10 +432,14 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
 
-        let (lounge_id, _) = create_lounge(&mut eng, 0, LoungeVariant::Basic {
-            contactor_id: p1,
-            contacted_id: p2,
-        });
+        let (lounge_id, _) = create_lounge(
+            &mut eng,
+            0,
+            LoungeVariant::Basic {
+                contactor_id: p1,
+                contacted_id: p2,
+            },
+        );
 
         assert!(get_player(&eng, p1).unwrap().lounges.contains(&lounge_id));
         assert!(get_player(&eng, p2).unwrap().lounges.contains(&lounge_id));
@@ -361,18 +451,22 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
 
-        let (response, ctx) = eng.execute(ActionRequest {
-            actor: ActionActor::System,
-            timestamp: 0,
-            payload: Action::CreateLounge(CreateLounge {
-                variant: LoungeVariant::Basic {
-                    contactor_id: p1,
-                    contacted_id: p2,
-                },
-            }),
-        }).unwrap();
+        let (response, ctx) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateLounge(CreateLounge {
+                    variant: LoungeVariant::Basic {
+                        contactor_id: p1,
+                        contacted_id: p2,
+                    },
+                }),
+            })
+            .unwrap();
 
-        let ActionResponse::CreateLounge(data) = response else { unreachable!() };
+        let ActionResponse::CreateLounge(data) = response else {
+            unreachable!()
+        };
 
         assert!(ctx.commands.iter().any(|p| {
             p.recipient.is_none()
@@ -387,10 +481,14 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
 
-        let (lounge_id, ch) = create_lounge(&mut eng, 0, LoungeVariant::Basic {
-            contactor_id: p1,
-            contacted_id: p2,
-        });
+        let (lounge_id, ch) = create_lounge(
+            &mut eng,
+            0,
+            LoungeVariant::Basic {
+                contactor_id: p1,
+                contacted_id: p2,
+            },
+        );
 
         leave_lounge(&mut eng, 0, p1, lounge_id).unwrap();
 
@@ -403,10 +501,14 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
 
-        let (lounge_id, _) = create_lounge(&mut eng, 0, LoungeVariant::Basic {
-            contactor_id: p1,
-            contacted_id: p2,
-        });
+        let (lounge_id, _) = create_lounge(
+            &mut eng,
+            0,
+            LoungeVariant::Basic {
+                contactor_id: p1,
+                contacted_id: p2,
+            },
+        );
 
         leave_lounge(&mut eng, 0, p1, lounge_id).unwrap();
 
@@ -421,14 +523,25 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
 
-        let (_, ch) = create_lounge(&mut eng, 0, LoungeVariant::Basic {
-            contactor_id: p1,
-            contacted_id: p2,
-        });
+        let (_, ch) = create_lounge(
+            &mut eng,
+            0,
+            LoungeVariant::Basic {
+                contactor_id: p1,
+                contacted_id: p2,
+            },
+        );
 
         add_state(&mut eng, 0, p1, State::Dead);
 
-        assert!(get_channel(&eng, ch).unwrap().get_member(p1).unwrap().perms.is_empty());
+        assert!(
+            get_channel(&eng, ch)
+                .unwrap()
+                .get_member(p1)
+                .unwrap()
+                .perms
+                .is_empty()
+        );
     }
 
     #[test]
@@ -437,15 +550,23 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
 
-        let (_, ch) = create_lounge(&mut eng, 0, LoungeVariant::Basic {
-            contactor_id: p1,
-            contacted_id: p2,
-        });
+        let (_, ch) = create_lounge(
+            &mut eng,
+            0,
+            LoungeVariant::Basic {
+                contactor_id: p1,
+                contacted_id: p2,
+            },
+        );
 
         add_state(&mut eng, 0, p1, State::Dead);
         remove_state(&mut eng, 0, p1, State::Dead);
 
-        let member = get_channel(&eng, ch).unwrap().get_member(p1).unwrap().clone();
+        let member = get_channel(&eng, ch)
+            .unwrap()
+            .get_member(p1)
+            .unwrap()
+            .clone();
         assert!(member.perms.contains(ChannelPermission::Send));
         assert!(member.perms.contains(ChannelPermission::View));
     }

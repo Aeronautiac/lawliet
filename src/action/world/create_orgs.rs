@@ -20,7 +20,7 @@ impl ActionInterface for CreateOrgs {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         // TODO:
         // implement it

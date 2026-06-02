@@ -25,7 +25,7 @@ impl ActionInterface for ReturnDormantBooks {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         if mutate {
             for notebook in eng.world.notebooks.values_mut() {

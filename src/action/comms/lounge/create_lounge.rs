@@ -50,7 +50,7 @@ impl ActionInterface for CreateLounge {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let mut participants: SmallVec<[Participant; 8]> = smallvec![];
         match &self.variant {

@@ -26,7 +26,7 @@ impl ActionInterface for ClearLinks {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let ability = get_ability_mut(eng, self.ability_id)?;
         let links = ability.pool_links.clone();

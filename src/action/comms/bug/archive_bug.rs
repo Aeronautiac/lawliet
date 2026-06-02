@@ -1,6 +1,6 @@
 /*
 * SYSTEM ACTION
-* Archive (disable) a bug. Bugs are never destroyed.
+* Archive (disable) a bug.
 */
 
 use crate::{
@@ -26,7 +26,7 @@ impl ActionInterface for ArchiveBug {
         _version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         let bug = get_bug_mut(eng, self.bug_id)?;
         if mutate {
             bug.enabled = false;

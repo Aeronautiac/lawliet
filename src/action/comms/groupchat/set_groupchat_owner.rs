@@ -29,7 +29,7 @@ impl ActionInterface for SetGroupchatOwner {
         _version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.player_or_system()?;
+        actor.player_or_authoritative()?;
 
         if let Some(owner_id) = self.owner {
             get_player(eng, owner_id)?;

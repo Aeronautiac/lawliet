@@ -31,7 +31,7 @@ impl ActionInterface for CreateActorLinks {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let mut links_to_create: Vec<LinkDescriptor> = vec![];
         for (id, _) in eng.world.actors.iter() {

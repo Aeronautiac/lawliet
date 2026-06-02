@@ -38,7 +38,7 @@ impl ActionInterface for SetWorldChannelOverride {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let player = get_player_mut(eng, self.player_id)?;
         if mutate {

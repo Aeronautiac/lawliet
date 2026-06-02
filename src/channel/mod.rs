@@ -30,6 +30,10 @@ use enumflags2::{BitFlags, bitflags};
 // if you have send perms in a channel, but you cannot see that channel, you can still speak there,
 // but you wont see any messages there (including your own)
 
+// channels may be deleted, but only indirectly through wrapper objects/actions
+// you don't want to allow the deletion of a channel that a lounge depends on without deleting the
+// lounge as well for instance
+
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord)]
 pub enum SenderDisplay {
     Raw(ID),

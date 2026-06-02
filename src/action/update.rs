@@ -24,7 +24,7 @@ impl ActionInterface for Update {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         Action::DeferredCmds(DeferredCmds {}).handle(eng, ctx, actor, version, mutate)?;
         Action::UpdatePolls(UpdatePolls {}).handle(eng, ctx, actor, version, mutate)?;

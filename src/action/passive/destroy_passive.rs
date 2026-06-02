@@ -26,7 +26,7 @@ impl ActionInterface for DestroyPassive {
         _version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let passive = get_passive(eng, self.passive_id)?;
         let owner = passive.ownership_struct.owner;

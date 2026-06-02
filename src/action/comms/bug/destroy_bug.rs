@@ -25,7 +25,7 @@ impl ActionInterface for DestroyBug {
         _version: crate::common::Version,
         _mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         // TODO: implement
         Ok(ActionResponse::DestroyBug(DestroyBugResponse {}))
     }

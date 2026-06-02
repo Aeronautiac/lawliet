@@ -28,7 +28,7 @@ impl ActionInterface for CreateChannel {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let id = if mutate {
             eng.world.add_channel(Channel::new(self.loggable))

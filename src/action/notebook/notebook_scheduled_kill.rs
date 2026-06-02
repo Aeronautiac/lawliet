@@ -28,7 +28,7 @@ impl ActionInterface for NotebookScheduledKill {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         Action::Kill(self.kill.clone()).handle(eng, ctx, actor, version, mutate)?;
 

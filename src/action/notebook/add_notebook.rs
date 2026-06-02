@@ -33,7 +33,7 @@ impl ActionInterface for AddNotebook {
         version: Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let channel_response = Action::CreateChannel(CreateChannel { loggable: false })
             .handle(eng, ctx, actor, version, mutate)?;

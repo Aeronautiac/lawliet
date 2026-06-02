@@ -28,7 +28,7 @@ impl ActionInterface for RemoveFromOrg {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         get_actor(eng, self.actor_id)?;
 
         let org = get_org_mut(eng, self.org_id)?;

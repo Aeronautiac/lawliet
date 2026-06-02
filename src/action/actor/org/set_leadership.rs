@@ -30,7 +30,7 @@ impl ActionInterface for SetLeadership {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let org = get_org_mut(eng, self.org_id)?;
         if mutate {

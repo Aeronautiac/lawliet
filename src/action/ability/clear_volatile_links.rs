@@ -30,7 +30,7 @@ impl ActionInterface for ClearVolatileLinks {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         let ability = get_ability_mut(eng, self.ability_id)?;
 
         let mut links_to_destroy = vec![];

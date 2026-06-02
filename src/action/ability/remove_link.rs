@@ -33,7 +33,7 @@ impl ActionInterface for RemoveLink {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         get_charge_pool(eng, self.pool_id)?;
 
         let ability = get_ability_mut(eng, self.ability_id)?;

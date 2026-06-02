@@ -34,7 +34,7 @@ impl ActionInterface for AddToGroupchat {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.player_or_system()?;
+        actor.player_or_authoritative()?;
 
         let gc = get_gc(eng, self.groupchat_id)?;
         if actor.is_player() {

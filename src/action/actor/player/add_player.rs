@@ -38,7 +38,7 @@ impl ActionInterface for AddPlayer {
         version: Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         if eng.world.get_player_id_by_name(&self.true_name).is_some() {
             return Err(ActionError::NameNotUnique);

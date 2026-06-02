@@ -32,7 +32,7 @@ impl ActionInterface for CreateAndGiveNotebook {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let add_response = Action::AddNotebook(AddNotebook { fake: self.fake })
             .handle(eng, ctx, actor, version, mutate)?;

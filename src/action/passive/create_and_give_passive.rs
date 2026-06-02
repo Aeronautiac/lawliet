@@ -34,7 +34,7 @@ impl ActionInterface for CreateAndGivePassive {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let add_response = Action::AddPassive(AddPassive {
             passive_type: self.passive_type,

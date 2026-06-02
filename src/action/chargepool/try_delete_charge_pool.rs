@@ -26,7 +26,7 @@ impl ActionInterface for TryDeleteChargePool {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         let pool = get_charge_pool(eng, self.id)?;
 
         if mutate && pool.ref_count == 0 {

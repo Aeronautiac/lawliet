@@ -38,7 +38,7 @@ impl ActionInterface for CreatePoll {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let id = if mutate {
             eng.world.add_poll(Poll::new(

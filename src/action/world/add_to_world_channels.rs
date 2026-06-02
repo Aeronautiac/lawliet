@@ -34,7 +34,7 @@ impl ActionInterface for AddToWorldChannels {
         version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         get_player(eng, self.player_id)?;
 
         let channel_ids: Vec<ID> = eng

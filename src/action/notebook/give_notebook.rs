@@ -32,7 +32,7 @@ impl ActionInterface for GiveNotebook {
         _: Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
         require_player(eng, self.actor_id)?;
 
         // Semantics:

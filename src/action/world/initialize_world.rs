@@ -27,7 +27,7 @@ impl ActionInterface for InitializeWorld {
         version: crate::common::Version,
         mutate: bool,
     ) -> ActionResult {
-        actor.require_system()?;
+        actor.admin_or_system()?;
 
         let pool_config = eng.config.world_config.charge_pools.clone();
         for (name, specifier) in pool_config {
