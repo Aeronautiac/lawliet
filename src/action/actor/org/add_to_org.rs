@@ -4,12 +4,12 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionError, ActionInterface, ActionResponse,
         actor::org::change_org_leader::ChangeOrgLeader,
     },
     actor::{ActorLink, ActorLinkType},
+    common::ActorKey,
     helpers::{get_actor, get_actor_mut, get_org_mut},
 };
 
@@ -20,8 +20,8 @@ pub struct AddToOrgResponse {}
 pub struct AddToOrg {
     pub leader: bool,
     pub og: bool,
-    pub actor_id: ID,
-    pub org_id: ID,
+    pub actor_id: ActorKey,
+    pub org_id: ActorKey,
 }
 
 impl ActionInterface for AddToOrg {

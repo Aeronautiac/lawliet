@@ -11,7 +11,6 @@ use indexmap::{IndexSet, indexset};
 use smallvec::{SmallVec, smallvec};
 
 use crate::{
-    ID,
     action::{
         Action, ActionInterface, ActionResponse,
         comms::{
@@ -21,14 +20,15 @@ use crate::{
     },
     channel::{ChannelMember, ChannelPermissions, SenderDisplay},
     command::Command,
+    common::{ActorKey, ChannelKey, LoungeKey},
     helpers::{get_player, get_player_mut},
     lounge::{Lounge, LoungeVariant},
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CreateLoungeResponse {
-    pub lounge_id: ID,
-    pub channel_id: ID,
+    pub lounge_id: LoungeKey,
+    pub channel_id: ChannelKey,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -38,7 +38,7 @@ pub struct CreateLounge {
 
 struct Participant {
     pub displays: IndexSet<SenderDisplay>,
-    pub id: ID,
+    pub id: ActorKey,
 }
 
 impl ActionInterface for CreateLounge {
@@ -98,7 +98,7 @@ impl ActionInterface for CreateLounge {
                 variant: self.variant.clone(),
             };
 
-            let lounge_id = eng.world.add_lounge(lounge);
+            let lounge_id: LoungeKey = eng.world.add_lounge(lounge);
 
             for participant in participants {
                 Action::SetMember(SetMember {
@@ -132,7 +132,7 @@ impl ActionInterface for CreateLounge {
 
             lounge_id
         } else {
-            0
+            LoungeKey::default()
         };
 
         Ok(ActionResponse::CreateLounge(CreateLoungeResponse {

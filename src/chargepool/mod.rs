@@ -1,7 +1,4 @@
-use crate::{
-    ID,
-    common::{ChargeCount, IterationCount, LinkWeight},
-};
+use crate::common::{ChargeCount, ChargePoolKey, IterationCount, LinkWeight};
 use std::cmp::max;
 
 #[derive(Hash, PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy)]
@@ -21,7 +18,7 @@ pub struct PoolSpecifier {
 #[derive(Hash, PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]
 pub struct PoolLink {
     pub link_type: PoolLinkType,
-    pub link_dest: ID,
+    pub link_dest: ChargePoolKey,
     pub weight: LinkWeight,
 }
 

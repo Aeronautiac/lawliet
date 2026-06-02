@@ -7,13 +7,13 @@
 use indexmap::indexset;
 
 use crate::{
-    ID,
     action::{
         Action, ActionInterface, ActionResponse,
         comms::channel::set_member::SetMember,
         world::update_world_channel_perms::UpdateWorldChannelPerms,
     },
     channel::{ChannelMember, ChannelPermissions, SenderDisplay},
+    common::{ActorKey, ChannelKey},
     helpers::get_player,
 };
 
@@ -22,7 +22,7 @@ pub struct AddToWorldChannelsResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct AddToWorldChannels {
-    pub player_id: ID,
+    pub player_id: ActorKey,
 }
 
 impl ActionInterface for AddToWorldChannels {
@@ -37,7 +37,7 @@ impl ActionInterface for AddToWorldChannels {
         actor.admin_or_system()?;
         get_player(eng, self.player_id)?;
 
-        let channel_ids: Vec<ID> = eng
+        let channel_ids: Vec<ChannelKey> = eng
             .world
             .world_channel_map
             .values()

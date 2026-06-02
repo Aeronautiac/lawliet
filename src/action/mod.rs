@@ -1,7 +1,8 @@
 use enum_dispatch::enum_dispatch;
 
 use crate::{
-    ID, Time,
+    Time,
+    common::ActorKey,
     action::{
         ability::{
             add_ability::{AddAbility, AddAbilityResponse},
@@ -200,7 +201,7 @@ pub struct ActionContext {
 }
 
 impl ActionContext {
-    pub fn push_cmd(&mut self, cmd: Command, recipient: Option<ID>, time: Time) {
+    pub fn push_cmd(&mut self, cmd: Command, recipient: Option<ActorKey>, time: Time) {
         self.commands.push(CommandPayload {
             timestamp: time,
             recipient,
@@ -392,15 +393,15 @@ pub enum ActionResponse {
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct OrgActorInfo {
-    pub org_id: ID,
-    pub player_id: ID,
+    pub org_id: ActorKey,
+    pub player_id: ActorKey,
 }
 
 #[derive(PartialEq, Eq, Clone)]
 pub enum ActionActor {
     Admin,
     System,
-    Player(crate::ID),
+    Player(ActorKey),
     Organization(OrgActorInfo),
 }
 

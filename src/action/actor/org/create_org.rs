@@ -6,7 +6,6 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionInterface, ActionResponse,
         ability::create_and_give_ability::CreateAndGiveAbility,
@@ -14,12 +13,13 @@ use crate::{
         passive::create_and_give_passive::CreateAndGivePassive,
     },
     actor::organization::{LeadershipStruct, OrgAbility},
+    common::ActorKey,
     config::actor::organization::OrganizationName,
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CreateOrgResponse {
-    pub id: ID,
+    pub id: ActorKey,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -57,7 +57,7 @@ impl ActionInterface for CreateOrg {
             }
             eng.world.add_org(self.name, leadership)
         } else {
-            0
+            ActorKey::default()
         };
 
         if mutate {

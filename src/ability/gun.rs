@@ -1,7 +1,7 @@
 use crate::{
-    ID,
     ability::{AbilityInterface, AbilityResponse},
     action::{Action, ActionActor, ActionContext, ActionInterface, actor::player::kill::Kill},
+    common::{AbilityKey, ActorKey},
     config::ability::AbilityName,
     helpers::player_id,
 };
@@ -11,7 +11,7 @@ pub struct GunResponse {}
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]
 pub struct Gun {
-    pub target_id: ID,
+    pub target_id: ActorKey,
 }
 
 impl AbilityInterface for Gun {
@@ -24,7 +24,7 @@ impl AbilityInterface for Gun {
         eng: &mut crate::engine::Engine,
         ctx: &mut ActionContext,
         actor: &crate::action::ActionActor,
-        _: ID,
+        _: AbilityKey,
         version: u8,
         mutate: bool,
     ) -> super::AbilityResult {

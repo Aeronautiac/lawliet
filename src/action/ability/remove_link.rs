@@ -7,11 +7,11 @@
 // move reference counting here
 
 use crate::{
-    ID,
     action::{
         Action, ActionInterface, ActionResponse,
         chargepool::try_delete_charge_pool::TryDeleteChargePool,
     },
+    common::{AbilityKey, ChargePoolKey},
     helpers::{get_ability_mut, get_charge_pool, get_charge_pool_mut},
 };
 
@@ -20,8 +20,8 @@ pub struct RemoveLinkResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct RemoveLink {
-    pub ability_id: ID,
-    pub pool_id: ID,
+    pub ability_id: AbilityKey,
+    pub pool_id: ChargePoolKey,
 }
 
 impl ActionInterface for RemoveLink {

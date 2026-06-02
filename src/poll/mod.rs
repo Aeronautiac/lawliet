@@ -1,9 +1,8 @@
 use indexmap::IndexMap;
 
 use crate::{
-    ID,
     action::Action,
-    common::PollWeight,
+    common::{ActorKey, ChannelKey, PollWeight},
     engine::Engine,
     helpers::get_voter_weight,
     poll::policies::{
@@ -60,8 +59,8 @@ pub enum PollPolicy {
 
 #[derive(PartialEq, Eq, Clone, Debug, Copy)]
 pub enum PollVisibility {
-    Org(ID),     // everyone present within an org
-    Channel(ID), // everyone present within a channel
+    Org(ActorKey),     // everyone present within an org
+    Channel(ChannelKey), // everyone present within a channel
     AllPresent,  // everyone present in the game (not kidnapped, dead, etc...)
 }
 
@@ -85,7 +84,7 @@ pub struct Poll {
     pub update_policy: PollPolicy,
     pub timeout_policy: PollPolicy,
     pub voter_policy: VoterPolicy,
-    pub votes: IndexMap<ID, Vote>,
+    pub votes: IndexMap<ActorKey, Vote>,
 }
 
 impl Poll {
@@ -114,7 +113,7 @@ impl Poll {
         }
     }
 
-    pub fn voter_policy(&self, eng: &Engine, voter_id: ID) -> bool {
+    pub fn voter_policy(&self, eng: &Engine, voter_id: ActorKey) -> bool {
         match self.voter_policy {
             VoterPolicy::Present => present(self, eng, voter_id),
         }
@@ -135,11 +134,11 @@ impl Poll {
 
         let mut weights = IndexMap::new();
         for (id, _) in eng.world.actors.iter() {
-            if !self.voter_policy(eng, *id) {
+            if !self.voter_policy(eng, id) {
                 continue;
             }
-            let weight = get_voter_weight(eng, *id);
-            weights.insert(*id, weight);
+            let weight = get_voter_weight(eng, id);
+            weights.insert(id, weight);
             potential += weight;
         }
 
@@ -163,15 +162,15 @@ impl Poll {
         }
     }
 
-    pub fn add_vote(&mut self, id: ID, accept: bool) {
+    pub fn add_vote(&mut self, id: ActorKey, accept: bool) {
         self.votes.insert(id, Vote { accept });
     }
 
-    pub fn remove_vote(&mut self, id: ID) {
+    pub fn remove_vote(&mut self, id: ActorKey) {
         self.votes.swap_remove(&id);
     }
 
-    pub fn contains_voter(&self, id: ID) -> bool {
+    pub fn contains_voter(&self, id: ActorKey) -> bool {
         self.votes.contains_key(&id)
     }
 }

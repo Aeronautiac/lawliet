@@ -4,8 +4,8 @@
 */
 
 use crate::{
-    ID,
     action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    common::NotebookKey,
     helpers::{get_actor, get_actor_mut, get_notebook},
 };
 
@@ -14,7 +14,7 @@ pub struct DestroyNotebookResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct DestroyNotebook {
-    pub notebook_id: ID,
+    pub notebook_id: NotebookKey,
 }
 
 impl ActionInterface for DestroyNotebook {

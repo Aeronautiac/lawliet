@@ -4,8 +4,8 @@
 */
 
 use crate::{
-    ID,
     action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    common::ChargePoolKey,
     helpers::get_charge_pool,
 };
 
@@ -14,7 +14,7 @@ pub struct TryDeleteChargePoolResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct TryDeleteChargePool {
-    pub id: ID,
+    pub id: ChargePoolKey,
 }
 
 impl ActionInterface for TryDeleteChargePool {

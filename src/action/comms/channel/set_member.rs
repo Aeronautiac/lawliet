@@ -4,10 +4,10 @@
 */
 
 use crate::{
-    ID,
     action::{ActionInterface, ActionResponse},
     channel::ChannelMember,
     command::Command,
+    common::{ActorKey, ChannelKey},
     helpers::{get_channel_mut, get_player},
 };
 
@@ -16,8 +16,8 @@ pub struct SetMemberResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct SetMember {
-    pub player_id: ID,
-    pub channel_id: ID,
+    pub player_id: ActorKey,
+    pub channel_id: ChannelKey,
     pub settings: Option<ChannelMember>,
 }
 

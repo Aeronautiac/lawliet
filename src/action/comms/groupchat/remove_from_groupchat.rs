@@ -4,8 +4,8 @@
 */
 
 use crate::{
-    ID,
     action::{ActionError, ActionInterface, ActionResponse},
+    common::{ActorKey, GroupchatKey},
     helpers::{actor_id, get_gc_mut, get_player_mut},
 };
 
@@ -14,8 +14,8 @@ pub struct RemoveFromGroupchatResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct RemoveFromGroupchat {
-    pub groupchat_id: ID,
-    pub player_id: ID,
+    pub groupchat_id: GroupchatKey,
+    pub player_id: ActorKey,
 }
 
 impl ActionInterface for RemoveFromGroupchat {

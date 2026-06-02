@@ -4,8 +4,8 @@
 */
 
 use crate::{
-    ID,
     action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    common::PassiveKey,
     helpers::{get_passive, get_actor, get_actor_mut},
 };
 
@@ -14,7 +14,7 @@ pub struct DestroyPassiveResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct DestroyPassive {
-    pub passive_id: ID,
+    pub passive_id: PassiveKey,
 }
 
 impl ActionInterface for DestroyPassive {

@@ -4,10 +4,9 @@
 */
 
 use crate::{
-    ID,
     action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
     chargepool::PoolLinkType,
-    common::LinkWeight,
+    common::{AbilityKey, ChargePoolKey, LinkWeight},
     helpers::{get_ability_mut, get_charge_pool, get_charge_pool_mut},
 };
 
@@ -16,8 +15,8 @@ pub struct AddLinkResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct AddLink {
-    pub ability_id: ID,
-    pub pool_id: ID,
+    pub ability_id: AbilityKey,
+    pub pool_id: ChargePoolKey,
     pub weight: LinkWeight,
     pub link_type: PoolLinkType,
     pub volatile: bool,

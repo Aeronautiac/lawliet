@@ -4,8 +4,8 @@
 */
 
 use crate::{
-    ID,
     action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    common::BugKey,
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -13,7 +13,7 @@ pub struct DestroyBugResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct DestroyBug {
-    pub bug_id: ID,
+    pub bug_id: BugKey,
 }
 
 impl ActionInterface for DestroyBug {

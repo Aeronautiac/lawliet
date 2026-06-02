@@ -6,8 +6,8 @@
 */
 
 use crate::{
-    ID,
     action::{ActionInterface, ActionResponse},
+    common::{AbilityKey, ActorKey, BugKey},
     config::ability::AbilityName,
     helpers::get_ability,
 };
@@ -17,9 +17,9 @@ pub struct TryUpdateBugVisibilityResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct TryUpdateBugVisibility {
-    pub ability_id: ID,
-    pub old_owner: Option<ID>,
-    pub new_owner: ID,
+    pub ability_id: AbilityKey,
+    pub old_owner: Option<ActorKey>,
+    pub new_owner: ActorKey,
 }
 
 impl ActionInterface for TryUpdateBugVisibility {
@@ -40,12 +40,12 @@ impl ActionInterface for TryUpdateBugVisibility {
             ));
         }
 
-        let _bug_ids: Vec<ID> = eng
+        let _bug_ids: Vec<BugKey> = eng
             .world
             .bugs
             .iter()
             .filter(|(_, bug)| bug.ability_id == self.ability_id)
-            .map(|(id, _)| *id)
+            .map(|(id, _)| id)
             .collect();
 
         for _bug_id in _bug_ids {

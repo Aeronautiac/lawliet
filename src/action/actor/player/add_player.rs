@@ -4,14 +4,13 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
         ActionResult, ability::create_and_give_ability::CreateAndGiveAbility,
         actor::player::give_role::GiveRole, chargepool::add_charge_pool::AddChargePool,
         world::add_to_world_channels::AddToWorldChannels,
     },
-    common::Version,
+    common::{ActorKey, Version},
     config::role::Role,
     engine::Engine,
     helpers::{get_actor_mut, get_charge_pool_mut},
@@ -19,7 +18,7 @@ use crate::{
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct AddPlayerResponse {
-    pub id: ID, // return the internal id assigned to this player
+    pub id: ActorKey, // return the internal id assigned to this player
 }
 
 // true names must be unique
@@ -49,7 +48,7 @@ impl ActionInterface for AddPlayer {
                 .add_player(&self.true_name, self.starting_role)
                 .unwrap()
         } else {
-            0
+            ActorKey::default()
         };
 
         // player will only be physically created in the mutation path

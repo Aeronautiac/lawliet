@@ -4,26 +4,25 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionInterface, ActionResponse, ability::add_ability::AddAbility,
         actor::org::give_org_ability::GiveOrgAbility,
     },
     actor::organization::OrgAbility,
-    common::Variant,
+    common::{AbilityKey, ActorKey, Variant},
     config::ability::AbilityName,
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CreateAndGiveOrgAbilityResponse {
-    pub id: ID,
+    pub id: AbilityKey,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CreateAndGiveOrgAbility {
     pub ability_name: AbilityName,
     pub variant: Variant,
-    pub org_id: ID,
+    pub org_id: ActorKey,
     pub settings: OrgAbility,
 }
 

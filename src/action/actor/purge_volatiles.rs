@@ -4,13 +4,13 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         ability::destroy_ability::DestroyAbility,
         notebook::destroy_notebook::DestroyNotebook,
         passive::destroy_passive::DestroyPassive,
     },
+    common::{AbilityKey, ActorKey, NotebookKey, PassiveKey},
     helpers::{get_ability, get_actor, get_notebook, get_passive},
 };
 
@@ -19,7 +19,7 @@ pub struct PurgeVolatilesResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct PurgeVolatiles {
-    pub actor_id: ID,
+    pub actor_id: ActorKey,
 }
 
 impl ActionInterface for PurgeVolatiles {
@@ -34,9 +34,9 @@ impl ActionInterface for PurgeVolatiles {
         actor.admin_or_system()?;
 
         let target_actor = get_actor(eng, self.actor_id)?;
-        let mut remove_abilities: Vec<ID> = vec![];
-        let mut remove_passives: Vec<ID> = vec![];
-        let mut remove_notebooks: Vec<ID> = vec![];
+        let mut remove_abilities: Vec<AbilityKey> = vec![];
+        let mut remove_passives: Vec<PassiveKey> = vec![];
+        let mut remove_notebooks: Vec<NotebookKey> = vec![];
         for id in target_actor.abilities.iter() {
             let ability = get_ability(eng, *id).expect("actor references non-existent ability: engine invariant violated");
             if ability.ownership_struct.volatile {

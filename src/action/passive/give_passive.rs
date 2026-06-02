@@ -4,10 +4,10 @@
 */
 
 use crate::{
-    ID,
     action::{
         ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse, ActionResult,
     },
+    common::{ActorKey, PassiveKey},
     helpers::{get_actor, get_actor_mut, get_passive, get_passive_mut},
 };
 
@@ -16,8 +16,8 @@ pub struct GivePassiveResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct GivePassive {
-    pub passive_id: ID,
-    pub actor_id: ID,
+    pub passive_id: PassiveKey,
+    pub actor_id: ActorKey,
     pub volatile: bool,
 }
 

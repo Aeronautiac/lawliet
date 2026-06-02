@@ -5,11 +5,11 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         ability::remove_link::RemoveLink, chargepool::try_delete_charge_pool::TryDeleteChargePool,
     },
+    common::AbilityKey,
     helpers::{get_ability_mut, get_charge_pool_mut},
 };
 
@@ -18,7 +18,7 @@ pub struct ClearVolatileLinksResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct ClearVolatileLinks {
-    pub ability_id: ID,
+    pub ability_id: AbilityKey,
 }
 
 impl ActionInterface for ClearVolatileLinks {
@@ -40,10 +40,10 @@ impl ActionInterface for ClearVolatileLinks {
             }
         }
 
-        for id in &links_to_destroy {
+        for id in links_to_destroy {
             Action::RemoveLink(RemoveLink {
                 ability_id: self.ability_id,
-                pool_id: *id,
+                pool_id: id,
             })
             .handle(eng, ctx, actor, version, mutate)?;
         }

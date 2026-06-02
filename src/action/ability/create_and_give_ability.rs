@@ -4,18 +4,17 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         ability::{add_ability::AddAbility, give_ability::GiveAbility},
     },
-    common::Variant,
+    common::{AbilityKey, ActorKey, Variant},
     config::ability::AbilityName,
 };
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct CreateAndGiveAbilityResponse {
-    pub id: ID,
+    pub id: AbilityKey,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -23,7 +22,7 @@ pub struct CreateAndGiveAbility {
     pub ability_name: AbilityName,
     pub transferrable: bool,
     pub variant: Variant,
-    pub actor_id: ID,
+    pub actor_id: ActorKey,
     pub volatile: bool,
 }
 

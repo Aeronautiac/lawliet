@@ -4,21 +4,21 @@
 */
 
 use crate::{
-    ID,
     action::{ActionInterface, ActionResponse},
     bug::Bug,
+    common::{AbilityKey, ActorKey, BugKey},
     helpers::{get_ability, get_player_mut},
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CreateBugResponse {
-    pub id: ID,
+    pub id: BugKey,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CreateBug {
-    pub target_id: ID,
-    pub ability_id: ID,
+    pub target_id: ActorKey,
+    pub ability_id: AbilityKey,
 }
 
 impl ActionInterface for CreateBug {
@@ -41,7 +41,7 @@ impl ActionInterface for CreateBug {
                 .add_bug(bug_id);
             bug_id
         } else {
-            0
+            BugKey::default()
         };
 
         Ok(ActionResponse::CreateBug(CreateBugResponse { id }))

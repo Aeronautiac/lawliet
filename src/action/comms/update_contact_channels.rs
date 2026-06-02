@@ -4,10 +4,10 @@
 */
 
 use crate::{
-    ID,
     action::{ActionInterface, ActionResponse},
     actor::modifier::Modifier,
     channel::{ChannelPermission, ChannelPermissions},
+    common::ActorKey,
     helpers::{get_actor, get_channel_mut, get_gc, get_lounge, get_player},
 };
 
@@ -16,7 +16,7 @@ pub struct UpdateContactChannelsResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct UpdateContactChannels {
-    pub player_id: ID,
+    pub player_id: ActorKey,
 }
 
 impl ActionInterface for UpdateContactChannels {

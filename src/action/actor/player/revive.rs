@@ -4,13 +4,12 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         actor::remove_state::RemoveState, notebook::return_dormant_books::ReturnDormantBooks,
     },
     actor::{ActorLinkType, state::State},
-    common::Version,
+    common::{ActorKey, Version},
     engine::Engine,
     helpers::{get_actor, require_dead},
 };
@@ -21,7 +20,7 @@ pub struct ReviveResponse {}
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Revive {
     pub ignore_links: bool,
-    pub target_id: ID,
+    pub target_id: ActorKey,
 }
 
 impl ActionInterface for Revive {

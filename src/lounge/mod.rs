@@ -32,24 +32,24 @@
 // leaving a lounge simply removes the lounge id from their array and subsequently removes them from
 // the channel
 
-use crate::ID;
+use crate::common::{ActorKey, ChannelKey};
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub enum LoungeVariant {
     Fake {
-        creator_id: ID,
-        contacted_id: ID,
-        contactor_id: ID,
+        creator_id: ActorKey,
+        contacted_id: ActorKey,
+        contactor_id: ActorKey,
     },
     Basic {
-        contacted_id: ID,
-        contactor_id: ID,
+        contacted_id: ActorKey,
+        contactor_id: ActorKey,
     },
 }
 
 // storing the player's ids is necessary
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Lounge {
-    pub channel_id: ID,
+    pub channel_id: ChannelKey,
     pub variant: LoungeVariant,
 }

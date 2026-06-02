@@ -6,7 +6,6 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         ability::create_and_give_ability::CreateAndGiveAbility,
@@ -22,6 +21,7 @@ use crate::{
         },
     },
     actor::player::OverrideSource,
+    common::ActorKey,
     config::role::Role,
     helpers::{get_player_mut, get_role_config},
 };
@@ -31,7 +31,7 @@ pub struct GiveRoleResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct GiveRole {
-    pub target_id: ID,
+    pub target_id: ActorKey,
     pub role: Role,
 }
 

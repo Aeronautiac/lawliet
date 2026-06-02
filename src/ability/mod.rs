@@ -10,14 +10,13 @@
 // 2. UseAbility calls the struct's functions and returns its results
 
 use crate::{
-    ID,
     ability::{
         gun::{Gun, GunResponse},
         pseudocide::{Pseudocide, PseudocideResponse},
     },
     action::{ActionActor, ActionContext, ActionError},
     chargepool::{PoolLink, PoolLinkType},
-    common::{ChargeCount, LinkWeight, Variant},
+    common::{AbilityKey, ChargeCount, ChargePoolKey, LinkWeight, Variant},
     config::ability::AbilityName,
     engine::Engine,
     ownership::OwnershipStruct,
@@ -37,7 +36,7 @@ pub trait AbilityInterface {
         eng: &mut Engine,
         ctx: &mut ActionContext,
         actor: &ActionActor,
-        ability: ID,
+        ability: AbilityKey,
         version: u8,
         mutate: bool,
     ) -> AbilityResult;
@@ -88,7 +87,7 @@ impl Ability {
 
     pub fn add_link(
         &mut self,
-        link_dest: ID,
+        link_dest: ChargePoolKey,
         link_type: PoolLinkType,
         weight: LinkWeight,
         volatile: bool,
@@ -108,7 +107,7 @@ impl Ability {
         removed
     }
 
-    pub fn remove_link(&mut self, link_dest: ID) {
+    pub fn remove_link(&mut self, link_dest: ChargePoolKey) {
         self.pool_links.retain(|l| l.link.link_dest != link_dest)
     }
 

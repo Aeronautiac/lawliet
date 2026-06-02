@@ -8,7 +8,6 @@
 // Shouild probably be done in higher level actions
 
 use crate::{
-    ID,
     action::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
         ActionResult,
@@ -16,6 +15,7 @@ use crate::{
         comms::bug::try_update_bug_visibility::TryUpdateBugVisibility,
     },
     chargepool::PoolLink,
+    common::{AbilityKey, ActorKey},
     config::ability::{AbilityIdentifier, ConfigPoolLinkDetails},
     helpers::{get_ability, get_ability_mut, get_actor, get_actor_mut, get_charge_pool_mut},
 };
@@ -25,8 +25,8 @@ pub struct GiveAbilityResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct GiveAbility {
-    pub ability_id: ID,
-    pub actor_id: ID,
+    pub ability_id: AbilityKey,
+    pub actor_id: ActorKey,
     pub volatile: bool,
 }
 

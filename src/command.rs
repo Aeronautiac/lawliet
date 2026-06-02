@@ -4,7 +4,7 @@ use crate::{
     ID, Time,
     actor::{modifier::Modifiers, state::States},
     channel::{ChannelPermissions, SenderDisplay},
-    common::{AttemptCount, ChargeCount, IterationCount},
+    common::{AbilityKey, ActorKey, AttemptCount, ChannelKey, ChargeCount, GroupchatKey, IterationCount, LoungeKey, NotebookKey, PassiveKey},
     config::{ability::AbilityName, role::Role},
 };
 
@@ -22,7 +22,7 @@ pub struct DeferredCommand {
 #[derive(Clone)]
 pub struct CommandPayload {
     pub timestamp: Time,
-    pub recipient: Option<ID>,
+    pub recipient: Option<ActorKey>,
     pub cmd: Command,
 }
 
@@ -68,7 +68,7 @@ pub enum Command {
 
     // display/announce kidnapping. can be handled similar to death.
     Kidnapping {
-        target_id: ID,
+        target_id: ActorKey,
         duration: Time,
     },
 
@@ -78,7 +78,7 @@ pub enum Command {
 
     // display/announce a pseudocide revival. can be handled similarly to death.
     PseudocideRevival {
-        target_id: ID,
+        target_id: ActorKey,
     },
 
     ////////////////////////////////////////////////
@@ -97,14 +97,14 @@ pub enum Command {
     // handling the mapping on the client would allow players to spoof actions for other players
     // (horrible vulnerability)
     MapPlayer {
-        player_id: ID,
-        actor_id: ID,
+        player_id: ActorKey,
+        actor_id: ActorKey,
     },
 
     // same as above, just for orgs
     MapOrg {
-        org_id: ID,
-        actor_id: ID,
+        org_id: ActorKey,
+        actor_id: ActorKey,
     },
 
     // all display instances of this actor must be updated
@@ -117,7 +117,7 @@ pub enum Command {
     // are no deception mechanics regarding state displays.
     ActorState {
         state: States,
-        actor_id: ID,
+        actor_id: ActorKey,
     },
 
     /////=<TARGETTED>=/////
@@ -125,14 +125,14 @@ pub enum Command {
     // display a player as an org member
     // this includes dead players and such as they are still considered org members
     AddOrgMember {
-        player_id: ID,
-        org_id: ID,
+        player_id: ActorKey,
+        org_id: ActorKey,
     },
 
     // remove from org member list
     RemoveOrgMember {
-        player_id: ID,
-        org_id: ID,
+        player_id: ActorKey,
+        org_id: ActorKey,
     },
 
     ////////////////////////////////////////////////
@@ -149,51 +149,51 @@ pub enum Command {
     // add a message to a channel
     AddMessage {
         content: String,
-        channel_id: ID,
+        channel_id: ChannelKey,
         sender_display: SenderDisplay,
     },
 
     // map a lounge id to a channel id
     MapLounge {
-        lounge_id: ID,
-        channel_id: ID,
+        lounge_id: LoungeKey,
+        channel_id: ChannelKey,
     },
 
     // map a gc id to a channel id
     MapGc {
-        gc_id: ID,
-        channel_id: ID,
+        gc_id: GroupchatKey,
+        channel_id: ChannelKey,
     },
 
     /////=<TARGETTED>=/////
 
     // entirely remove someone's view of a channel
     RemoveChannel {
-        channel_id: ID,
+        channel_id: ChannelKey,
     },
 
     // update the owner status of a gc for a player
     GcOwnerStatus {
         owner: bool,
-        gc_id: ID,
+        gc_id: GroupchatKey,
     },
 
     // display a channel member
     ShowChannelMember {
-        channel_id: ID,
+        channel_id: ChannelKey,
         display: SenderDisplay,
         channel_perms: ChannelPermissions,
     },
 
     // remove a channel member display
     RemoveChannelMember {
-        channel_id: ID,
+        channel_id: ChannelKey,
         display: SenderDisplay,
     },
 
     // update a player's view of the channel based on their permissions
     UpdateChannelView {
-        channel_id: ID,
+        channel_id: ChannelKey,
         perms: ChannelPermissions,
         displays: IndexSet<SenderDisplay>,
     },
@@ -222,15 +222,15 @@ pub enum Command {
     // the state of the display for a given player should depend on that player's permissions in the
     // notebook's channel
     MapNotebook {
-        notebook_id: ID,
-        channel_id: ID,
+        notebook_id: NotebookKey,
+        channel_id: ChannelKey,
     },
 
     // notebook writes encompass everything the frontend could possibly need
     // the frontend should display all info when relevant
     NotebookWrite {
-        notebook_id: ID,
-        user_id: ID,
+        notebook_id: NotebookKey,
+        user_id: ActorKey,
         message: Option<String>,
         true_name: String,
         delay: Time,
@@ -271,7 +271,7 @@ pub enum Command {
     // contact logs include group chat additions and such as well
     AddContactLog {
         // log: ContactLog,
-        passive_id: ID,
+        passive_id: PassiveKey,
     },
 
     /////=<TARGETTED>=/////
@@ -281,19 +281,19 @@ pub enum Command {
         ability_name: AbilityName,
         usages_remaining: ChargeCount,
         iterations_to_reset: IterationCount,
-        ability_id: ID,
-        owner_id: ID,
+        ability_id: AbilityKey,
+        owner_id: ActorKey,
     },
 
     // entirely hide an ability from a user
     RemoveAbility {
-        ability_id: ID,
+        ability_id: AbilityKey,
     },
 
     // tell the frontend to display autopsy messages for a specific user. the frontend server will do the
     // querying and filtering, and the clients will handle the display of that info.
     RevealAutopsyMessages {
-        target_id: ID,
+        target_id: ActorKey,
         range: Time, // ms
         redact_names: bool,
     },

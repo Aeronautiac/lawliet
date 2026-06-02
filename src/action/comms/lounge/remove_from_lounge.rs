@@ -4,10 +4,10 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionError, ActionInterface, ActionResponse, comms::channel::set_member::SetMember,
     },
+    common::{ActorKey, LoungeKey},
     helpers::{get_channel, get_channel_mut, get_lounge, get_player, get_player_mut},
 };
 
@@ -16,8 +16,8 @@ pub struct RemoveFromLoungeResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct RemoveFromLounge {
-    pub lounge_id: ID,
-    pub player_id: ID,
+    pub lounge_id: LoungeKey,
+    pub player_id: ActorKey,
 }
 
 impl ActionInterface for RemoveFromLounge {

@@ -4,8 +4,8 @@
 */
 
 use crate::{
-    ID,
     action::{ActionInterface, ActionResponse},
+    common::ChannelKey,
     helpers::get_channel_mut,
 };
 
@@ -14,7 +14,7 @@ pub struct SetLoggableResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct SetLoggable {
-    pub channel_id: ID,
+    pub channel_id: ChannelKey,
     pub loggable: bool,
 }
 

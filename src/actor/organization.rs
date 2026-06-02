@@ -1,6 +1,5 @@
 use crate::{
-    ID,
-    common::MemberCount,
+    common::{AbilityKey, ActorKey, MemberCount},
     config::{actor::organization::OrganizationName, role::Role},
 };
 use enumflags2::{BitFlags, bitflags};
@@ -61,7 +60,7 @@ pub type LeadershipTransferPolicies = BitFlags<LeadershipTransferPolicy>;
 
 #[derive(Hash, PartialEq, Eq, Debug, Clone)]
 pub struct LeadershipStruct {
-    pub leader: Option<ID>,
+    pub leader: Option<ActorKey>,
     pub transfer_policies: LeadershipTransferPolicies,
 }
 
@@ -73,9 +72,9 @@ pub struct OrgMember {
 #[derive(PartialEq, Eq, Debug)]
 pub struct Organization {
     pub leadership_struct: Option<LeadershipStruct>,
-    pub members: IndexMap<ID, OrgMember>,
-    pub blacklist: IndexSet<ID>,
-    pub abilities: IndexMap<ID, OrgAbility>,
+    pub members: IndexMap<ActorKey, OrgMember>,
+    pub blacklist: IndexSet<ActorKey>,
+    pub abilities: IndexMap<AbilityKey, OrgAbility>,
     pub org_name: OrganizationName,
 }
 
@@ -90,21 +89,21 @@ impl Organization {
         }
     }
 
-    pub fn has_member(&self, id: ID) -> bool {
+    pub fn has_member(&self, id: ActorKey) -> bool {
         self.members.contains_key(&id)
     }
 
-    pub fn is_blacklisted(&self, id: ID) -> bool {
+    pub fn is_blacklisted(&self, id: ActorKey) -> bool {
         self.blacklist.contains(&id)
     }
 
     /// this will replace the old leader (if applicable)
-    pub fn add_member(&mut self, id: ID, og: bool) {
+    pub fn add_member(&mut self, id: ActorKey, og: bool) {
         self.members.insert(id, OrgMember { og });
     }
 
     /// if this member was the leader, there will be no leader after this
-    pub fn remove_member(&mut self, id: ID) {
+    pub fn remove_member(&mut self, id: ActorKey) {
         self.members.swap_remove(&id);
         if let Some(leadership_struct) = &mut self.leadership_struct
             && leadership_struct.leader == Some(id)
@@ -114,7 +113,7 @@ impl Organization {
     }
 
     /// count number of members matching a certain condition
-    pub fn member_count(&self, condition: impl Fn(ID, &OrgMember) -> bool) -> MemberCount {
+    pub fn member_count(&self, condition: impl Fn(ActorKey, &OrgMember) -> bool) -> MemberCount {
         let mut count = 0;
         for (id, member) in self.members.iter() {
             if condition(*id, member) {
@@ -124,7 +123,7 @@ impl Organization {
         count
     }
 
-    pub fn get_leader(&self) -> Option<ID> {
+    pub fn get_leader(&self) -> Option<ActorKey> {
         if let Some(leadership) = &self.leadership_struct {
             leadership.leader
         } else {
@@ -132,7 +131,7 @@ impl Organization {
         }
     }
 
-    pub fn add_ability(&mut self, id: ID, settings: OrgAbility) {
+    pub fn add_ability(&mut self, id: AbilityKey, settings: OrgAbility) {
         self.abilities.insert(id, settings);
     }
 }

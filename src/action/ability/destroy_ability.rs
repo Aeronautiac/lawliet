@@ -5,12 +5,12 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         ability::remove_link::RemoveLink,
         comms::bug::destroy_bug::DestroyBug,
     },
+    common::{AbilityKey, BugKey, ChargePoolKey},
     helpers::{get_ability, get_actor, get_actor_mut},
 };
 
@@ -19,7 +19,7 @@ pub struct DestroyAbilityResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct DestroyAbility {
-    pub ability_id: ID,
+    pub ability_id: AbilityKey,
 }
 
 impl ActionInterface for DestroyAbility {
@@ -35,7 +35,7 @@ impl ActionInterface for DestroyAbility {
 
         let ability = get_ability(eng, self.ability_id)?;
         let owner = ability.ownership_struct.owner;
-        let pool_ids: Vec<ID> = ability.pool_links.iter().map(|l| l.link.link_dest).collect();
+        let pool_ids: Vec<ChargePoolKey> = ability.pool_links.iter().map(|l| l.link.link_dest).collect();
 
         if let Some(owner_id) = owner {
             get_actor(eng, owner_id)?;
@@ -49,12 +49,12 @@ impl ActionInterface for DestroyAbility {
             .handle(eng, ctx, actor, version, mutate)?;
         }
 
-        let bug_ids: Vec<ID> = eng
+        let bug_ids: Vec<BugKey> = eng
             .world
             .bugs
             .iter()
             .filter(|(_, bug)| bug.ability_id == self.ability_id)
-            .map(|(id, _)| *id)
+            .map(|(id, _)| id)
             .collect();
 
         for bug_id in bug_ids {

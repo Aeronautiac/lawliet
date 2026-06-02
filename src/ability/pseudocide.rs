@@ -1,5 +1,4 @@
 use crate::{
-    ID,
     ability::{AbilityInterface, AbilityResponse},
     action::{
         Action, ActionActor, ActionContext, ActionInterface,
@@ -7,6 +6,7 @@ use crate::{
     },
     actor::modifier::Modifier,
     command::{Command, CommandPayload, DeferredCommand},
+    common::{AbilityKey, ActorKey},
     config::{ability::AbilityName, role::Role},
     helpers::{cmd_all_deferred, get_player},
 };
@@ -16,7 +16,7 @@ pub struct PseudocideResponse {}
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]
 pub struct Pseudocide {
-    pub target_id: ID,
+    pub target_id: ActorKey,
     pub true_name: String,
     pub death_message: String,
     pub role: Role,
@@ -34,7 +34,7 @@ impl AbilityInterface for Pseudocide {
         eng: &mut crate::engine::Engine,
         ctx: &mut ActionContext,
         actor: &crate::action::ActionActor,
-        _ability: ID,
+        _ability: AbilityKey,
         version: u8,
         mutate: bool,
     ) -> super::AbilityResult {

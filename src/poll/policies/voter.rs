@@ -1,11 +1,11 @@
 use crate::{
-    ID,
+    common::ActorKey,
     engine::Engine,
     helpers::{get_actor, get_org},
     poll::{Poll, PollVisibility},
 };
 
-fn visibility_check(poll: &Poll, eng: &Engine, voter_id: ID) -> bool {
+fn visibility_check(poll: &Poll, eng: &Engine, voter_id: ActorKey) -> bool {
     match poll.visibility {
         PollVisibility::Org(org_id) => {
             let org = get_org(eng, org_id).unwrap();
@@ -21,7 +21,7 @@ fn visibility_check(poll: &Poll, eng: &Engine, voter_id: ID) -> bool {
 
 // they must not have the present restriction
 // they must be able to see the vote
-pub fn present(poll: &Poll, eng: &Engine, voter_id: ID) -> bool {
+pub fn present(poll: &Poll, eng: &Engine, voter_id: ActorKey) -> bool {
     let actor = get_actor(eng, voter_id).unwrap(); // the actor id must be valid,
     // if it isnt, the engine is broken
     if actor.has_modifier(crate::actor::modifier::Modifier::NoPresence) {

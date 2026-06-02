@@ -4,17 +4,17 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionInterface, ActionResponse, comms::channel::create_channel::CreateChannel,
     },
     command::Command,
+    common::GroupchatKey,
     groupchat::Groupchat,
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CreateGroupchatResponse {
-    pub id: ID,
+    pub id: GroupchatKey,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -41,7 +41,7 @@ impl ActionInterface for CreateGroupchat {
         let id = if mutate {
             eng.world.add_groupchat(Groupchat::new(channel_id))
         } else {
-            0
+            GroupchatKey::default()
         };
 
         ctx.push_cmd(

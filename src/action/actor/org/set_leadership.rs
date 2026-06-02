@@ -4,11 +4,11 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionInterface, ActionResponse, actor::org::change_org_leader::ChangeOrgLeader,
     },
     actor::organization::{LeadershipStruct, LeadershipTransferPolicies},
+    common::ActorKey,
     helpers::get_org_mut,
 };
 
@@ -17,7 +17,7 @@ pub struct SetLeadershipResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct SetLeadership {
-    pub org_id: ID,
+    pub org_id: ActorKey,
     pub policies: Option<LeadershipTransferPolicies>,
 }
 

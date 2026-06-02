@@ -7,21 +7,20 @@
 // - Optimize this by just constructing a link set and passing it directly into the ability constructor
 
 use crate::{
-    ID,
     ability::Ability,
     action::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
         ActionResult, chargepool::add_charge_pool::AddChargePool,
     },
     chargepool::PoolLink,
-    common::Variant,
+    common::{AbilityKey, Variant},
     config::ability::{AbilityIdentifier, AbilityName, ConfigPoolLinkDetails},
     helpers::get_charge_pool_mut,
 };
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct AddAbilityResponse {
-    pub id: ID,
+    pub id: AbilityKey,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -98,7 +97,7 @@ impl ActionInterface for AddAbility {
             }
             eng.world.add_ability(ability)
         } else {
-            0
+            AbilityKey::default()
         };
 
         Ok(ActionResponse::AddAbility(AddAbilityResponse { id }))

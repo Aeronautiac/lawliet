@@ -4,13 +4,13 @@
 */
 
 use crate::{
-    ID,
     ability::{AbilityBehaviour, AbilityInterface, AbilityResponse},
     action::{
         ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse, ActionResult,
     },
     actor::modifier::Modifier,
     chargepool::PoolLinkType,
+    common::AbilityKey,
     helpers::{
         actor_id, get_ability, get_ability_config, get_ability_mut, get_actor, get_charge_pool_mut,
     },
@@ -21,7 +21,7 @@ pub struct UseAbilityResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct UseAbility {
-    pub ability_id: ID,
+    pub ability_id: AbilityKey,
     pub ability_args: AbilityBehaviour,
 }
 

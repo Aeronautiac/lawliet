@@ -4,8 +4,8 @@
 */
 
 use crate::{
-    ID,
     action::{Action, ActionInterface, ActionResponse, ability::remove_link::RemoveLink},
+    common::AbilityKey,
     helpers::{get_ability_mut, get_charge_pool},
 };
 
@@ -14,7 +14,7 @@ pub struct ClearLinksResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct ClearLinks {
-    pub ability_id: ID,
+    pub ability_id: AbilityKey,
 }
 
 impl ActionInterface for ClearLinks {

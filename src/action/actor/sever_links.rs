@@ -4,8 +4,8 @@
 */
 
 use crate::{
-    ID,
     action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    common::ActorKey,
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -13,7 +13,7 @@ pub struct SeverLinksResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct SeverLinks {
-    pub actor_id: ID,
+    pub actor_id: ActorKey,
 }
 
 impl ActionInterface for SeverLinks {

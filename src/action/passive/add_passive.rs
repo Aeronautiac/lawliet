@@ -4,15 +4,15 @@
 */
 
 use crate::{
-    ID,
     action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    common::PassiveKey,
     ownership::OwnershipStruct,
     passive::{Passive, PassiveType},
 };
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct AddPassiveResponse {
-    pub id: ID,
+    pub id: PassiveKey,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -43,7 +43,7 @@ impl ActionInterface for AddPassive {
             };
             eng.world.add_passive(passive)
         } else {
-            0
+            PassiveKey::default()
         };
 
         Ok(ActionResponse::AddPassive(AddPassiveResponse { id }))

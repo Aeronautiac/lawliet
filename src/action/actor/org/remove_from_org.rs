@@ -4,9 +4,9 @@
 */
 
 use crate::{
-    ID,
     action::{ActionError, ActionInterface, ActionResponse},
     actor::{ActorLink, ActorLinkType},
+    common::ActorKey,
     helpers::{get_actor, get_actor_mut, get_org_mut},
 };
 
@@ -15,8 +15,8 @@ pub struct RemoveFromOrgResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct RemoveFromOrg {
-    pub actor_id: ID,
-    pub org_id: ID,
+    pub actor_id: ActorKey,
+    pub org_id: ActorKey,
 }
 
 impl ActionInterface for RemoveFromOrg {

@@ -4,22 +4,22 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         notebook::{add_notebook::AddNotebook, give_notebook::GiveNotebook},
     },
+    common::{ActorKey, NotebookKey},
 };
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct CreateAndGiveNotebookResponse {
-    pub id: ID,
+    pub id: NotebookKey,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CreateAndGiveNotebook {
     pub fake: bool,
-    pub actor_id: ID,
+    pub actor_id: ActorKey,
     pub volatile: bool,
 }
 

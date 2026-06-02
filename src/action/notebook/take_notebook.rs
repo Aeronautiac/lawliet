@@ -4,10 +4,10 @@
 */
 
 use crate::{
-    ID,
     action::{
         ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse, ActionResult,
     },
+    common::NotebookKey,
     helpers::{get_actor_mut, get_notebook, get_notebook_mut},
 };
 
@@ -16,7 +16,7 @@ pub struct TakeNotebookResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct TakeNotebook {
-    pub notebook_id: ID,
+    pub notebook_id: NotebookKey,
 }
 
 impl ActionInterface for TakeNotebook {

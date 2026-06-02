@@ -4,8 +4,8 @@
 */
 
 use crate::{
-    ID,
     action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    common::ActorKey,
 };
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -13,7 +13,7 @@ pub struct SetBooksDormantResponse {}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SetBooksDormant {
-    pub actor_id: ID,
+    pub actor_id: ActorKey,
 }
 
 impl ActionInterface for SetBooksDormant {

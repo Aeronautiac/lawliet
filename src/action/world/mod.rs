@@ -21,7 +21,7 @@ mod world_tests {
     fn world_channel_perms(
         eng: &Engine,
         name: WorldChannelName,
-        player_id: crate::ID,
+        player_id: crate::common::ActorKey,
     ) -> ChannelPermissions {
         let channel_id = *eng.world.world_channel_map.get(&name).unwrap();
         get_channel(eng, channel_id)

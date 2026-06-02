@@ -19,7 +19,8 @@
 
 use indexmap::{IndexMap, IndexSet};
 
-use crate::{ID, config::role::Role};
+use crate::common::ActorKey;
+use crate::config::role::Role;
 use enumflags2::{BitFlags, bitflags};
 
 // frontend servers can maintain tables of visible messages for specific channels within
@@ -36,7 +37,7 @@ use enumflags2::{BitFlags, bitflags};
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord)]
 pub enum SenderDisplay {
-    Raw(ID),
+    Raw(ActorKey),
     Role(Role),
     Mysterious,
 }
@@ -59,7 +60,7 @@ pub struct ChannelMember {
 #[derive(Debug)]
 pub struct Channel {
     pub loggable: bool, // whether or not abilities like autopsy can use messages sent here
-    pub members: IndexMap<ID, ChannelMember>, // the people in the channel and their permissions
+    pub members: IndexMap<ActorKey, ChannelMember>, // the people in the channel and their permissions
 }
 
 impl Channel {
@@ -70,7 +71,7 @@ impl Channel {
         }
     }
 
-    pub fn set_member(&mut self, id: ID, settings: Option<ChannelMember>) {
+    pub fn set_member(&mut self, id: ActorKey, settings: Option<ChannelMember>) {
         if let Some(obj) = settings {
             self.members.insert(id, obj);
         } else {
@@ -78,7 +79,7 @@ impl Channel {
         }
     }
 
-    pub fn get_member(&self, id: ID) -> Option<&ChannelMember> {
+    pub fn get_member(&self, id: ActorKey) -> Option<&ChannelMember> {
         self.members.get(&id)
     }
 

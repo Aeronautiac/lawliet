@@ -4,14 +4,13 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         comms::update_contact_channels::UpdateContactChannels,
         world::update_world_channel_perms::UpdateWorldChannelPerms,
     },
     actor::state::State,
-    common::Version,
+    common::{ActorKey, Version},
     engine::Engine,
     helpers::{get_actor_mut, get_player},
 };
@@ -21,7 +20,7 @@ pub struct RemoveStateResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct RemoveState {
-    pub actor_id: ID,
+    pub actor_id: ActorKey,
     pub state: State,
 }
 

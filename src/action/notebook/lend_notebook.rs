@@ -4,12 +4,11 @@
 */
 
 use crate::{
-    ID,
     action::{
         ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse, ActionResult,
     },
     actor::modifier::Modifier,
-    common::Version,
+    common::{ActorKey, NotebookKey, Version},
     engine::Engine,
     helpers::{actor_id, get_actor_mut, get_notebook_mut},
 };
@@ -19,8 +18,8 @@ pub struct LendNotebookResponse {}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LendNotebook {
-    pub notebook_id: ID,
-    pub target_id: ID,
+    pub notebook_id: NotebookKey,
+    pub target_id: ActorKey,
 }
 
 impl ActionInterface for LendNotebook {

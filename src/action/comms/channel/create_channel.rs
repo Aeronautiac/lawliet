@@ -4,14 +4,14 @@
 */
 
 use crate::{
-    ID,
     action::{ActionInterface, ActionResponse},
     channel::Channel,
+    common::ChannelKey,
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CreateChannelResponse {
-    pub id: ID,
+    pub id: ChannelKey,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -33,7 +33,7 @@ impl ActionInterface for CreateChannel {
         let id = if mutate {
             eng.world.add_channel(Channel::new(self.loggable))
         } else {
-            0
+            ChannelKey::default()
         };
 
         Ok(ActionResponse::CreateChannel(CreateChannelResponse { id }))

@@ -6,7 +6,6 @@
 use indexmap::IndexSet;
 
 use crate::{
-    ID,
     ability::AbilityBehaviour,
     action::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
@@ -14,6 +13,7 @@ use crate::{
         poll::create_poll::CreatePoll,
     },
     actor::{modifier::Modifier, organization::OrgAbilityPolicy},
+    common::{AbilityKey, ActorKey, PollKey},
     config::role::Role,
     helpers::{get_actor, get_org},
     poll::{PollPolicy, PollVisibility, VoterPolicy},
@@ -21,14 +21,14 @@ use crate::{
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct SystemUseOrgAbilityResponse {
-    pub poll_id: Option<ID>,
+    pub poll_id: Option<PollKey>,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct SystemUseOrgAbility {
-    pub org_id: ID,
-    pub user_id: ID,
-    pub ability_id: ID,
+    pub org_id: ActorKey,
+    pub user_id: ActorKey,
+    pub ability_id: AbilityKey,
     pub ability_args: AbilityBehaviour,
     pub dont_vote: bool,
 }

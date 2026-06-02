@@ -2,7 +2,12 @@ use std::rc::Rc;
 
 use indexmap::{IndexMap, IndexSet, indexset};
 
-use crate::{ID, channel::ChannelPermissions, config::{role::Role, world::WorldChannelName}};
+use crate::{
+    ID,
+    channel::ChannelPermissions,
+    common::{ActorKey, BugKey, GroupchatKey, LoungeKey},
+    config::{role::Role, world::WorldChannelName},
+};
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct WorldChannelOverride {
@@ -13,8 +18,8 @@ pub struct WorldChannelOverride {
 #[derive(PartialEq, Eq, Clone, Debug, Hash)]
 pub enum OverrideSource {
     Role(Role),
-    Manual(ID),
-    PressConference(ID),
+    Manual(ID), // host-inserted frontend identifier
+    PressConference(ActorKey),
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -34,9 +39,9 @@ pub struct Player {
     pub role: Role,
     pub true_name: Rc<str>,
     pub eyes: u32,
-    pub lounges: IndexSet<ID>,
-    pub groupchats: IndexSet<ID>,
-    pub bugs: IndexSet<ID>,
+    pub lounges: IndexSet<LoungeKey>,
+    pub groupchats: IndexSet<GroupchatKey>,
+    pub bugs: IndexSet<BugKey>,
     pub world_channel_overrides: IndexMap<WorldChannelName, IndexMap<OverrideSource, SourcedWorldChannelOverride>>,
 }
 
@@ -87,23 +92,23 @@ impl Player {
         })
     }
 
-    pub fn add_lounge(&mut self, id: ID) {
+    pub fn add_lounge(&mut self, id: LoungeKey) {
         self.lounges.insert(id);
     }
 
-    pub fn remove_lounge(&mut self, id: ID) {
+    pub fn remove_lounge(&mut self, id: LoungeKey) {
         self.lounges.swap_remove(&id);
     }
 
-    pub fn add_groupchat(&mut self, id: ID) {
+    pub fn add_groupchat(&mut self, id: GroupchatKey) {
         self.groupchats.insert(id);
     }
 
-    pub fn remove_groupchat(&mut self, id: ID) {
+    pub fn remove_groupchat(&mut self, id: GroupchatKey) {
         self.groupchats.swap_remove(&id);
     }
 
-    pub fn add_bug(&mut self, id: ID) {
+    pub fn add_bug(&mut self, id: BugKey) {
         self.bugs.insert(id);
     }
 }

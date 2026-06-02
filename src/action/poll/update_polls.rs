@@ -6,8 +6,8 @@
 use smallvec::{SmallVec, smallvec};
 
 use crate::{
-    ID,
     action::{Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    common::PollKey,
     helpers::get_poll,
     poll::PolicyResult,
 };
@@ -29,10 +29,10 @@ impl ActionInterface for UpdatePolls {
     ) -> ActionResult {
         actor.admin_or_system()?;
 
-        let mut polls_to_cancel: SmallVec<[ID; 8]> = smallvec![];
-        let mut polls_to_accept: SmallVec<[(ID, Action); 8]> = smallvec![];
-        let mut polls_to_reject: SmallVec<[ID; 8]> = smallvec![];
-        let ids: Vec<ID> = eng.world.polls.keys().cloned().collect();
+        let mut polls_to_cancel: SmallVec<[PollKey; 8]> = smallvec![];
+        let mut polls_to_accept: SmallVec<[(PollKey, Action); 8]> = smallvec![];
+        let mut polls_to_reject: SmallVec<[PollKey; 8]> = smallvec![];
+        let ids: Vec<PollKey> = eng.world.polls.keys().collect();
         for id in ids {
             let poll = get_poll(eng, id).unwrap();
             let mut payload = poll.payload.clone();

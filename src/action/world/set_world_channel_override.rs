@@ -7,12 +7,12 @@
 use indexmap::IndexMap;
 
 use crate::{
-    ID,
     action::{
         Action, ActionInterface, ActionResponse,
         world::update_world_channel_perms::UpdateWorldChannelPerms,
     },
     actor::player::{OverrideSource, SourcedWorldChannelOverride, WorldChannelOverride},
+    common::ActorKey,
     config::world::WorldChannelName,
     helpers::get_player_mut,
 };
@@ -22,7 +22,7 @@ pub struct SetWorldChannelOverrideResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct SetWorldChannelOverride {
-    pub player_id: ID,
+    pub player_id: ActorKey,
     pub channel_name: WorldChannelName,
     pub source: OverrideSource,
     pub priority: u8,

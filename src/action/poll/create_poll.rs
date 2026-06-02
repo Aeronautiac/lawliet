@@ -6,17 +6,18 @@
 */
 
 use crate::{
-    ID, Time,
+    Time,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         engine::schedule_job::ScheduleJob, poll::poll_timeout::PollTimeout,
     },
+    common::PollKey,
     poll::{Poll, PollPolicy, PollVisibility, VoterPolicy},
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CreatePollReponse {
-    pub id: ID,
+    pub id: PollKey,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -49,7 +50,7 @@ impl ActionInterface for CreatePoll {
                 self.voter_policy,
             ))
         } else {
-            0
+            PollKey::default()
         };
 
         // poll only exists in the mutate path

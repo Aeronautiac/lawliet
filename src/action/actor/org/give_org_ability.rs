@@ -4,9 +4,9 @@
 */
 
 use crate::{
-    ID,
     action::{Action, ActionInterface, ActionResponse, ability::give_ability::GiveAbility},
     actor::organization::OrgAbility,
+    common::{AbilityKey, ActorKey},
     helpers::{get_org, get_org_mut},
 };
 
@@ -15,8 +15,8 @@ pub struct GiveOrgAbilityResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct GiveOrgAbility {
-    pub org_id: ID,
-    pub ability_id: ID,
+    pub org_id: ActorKey,
+    pub ability_id: AbilityKey,
     pub settings: OrgAbility,
 }
 

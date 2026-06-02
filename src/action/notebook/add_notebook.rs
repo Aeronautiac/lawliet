@@ -4,19 +4,18 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         comms::channel::create_channel::CreateChannel,
     },
     command::Command,
-    common::Version,
+    common::{NotebookKey, Version},
     engine::Engine,
 };
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct AddNotebookResponse {
-    pub id: ID, // return the internal id assigned to this notebook
+    pub id: NotebookKey, // return the internal id assigned to this notebook
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -45,7 +44,7 @@ impl ActionInterface for AddNotebook {
         let id = if mutate {
             eng.world.add_notebook(channel_id, self.fake)
         } else {
-            0
+            NotebookKey::default()
         };
 
         ctx.push_cmd(

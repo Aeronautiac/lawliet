@@ -7,12 +7,12 @@ pub use self::organization::Organization;
 pub use self::player::Player;
 
 use crate::{
-    ID,
     actor::{
         modifier::{Modifier, Modifiers, Source},
         organization::LeadershipStruct,
         state::{State, States},
     },
+    common::{AbilityKey, ActorKey, ChargePoolKey, NotebookKey, PassiveKey},
     config::{
         actor::{ActorChargePoolName, organization::OrganizationName},
         role::Role,
@@ -34,7 +34,7 @@ pub enum ActorLinkType {
 #[derive(Hash, PartialEq, Eq, Debug, Ord, PartialOrd, Clone)]
 pub struct ActorLink {
     pub link_type: ActorLinkType,
-    pub link_dest: ID,
+    pub link_dest: ActorKey,
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -45,17 +45,17 @@ pub enum ActorType {
 
 #[derive(Debug)]
 pub struct Actor {
-    pub kills: Vec<ID>,
-    pub abilities: IndexSet<ID>, // true ownership is in the structs themselves, these sets are here
+    pub kills: Vec<ActorKey>,
+    pub abilities: IndexSet<AbilityKey>, // true ownership is in the structs themselves, these sets are here
     // for performance and utility
     // they must be synced to game state
-    pub passives: IndexSet<ID>,
-    pub notebooks: IndexSet<ID>, // any notebook currently HELD (not owned) by this actor
+    pub passives: IndexSet<PassiveKey>,
+    pub notebooks: IndexSet<NotebookKey>, // any notebook currently HELD (not owned) by this actor
     pub modifiers: IndexMap<Source, Modifiers>,
     pub states: States,
     pub actor_type: ActorType,
     pub actor_links: IndexSet<ActorLink>,
-    pub pool_map: IndexMap<ActorChargePoolName, ID>,
+    pub pool_map: IndexMap<ActorChargePoolName, ChargePoolKey>,
 }
 
 impl Actor {
@@ -134,31 +134,31 @@ impl Actor {
         self.actor_links.swap_remove(&link);
     }
 
-    pub fn remove_ability(&mut self, id: ID) {
+    pub fn remove_ability(&mut self, id: AbilityKey) {
         self.abilities.swap_remove(&id);
     }
 
-    pub fn add_ability(&mut self, id: ID) {
+    pub fn add_ability(&mut self, id: AbilityKey) {
         self.abilities.insert(id);
     }
 
-    pub fn remove_passive(&mut self, id: ID) {
+    pub fn remove_passive(&mut self, id: PassiveKey) {
         self.passives.swap_remove(&id);
     }
 
-    pub fn add_passive(&mut self, id: ID) {
+    pub fn add_passive(&mut self, id: PassiveKey) {
         self.passives.insert(id);
     }
 
-    pub fn add_notebook(&mut self, id: ID) {
+    pub fn add_notebook(&mut self, id: NotebookKey) {
         self.notebooks.insert(id);
     }
 
-    pub fn remove_notebook(&mut self, id: ID) {
+    pub fn remove_notebook(&mut self, id: NotebookKey) {
         self.notebooks.swap_remove(&id);
     }
 
-    pub fn has_notebook(&self, id: ID) -> bool {
+    pub fn has_notebook(&self, id: NotebookKey) -> bool {
         self.notebooks.contains(&id)
     }
 }

@@ -6,7 +6,6 @@
 use smallvec::{SmallVec, smallvec};
 
 use crate::{
-    ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         ability::give_ability::GiveAbility,
@@ -22,7 +21,7 @@ use crate::{
     },
     actor::{ActorLinkType, ActorType, modifier::Modifier, state::State},
     command::Command,
-    common::Version,
+    common::{ActorKey, Version},
     engine::Engine,
     helpers::{cmd_all_deferred, get_actor, get_actor_mut, get_notebook, require_alive},
 };
@@ -32,8 +31,8 @@ pub struct KillResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Kill {
-    pub target_id: ID,
-    pub killer_id: Option<ID>,
+    pub target_id: ActorKey,
+    pub killer_id: Option<ActorKey>,
     pub death_message: Option<String>,
     pub silent: bool,
     pub allow_link_chaining: bool,
@@ -87,7 +86,7 @@ impl ActionInterface for Kill {
                         ability_transferred = true;
                         next_actions.push(Action::GiveAbility(GiveAbility {
                             volatile: false,
-                            ability_id: *id,
+                            ability_id: id,
                             actor_id: killer_id,
                         }));
                     }
@@ -102,7 +101,7 @@ impl ActionInterface for Kill {
                         ability_transferred = true;
                         next_actions.push(Action::GivePassive(GivePassive {
                             volatile: false,
-                            passive_id: *id,
+                            passive_id: id,
                             actor_id: killer_id,
                         }));
                     }

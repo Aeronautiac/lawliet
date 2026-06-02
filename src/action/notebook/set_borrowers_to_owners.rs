@@ -5,11 +5,11 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         notebook::give_notebook::GiveNotebook,
     },
+    common::ActorKey,
     helpers::get_actor,
 };
 
@@ -18,7 +18,7 @@ pub struct SetBorrowersToOwnersResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct SetBorrowersToOwners {
-    pub actor_id: ID,
+    pub actor_id: ActorKey,
 }
 
 impl ActionInterface for SetBorrowersToOwners {
@@ -37,7 +37,7 @@ impl ActionInterface for SetBorrowersToOwners {
         for (id, notebook) in eng.world.notebooks.iter() {
             if notebook.get_true_owner() == Some(self.actor_id) && notebook.is_owner_borrowing() {
                 next_actions.push(Action::GiveNotebook(GiveNotebook {
-                    notebook_id: *id,
+                    notebook_id: id,
                     actor_id: notebook.owner.unwrap(),
                     volatile: false,
                 }));

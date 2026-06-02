@@ -6,13 +6,13 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionInterface, ActionResponse,
         comms::channel::set_member::SetMember,
     },
     actor::player::OverrideResolver,
     channel::{ChannelMember, ChannelPermission, ChannelPermissions, SenderDisplay},
+    common::{ActorKey, ChannelKey},
     helpers::{get_actor, get_player},
 };
 
@@ -23,7 +23,7 @@ pub struct UpdateWorldChannelPermsResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct UpdateWorldChannelPerms {
-    pub player_id: ID,
+    pub player_id: ActorKey,
 }
 
 impl ActionInterface for UpdateWorldChannelPerms {
@@ -39,7 +39,7 @@ impl ActionInterface for UpdateWorldChannelPerms {
         get_player(eng, self.player_id)?;
 
         let player_modifiers = get_actor(eng, self.player_id)?.modifiers();
-        let updates: Vec<(ID, ChannelPermissions, IndexSet<SenderDisplay>)> = {
+        let updates: Vec<(ChannelKey, ChannelPermissions, IndexSet<SenderDisplay>)> = {
             let player = get_player(eng, self.player_id)?;
             eng.world
                 .world_channel_map

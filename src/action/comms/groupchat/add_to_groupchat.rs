@@ -4,12 +4,12 @@
 */
 
 use crate::{
-    ID,
     action::{
         Action, ActionError, ActionInterface, ActionResponse,
         comms::groupchat::set_groupchat_owner::SetGroupchatOwner,
     },
     actor::modifier::Modifier,
+    common::{ActorKey, GroupchatKey},
     helpers::{actor_id, get_actor, get_actor_mut, get_gc, get_gc_mut, get_player_mut},
 };
 
@@ -20,8 +20,8 @@ pub struct AddToGroupchatResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct AddToGroupchat {
-    pub groupchat_id: ID,
-    pub player_id: ID,
+    pub groupchat_id: GroupchatKey,
+    pub player_id: ActorKey,
     pub owner: bool,
 }
 

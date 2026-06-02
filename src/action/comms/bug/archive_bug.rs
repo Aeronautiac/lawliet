@@ -4,8 +4,8 @@
 */
 
 use crate::{
-    ID,
     action::{ActionInterface, ActionResponse},
+    common::BugKey,
     helpers::get_bug_mut,
 };
 
@@ -14,7 +14,7 @@ pub struct ArchiveBugResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct ArchiveBug {
-    pub bug_id: ID,
+    pub bug_id: BugKey,
 }
 
 impl ActionInterface for ArchiveBug {

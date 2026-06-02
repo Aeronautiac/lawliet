@@ -5,8 +5,8 @@
 */
 
 use crate::{
-    ID,
     action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    common::PollKey,
     helpers::get_poll,
     poll::PolicyResult,
 };
@@ -16,7 +16,7 @@ pub struct PollTimeoutResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct PollTimeout {
-    pub poll_id: ID,
+    pub poll_id: PollKey,
 }
 
 impl ActionInterface for PollTimeout {

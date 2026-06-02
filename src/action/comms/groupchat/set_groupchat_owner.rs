@@ -4,10 +4,10 @@
 */
 
 use crate::{
-    ID,
     action::{ActionError, ActionInterface, ActionResponse},
     actor::modifier::Modifier,
     command::Command,
+    common::{ActorKey, GroupchatKey},
     helpers::{actor_id, get_actor, get_gc_mut, get_player},
 };
 
@@ -16,8 +16,8 @@ pub struct SetGroupchatOwnerResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct SetGroupchatOwner {
-    pub groupchat_id: ID,
-    pub owner: Option<ID>,
+    pub groupchat_id: GroupchatKey,
+    pub owner: Option<ActorKey>,
 }
 
 impl ActionInterface for SetGroupchatOwner {

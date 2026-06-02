@@ -5,24 +5,24 @@
 */
 
 use crate::{
-    ID,
     ability::AbilityBehaviour,
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         actor::org::system_use_org_ability::SystemUseOrgAbility,
     },
+    common::{AbilityKey, ActorKey, PollKey},
     helpers::actor_id,
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct UseOrgAbilityResponse {
-    pub poll_id: Option<ID>,
+    pub poll_id: Option<PollKey>,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct UseOrgAbility {
-    pub org_id: ID,
-    pub ability_id: ID,
+    pub org_id: ActorKey,
+    pub ability_id: AbilityKey,
     pub ability_args: AbilityBehaviour,
 }
 

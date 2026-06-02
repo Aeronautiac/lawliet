@@ -29,7 +29,7 @@ use crate::{
 };
 
 use crate::{
-    ID, Time,
+    Time,
     ability::AbilityBehaviour,
     action::{
         Action, ActionActor, ActionRequest, ActionResponse, ActionResult,
@@ -58,13 +58,13 @@ use crate::{
     },
     actor::organization::LeadershipTransferPolicies,
     chargepool::PoolLinkType,
-    common::{ChargeCount, LinkWeight},
+    common::{AbilityKey, ActorKey, ChannelKey, ChargeCount, ChargePoolKey, GroupchatKey, LinkWeight, LoungeKey, NotebookKey, PassiveKey, PollKey},
     config::{actor::organization::OrganizationName, role::Role},
     engine::{Engine, ExecutionResult},
     passive::PassiveType,
 };
 
-pub fn add_player(eng: &mut Engine, timestamp: Time, starting_role: Role, true_name: &str) -> ID {
+pub fn add_player(eng: &mut Engine, timestamp: Time, starting_role: Role, true_name: &str) -> ActorKey {
     let data = eng
         .execute(ActionRequest {
             timestamp,
@@ -88,7 +88,7 @@ pub fn quick_kill(
     allow_link_chaining: bool,
     sever_links: bool,
     set_books_dormant: bool,
-    target: ID,
+    target: ActorKey,
 ) {
     eng.execute(ActionRequest {
         timestamp,
@@ -106,7 +106,7 @@ pub fn quick_kill(
     .unwrap();
 }
 
-pub fn quick_revive(eng: &mut Engine, timestamp: Time, ignore_links: bool, target: ID) {
+pub fn quick_revive(eng: &mut Engine, timestamp: Time, ignore_links: bool, target: ActorKey) {
     eng.execute(ActionRequest {
         timestamp,
         actor: ActionActor::System,
@@ -120,9 +120,9 @@ pub fn quick_revive(eng: &mut Engine, timestamp: Time, ignore_links: bool, targe
 
 pub fn quick_write(
     eng: &mut Engine,
-    writer: ID,
+    writer: ActorKey,
     timestamp: Time,
-    notebook_id: ID,
+    notebook_id: NotebookKey,
     true_name: &str,
     delay: Time,
 ) -> ActionResult {
@@ -151,7 +151,7 @@ pub fn null_action(eng: &mut Engine, time: Time) {
     .unwrap();
 }
 
-pub fn quick_lend(eng: &mut Engine, time: Time, notebook_id: ID, player_lending: ID, lend_to: ID) {
+pub fn quick_lend(eng: &mut Engine, time: Time, notebook_id: NotebookKey, player_lending: ActorKey, lend_to: ActorKey) {
     eng.execute(ActionRequest {
         actor: ActionActor::Player(player_lending),
         timestamp: time,
@@ -163,7 +163,7 @@ pub fn quick_lend(eng: &mut Engine, time: Time, notebook_id: ID, player_lending:
     .unwrap();
 }
 
-pub fn quick_notebook(eng: &mut Engine, time: Time, player: ID, fake: bool) -> ID {
+pub fn quick_notebook(eng: &mut Engine, time: Time, player: ActorKey, fake: bool) -> NotebookKey {
     let data = eng
         .execute(ActionRequest {
             actor: ActionActor::System,
@@ -185,10 +185,10 @@ pub fn quick_notebook(eng: &mut Engine, time: Time, player: ID, fake: bool) -> I
 pub fn quick_passive(
     eng: &mut Engine,
     time: Time,
-    player: ID,
+    player: ActorKey,
     passive_type: PassiveType,
     transferrable: bool,
-) -> ID {
+) -> PassiveKey {
     let data = eng
         .execute(ActionRequest {
             actor: ActionActor::System,
@@ -208,7 +208,7 @@ pub fn quick_passive(
     response.id
 }
 
-pub fn create_poll(eng: &mut Engine, time: Time, action: CreatePoll) -> ID {
+pub fn create_poll(eng: &mut Engine, time: Time, action: CreatePoll) -> PollKey {
     let data = eng
         .execute(ActionRequest {
             actor: ActionActor::System,
@@ -226,8 +226,8 @@ pub fn create_poll(eng: &mut Engine, time: Time, action: CreatePoll) -> ID {
 pub fn add_vote(
     eng: &mut Engine,
     time: Time,
-    poll_id: ID,
-    voter_id: ID,
+    poll_id: PollKey,
+    voter_id: ActorKey,
     accept: bool,
 ) -> ExecutionResult {
     eng.execute(ActionRequest {
@@ -237,7 +237,7 @@ pub fn add_vote(
     })
 }
 
-pub fn remove_vote(eng: &mut Engine, time: Time, poll_id: ID, voter_id: ID) -> ExecutionResult {
+pub fn remove_vote(eng: &mut Engine, time: Time, poll_id: PollKey, voter_id: ActorKey) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor: ActionActor::Player(voter_id),
         timestamp: time,
@@ -245,7 +245,7 @@ pub fn remove_vote(eng: &mut Engine, time: Time, poll_id: ID, voter_id: ID) -> E
     })
 }
 
-pub fn default_kill(id: ID) -> Action {
+pub fn default_kill(id: ActorKey) -> Action {
     Action::Kill(Kill {
         allow_link_chaining: true,
         death_message: None,
@@ -257,7 +257,7 @@ pub fn default_kill(id: ID) -> Action {
     })
 }
 
-pub fn quick_ability(eng: &mut Engine, time: Time, args: CreateAndGiveAbility) -> ID {
+pub fn quick_ability(eng: &mut Engine, time: Time, args: CreateAndGiveAbility) -> AbilityKey {
     let data = eng
         .execute(ActionRequest {
             actor: ActionActor::System,
@@ -275,8 +275,8 @@ pub fn quick_ability(eng: &mut Engine, time: Time, args: CreateAndGiveAbility) -
 pub fn use_ability(
     eng: &mut Engine,
     time: Time,
-    user_id: ID,
-    ability_id: ID,
+    user_id: ActorKey,
+    ability_id: AbilityKey,
     args: AbilityBehaviour,
 ) -> ExecutionResult {
     eng.execute(ActionRequest {
@@ -289,7 +289,7 @@ pub fn use_ability(
     })
 }
 
-pub fn quick_pool(eng: &mut Engine, time: Time, args: AddChargePool) -> ID {
+pub fn quick_pool(eng: &mut Engine, time: Time, args: AddChargePool) -> ChargePoolKey {
     let data = eng
         .execute(ActionRequest {
             actor: ActionActor::System,
@@ -307,8 +307,8 @@ pub fn quick_pool(eng: &mut Engine, time: Time, args: AddChargePool) -> ID {
 pub fn quick_link(
     eng: &mut Engine,
     time: Time,
-    ability_id: ID,
-    pool_id: ID,
+    ability_id: AbilityKey,
+    pool_id: ChargePoolKey,
     link_type: PoolLinkType,
     weight: LinkWeight,
 ) {
@@ -326,7 +326,7 @@ pub fn quick_link(
     .unwrap();
 }
 
-pub fn quick_clear_links(eng: &mut Engine, time: Time, ability_id: ID) {
+pub fn quick_clear_links(eng: &mut Engine, time: Time, ability_id: AbilityKey) {
     eng.execute(ActionRequest {
         actor: ActionActor::System,
         timestamp: time,
@@ -344,7 +344,7 @@ pub fn init_engine(eng: &mut Engine) {
     .unwrap();
 }
 
-pub fn add_org(eng: &mut Engine, time: Time, org: OrganizationName) -> ID {
+pub fn add_org(eng: &mut Engine, time: Time, org: OrganizationName) -> ActorKey {
     let data = eng
         .execute(ActionRequest {
             timestamp: time,
@@ -362,8 +362,8 @@ pub fn add_org(eng: &mut Engine, time: Time, org: OrganizationName) -> ID {
 pub fn add_to_org(
     eng: &mut Engine,
     time: Time,
-    org: ID,
-    actor: ID,
+    org: ActorKey,
+    actor: ActorKey,
     leader: bool,
     og: bool,
 ) -> ExecutionResult {
@@ -379,7 +379,7 @@ pub fn add_to_org(
     })
 }
 
-pub fn remove_from_org(eng: &mut Engine, time: Time, org: ID, actor: ID) -> ExecutionResult {
+pub fn remove_from_org(eng: &mut Engine, time: Time, org: ActorKey, actor: ActorKey) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor: ActionActor::System,
         timestamp: time,
@@ -393,7 +393,7 @@ pub fn remove_from_org(eng: &mut Engine, time: Time, org: ID, actor: ID) -> Exec
 pub fn set_leadership(
     eng: &mut Engine,
     time: Time,
-    org: ID,
+    org: ActorKey,
     policies: Option<LeadershipTransferPolicies>,
 ) {
     eng.execute(ActionRequest {
@@ -407,7 +407,7 @@ pub fn set_leadership(
     .unwrap();
 }
 
-pub fn change_leader(eng: &mut Engine, time: Time, org: ID, actor: Option<ID>) -> ExecutionResult {
+pub fn change_leader(eng: &mut Engine, time: Time, org: ActorKey, actor: Option<ActorKey>) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor: ActionActor::System,
         timestamp: time,
@@ -418,7 +418,7 @@ pub fn change_leader(eng: &mut Engine, time: Time, org: ID, actor: Option<ID>) -
     })
 }
 
-pub fn quick_org_ability(eng: &mut Engine, time: Time, args: CreateAndGiveOrgAbility) -> ID {
+pub fn quick_org_ability(eng: &mut Engine, time: Time, args: CreateAndGiveOrgAbility) -> AbilityKey {
     let data = eng
         .execute(ActionRequest {
             actor: ActionActor::System,
@@ -436,9 +436,9 @@ pub fn quick_org_ability(eng: &mut Engine, time: Time, args: CreateAndGiveOrgAbi
 pub fn use_org_ability(
     eng: &mut Engine,
     time: Time,
-    user_id: ID,
-    org_id: ID,
-    ability_id: ID,
+    user_id: ActorKey,
+    org_id: ActorKey,
+    ability_id: AbilityKey,
     args: AbilityBehaviour,
 ) -> ExecutionResult {
     eng.execute(ActionRequest {
@@ -452,7 +452,7 @@ pub fn use_org_ability(
     })
 }
 
-pub fn force_charges(eng: &mut Engine, time: Time, ability_id: ID, charges: ChargeCount) {
+pub fn force_charges(eng: &mut Engine, time: Time, ability_id: AbilityKey, charges: ChargeCount) {
     quick_clear_links(eng, 0, ability_id);
     quick_pool(
         eng,
@@ -464,7 +464,7 @@ pub fn force_charges(eng: &mut Engine, time: Time, ability_id: ID, charges: Char
     );
 }
 
-pub fn add_state(eng: &mut Engine, time: Time, actor_id: ID, state: State) {
+pub fn add_state(eng: &mut Engine, time: Time, actor_id: ActorKey, state: State) {
     eng.execute(ActionRequest {
         actor: ActionActor::System,
         timestamp: time,
@@ -473,7 +473,7 @@ pub fn add_state(eng: &mut Engine, time: Time, actor_id: ID, state: State) {
     .unwrap();
 }
 
-pub fn remove_state(eng: &mut Engine, time: Time, actor_id: ID, state: State) {
+pub fn remove_state(eng: &mut Engine, time: Time, actor_id: ActorKey, state: State) {
     eng.execute(ActionRequest {
         actor: ActionActor::System,
         timestamp: time,
@@ -482,7 +482,7 @@ pub fn remove_state(eng: &mut Engine, time: Time, actor_id: ID, state: State) {
     .unwrap();
 }
 
-pub fn create_channel(eng: &mut Engine, time: Time, loggable: bool) -> ID {
+pub fn create_channel(eng: &mut Engine, time: Time, loggable: bool) -> ChannelKey {
     let data = eng
         .execute(ActionRequest {
             actor: ActionActor::System,
@@ -500,8 +500,8 @@ pub fn create_channel(eng: &mut Engine, time: Time, loggable: bool) -> ID {
 pub fn set_member(
     eng: &mut Engine,
     time: Time,
-    player_id: ID,
-    channel_id: ID,
+    player_id: ActorKey,
+    channel_id: ChannelKey,
     settings: Option<ChannelMember>,
 ) -> ExecutionResult {
     eng.execute(ActionRequest {
@@ -518,8 +518,8 @@ pub fn set_member(
 pub fn send_message(
     eng: &mut Engine,
     time: Time,
-    player_id: ID,
-    channel_id: ID,
+    player_id: ActorKey,
+    channel_id: ChannelKey,
     display: SenderDisplay,
     content: &str,
 ) -> ExecutionResult {
@@ -534,7 +534,7 @@ pub fn send_message(
     })
 }
 
-pub fn create_gc(eng: &mut Engine, time: Time) -> ID {
+pub fn create_gc(eng: &mut Engine, time: Time) -> GroupchatKey {
     let data = eng
         .execute(ActionRequest {
             actor: ActionActor::System,
@@ -553,8 +553,8 @@ pub fn add_to_gc(
     eng: &mut Engine,
     time: Time,
     actor: ActionActor,
-    gc_id: ID,
-    player_id: ID,
+    gc_id: GroupchatKey,
+    player_id: ActorKey,
     owner: bool,
 ) -> ExecutionResult {
     eng.execute(ActionRequest {
@@ -572,8 +572,8 @@ pub fn remove_from_gc(
     eng: &mut Engine,
     time: Time,
     actor: ActionActor,
-    gc_id: ID,
-    player_id: ID,
+    gc_id: GroupchatKey,
+    player_id: ActorKey,
 ) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor,
@@ -589,8 +589,8 @@ pub fn set_gc_owner(
     eng: &mut Engine,
     time: Time,
     actor: ActionActor,
-    gc_id: ID,
-    owner: Option<ID>,
+    gc_id: GroupchatKey,
+    owner: Option<ActorKey>,
 ) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor,
@@ -602,7 +602,7 @@ pub fn set_gc_owner(
     })
 }
 
-pub fn create_lounge(eng: &mut Engine, time: Time, variant: LoungeVariant) -> (ID, ID) {
+pub fn create_lounge(eng: &mut Engine, time: Time, variant: LoungeVariant) -> (LoungeKey, ChannelKey) {
     let data = eng
         .execute(ActionRequest {
             actor: ActionActor::System,
@@ -620,8 +620,8 @@ pub fn create_lounge(eng: &mut Engine, time: Time, variant: LoungeVariant) -> (I
 pub fn leave_lounge(
     eng: &mut Engine,
     time: Time,
-    player_id: ID,
-    lounge_id: ID,
+    player_id: ActorKey,
+    lounge_id: LoungeKey,
 ) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor: ActionActor::Player(player_id),
@@ -633,8 +633,8 @@ pub fn leave_lounge(
 pub fn remove_from_lounge(
     eng: &mut Engine,
     time: Time,
-    player_id: ID,
-    lounge_id: ID,
+    player_id: ActorKey,
+    lounge_id: LoungeKey,
 ) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor: ActionActor::System,
@@ -646,7 +646,7 @@ pub fn remove_from_lounge(
     })
 }
 
-pub fn give_role(eng: &mut Engine, time: Time, target_id: ID, role: Role) {
+pub fn give_role(eng: &mut Engine, time: Time, target_id: ActorKey, role: Role) {
     eng.execute(ActionRequest {
         actor: ActionActor::System,
         timestamp: time,
@@ -658,7 +658,7 @@ pub fn give_role(eng: &mut Engine, time: Time, target_id: ID, role: Role) {
 pub fn set_world_channel_override(
     eng: &mut Engine,
     time: Time,
-    player_id: ID,
+    player_id: ActorKey,
     channel_name: WorldChannelName,
     source: OverrideSource,
     priority: u8,

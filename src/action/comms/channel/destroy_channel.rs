@@ -7,8 +7,8 @@
 */
 
 use crate::{
-    ID,
     action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    common::ChannelKey,
     helpers::get_channel,
 };
 
@@ -17,7 +17,7 @@ pub struct DestroyChannelResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct DestroyChannel {
-    pub channel_id: ID,
+    pub channel_id: ChannelKey,
 }
 
 impl ActionInterface for DestroyChannel {

@@ -1,6 +1,6 @@
 use indexmap::{IndexSet, indexset};
 
-use crate::ID;
+use crate::common::{ActorKey, ChannelKey};
 
 // when the owner leaves a groupchat, the owner is set to None
 //
@@ -11,13 +11,13 @@ use crate::ID;
 
 #[derive(Debug)]
 pub struct Groupchat {
-    pub channel_id: ID,
-    pub owner: Option<ID>,
-    pub members: IndexSet<ID>,
+    pub channel_id: ChannelKey,
+    pub owner: Option<ActorKey>,
+    pub members: IndexSet<ActorKey>,
 }
 
 impl Groupchat {
-    pub fn new(channel_id: ID) -> Self {
+    pub fn new(channel_id: ChannelKey) -> Self {
         Groupchat {
             channel_id,
             owner: None,
@@ -25,19 +25,19 @@ impl Groupchat {
         }
     }
 
-    pub fn add_member(&mut self, id: ID) {
+    pub fn add_member(&mut self, id: ActorKey) {
         self.members.insert(id);
     }
 
-    pub fn remove_member(&mut self, id: ID) {
+    pub fn remove_member(&mut self, id: ActorKey) {
         self.members.swap_remove(&id);
     }
 
-    pub fn contains_member(&self, id: ID) -> bool {
+    pub fn contains_member(&self, id: ActorKey) -> bool {
         self.members.contains(&id)
     }
 
-    pub fn set_owner(&mut self, owner: Option<ID>) {
+    pub fn set_owner(&mut self, owner: Option<ActorKey>) {
         self.owner = owner;
     }
 }

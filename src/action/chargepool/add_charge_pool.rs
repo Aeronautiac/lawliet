@@ -4,15 +4,14 @@
 */
 
 use crate::{
-    ID,
     action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
     chargepool::ChargePool,
-    common::{ChargeCount, IterationCount},
+    common::{ChargeCount, ChargePoolKey, IterationCount},
 };
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct AddChargePoolResponse {
-    pub id: ID,
+    pub id: ChargePoolKey,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -36,7 +35,7 @@ impl ActionInterface for AddChargePool {
             let pool = ChargePool::new(self.base_charges, self.base_reset_time);
             eng.world.add_charge_pool(pool)
         } else {
-            0
+            ChargePoolKey::default()
         };
 
         Ok(ActionResponse::AddChargePool(AddChargePoolResponse { id }))

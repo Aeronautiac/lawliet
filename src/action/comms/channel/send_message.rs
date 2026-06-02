@@ -4,10 +4,10 @@
 */
 
 use crate::{
-    ID,
     action::{ActionError, ActionInterface, ActionResponse},
     channel::{ChannelPermission, SenderDisplay},
     command::Command,
+    common::{BugKey, ChannelKey},
     helpers::{get_channel, player_id},
 };
 
@@ -16,7 +16,7 @@ pub struct SendMessageResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct SendMessage {
-    pub channel_id: ID,
+    pub channel_id: ChannelKey,
     pub display: SenderDisplay,
     pub content: String,
 }
@@ -62,7 +62,7 @@ impl ActionInterface for SendMessage {
 
         // relay to all active bugs targeting this player if the channel is loggable
         if loggable {
-            let bug_ids: Vec<ID> = eng
+            let bug_ids: Vec<BugKey> = eng
                 .world
                 .get_player(id)
                 .expect("expected valid player")

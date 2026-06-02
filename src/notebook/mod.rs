@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 
-use crate::{ID, common::AttemptCount};
+use crate::common::{ActorKey, AttemptCount, ChannelKey};
 
 #[derive(Debug)]
 pub enum NotebookError {
@@ -14,19 +14,19 @@ pub struct Notebook {
     pub volatile: bool, // if a notebook is volatile, it will be destroyed when the original owner's
     // role changes
     pub fake: bool, // if a notebook is fake, it cannot actually kill people
-    pub original_owner: Option<ID>,
-    pub dormant_true_owner: Option<ID>, // the person who the notebook should return to if it was
+    pub original_owner: Option<ActorKey>,
+    pub dormant_true_owner: Option<ActorKey>, // the person who the notebook should return to if it was
     // discovered that they never actually died (this should be None most of the time, but
     // pseudocide will set it to the target's ID if applicable)
-    pub owner: Option<ID>,    // the person this notebook currently belongs to
-    pub borrowed: Option<ID>, // the person the notebook is being borrowed from (if any)
-    pub iteration_successes: IndexMap<ID, AttemptCount>, // success counts (correct names)
-    pub iteration_failures: IndexMap<ID, AttemptCount>, // failed counts (wrong names)
-    pub channel_id: ID,
+    pub owner: Option<ActorKey>,    // the person this notebook currently belongs to
+    pub borrowed: Option<ActorKey>, // the person the notebook is being borrowed from (if any)
+    pub iteration_successes: IndexMap<ActorKey, AttemptCount>, // success counts (correct names)
+    pub iteration_failures: IndexMap<ActorKey, AttemptCount>, // failed counts (wrong names)
+    pub channel_id: ChannelKey,
 }
 
 impl Notebook {
-    pub fn new(channel_id: ID, fake: bool) -> Self {
+    pub fn new(channel_id: ChannelKey, fake: bool) -> Self {
         Notebook {
             fake,
             volatile: false,
@@ -40,12 +40,12 @@ impl Notebook {
         }
     }
 
-    pub fn set_original_owner(&mut self, id: ID) {
+    pub fn set_original_owner(&mut self, id: ActorKey) {
         self.original_owner = Some(id);
     }
 
     /// gives the notebook to the person AND sets them as a the true owner
-    pub fn set_true_owner(&mut self, id: ID, volatile: bool) {
+    pub fn set_true_owner(&mut self, id: ActorKey, volatile: bool) {
         self.volatile = volatile;
         if self.original_owner.is_none() {
             self.set_original_owner(id);
@@ -66,7 +66,7 @@ impl Notebook {
         self.dormant_true_owner = None;
     }
 
-    pub fn get_dormant_owner(&self) -> Option<ID> {
+    pub fn get_dormant_owner(&self) -> Option<ActorKey> {
         self.dormant_true_owner
     }
 
@@ -76,7 +76,7 @@ impl Notebook {
         self.owner = None;
     }
 
-    pub fn get_true_owner(&self) -> Option<ID> {
+    pub fn get_true_owner(&self) -> Option<ActorKey> {
         if let Some(borrowed) = self.borrowed {
             Some(borrowed)
         } else {
@@ -84,7 +84,7 @@ impl Notebook {
         }
     }
 
-    pub fn can_lend(&self, id: ID) -> Result<(), NotebookError> {
+    pub fn can_lend(&self, id: ActorKey) -> Result<(), NotebookError> {
         if self.owner != Some(id) {
             return Err(NotebookError::NotOwned);
         }
@@ -94,7 +94,7 @@ impl Notebook {
         Ok(())
     }
 
-    pub fn lend(&mut self, id: ID) -> Result<(), NotebookError> {
+    pub fn lend(&mut self, id: ActorKey) -> Result<(), NotebookError> {
         if let Some(owner) = self.owner {
             self.borrowed = Some(owner);
             self.owner = Some(id);
@@ -116,31 +116,31 @@ impl Notebook {
         }
     }
 
-    pub fn on_write_success(&mut self, id: ID) {
+    pub fn on_write_success(&mut self, id: ActorKey) {
         self.iteration_successes
             .entry(id)
             .and_modify(|count| *count += 1)
             .or_insert(1);
     }
 
-    pub fn on_write_failure(&mut self, id: ID) {
+    pub fn on_write_failure(&mut self, id: ActorKey) {
         self.iteration_failures
             .entry(id)
             .and_modify(|count| *count += 1)
             .or_insert(1);
     }
 
-    pub fn failures_remaining(&self, id: ID, limit: AttemptCount) -> AttemptCount {
+    pub fn failures_remaining(&self, id: ActorKey, limit: AttemptCount) -> AttemptCount {
         limit - self.iteration_failures.get(&id).unwrap_or(&0)
     }
 
-    pub fn successes_remaining(&self, id: ID, limit: AttemptCount) -> AttemptCount {
+    pub fn successes_remaining(&self, id: ActorKey, limit: AttemptCount) -> AttemptCount {
         limit - self.iteration_successes.get(&id).unwrap_or(&0)
     }
 
     pub fn can_write(
         &self,
-        id: ID,
+        id: ActorKey,
         fail_limit: u16,
         success_limit: u16,
     ) -> Result<(), NotebookError> {

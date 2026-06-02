@@ -4,9 +4,8 @@
 */
 
 use crate::{
-    ID,
     action::{ActionInterface, ActionResponse},
-    common::ChargeCount,
+    common::{ChargeCount, ChargePoolKey},
     helpers::get_charge_pool_mut,
 };
 
@@ -15,7 +14,7 @@ pub struct AddChargesResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct AddCharges {
-    pub id: ID,
+    pub id: ChargePoolKey,
     pub charges: ChargeCount,
 }
 

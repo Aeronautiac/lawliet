@@ -83,7 +83,10 @@ mod poll;
 mod test_helpers;
 mod world;
 
-pub use common::{ID, Time};
+pub use common::{
+    AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, ID, LoungeKey,
+    NotebookKey, PassiveKey, PollKey, Time,
+};
 
 // most of what remains within the engine are small tasks
 // the most difficult one here is defining and managing the communication protocol
@@ -131,14 +134,14 @@ mod tests {
         for &id in &actor.abilities {
             assert!(
                 get_ability(&eng, id).is_ok(),
-                "stale ability id {id} in actor cache"
+                "stale ability id {id:?} in actor cache"
             );
         }
         // all IDs in actor.passives must resolve in the world
         for &id in &actor.passives {
             assert!(
                 get_passive(&eng, id).is_ok(),
-                "stale passive id {id} in actor cache"
+                "stale passive id {id:?} in actor cache"
             );
         }
     }

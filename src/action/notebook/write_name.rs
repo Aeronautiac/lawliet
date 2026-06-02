@@ -5,7 +5,7 @@
 */
 
 use crate::{
-    ID, Time,
+    Time,
     action::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
         ActionResult,
@@ -13,7 +13,7 @@ use crate::{
     },
     actor::modifier::Modifier,
     command::Command,
-    common::Version,
+    common::{NotebookKey, Version},
     engine::Engine,
     helpers::{actor_get_effective_passive, actor_id, get_actor, get_notebook, get_notebook_mut},
     notebook::NotebookError,
@@ -27,7 +27,7 @@ pub struct WriteNameResponse {}
 pub struct WriteName {
     pub true_name: String,
     pub death_message: Option<String>,
-    pub notebook_id: ID,
+    pub notebook_id: NotebookKey,
     pub delay: Time, // the time (in seconds) after the current time to kill the player
 }
 

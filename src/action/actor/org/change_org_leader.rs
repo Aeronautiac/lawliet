@@ -8,8 +8,8 @@
 // notify existing leaders that leadership has changed
 
 use crate::{
-    ID,
     action::{ActionError, ActionInterface, ActionResponse},
+    common::ActorKey,
     helpers::{get_actor, get_org, get_org_mut},
 };
 
@@ -18,8 +18,8 @@ pub struct ChangeOrgLeaderResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct ChangeOrgLeader {
-    pub org_id: ID,
-    pub new_leader: Option<ID>,
+    pub org_id: ActorKey,
+    pub new_leader: Option<ActorKey>,
 }
 
 impl ActionInterface for ChangeOrgLeader {

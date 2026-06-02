@@ -4,8 +4,8 @@
 */
 
 use crate::{
-    ID,
     action::{ActionError, ActionInterface, ActionResponse},
+    common::PollKey,
     helpers::{actor_id, get_poll, get_poll_mut},
 };
 
@@ -14,7 +14,7 @@ pub struct RemoveVoteResponse {}
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct RemoveVote {
-    pub poll_id: ID,
+    pub poll_id: PollKey,
 }
 
 impl ActionInterface for RemoveVote {
