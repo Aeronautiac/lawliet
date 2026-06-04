@@ -80,6 +80,7 @@ mod notebook;
 mod ownership;
 mod passive;
 mod poll;
+mod prosecution;
 mod test_helpers;
 mod world;
 
@@ -89,7 +90,10 @@ pub use common::{
 };
 
 // most of what remains within the engine are small tasks
-// the most difficult one here is defining and managing the communication protocol
+// the most difficult one here is defining and managing the frontend communication protocol
+// as well as the prosecution system
+// kidnappings are trivial, but they do need their own stateful objects because they can directly
+// interacted with and have their own channels
 // a minimal frontend can likely be implemented with what has been written so far, but it is
 // probably best to finish the engine first
 
@@ -137,6 +141,7 @@ mod tests {
                 "stale ability id {id:?} in actor cache"
             );
         }
+
         // all IDs in actor.passives must resolve in the world
         for &id in &actor.passives {
             assert!(

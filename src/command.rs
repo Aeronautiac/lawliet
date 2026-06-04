@@ -1,10 +1,13 @@
 use indexmap::IndexSet;
 
 use crate::{
-    ID, Time,
+    Time,
     actor::{modifier::Modifiers, state::States},
     channel::{ChannelPermissions, SenderDisplay},
-    common::{AbilityKey, ActorKey, AttemptCount, ChannelKey, ChargeCount, GroupchatKey, IterationCount, LoungeKey, NotebookKey, PassiveKey},
+    common::{
+        AbilityKey, ActorKey, AttemptCount, ChannelKey, ChargeCount, GroupchatKey, IterationCount,
+        LoungeKey, NotebookKey, PassiveKey,
+    },
     config::{ability::AbilityName, role::Role},
 };
 
@@ -165,9 +168,16 @@ pub enum Command {
         channel_id: ChannelKey,
     },
 
+    // delete a channel
+    // the frontend must handle the cascading effects of handling things tied to the channel
+    // (notebooks, groupchats, lounges, etc...)
+    DeleteChannel {
+        channel_id: ChannelKey,
+    },
+
     /////=<TARGETTED>=/////
 
-    // entirely remove someone's view of a channel
+    // remove someone's view of a channel
     RemoveChannel {
         channel_id: ChannelKey,
     },

@@ -3,11 +3,11 @@
 * Destroy a channel and remove it from the world.
 * Callers are responsible for cleaning up any wrapper objects (lounges, groupchats, notebooks,
 * world channels) that reference this channel before calling this action.
-* TODO: emit frontend command when command protocol is implemented
 */
 
 use crate::{
     action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
+    command::Command,
     common::ChannelKey,
     helpers::get_channel,
 };
@@ -24,7 +24,7 @@ impl ActionInterface for DestroyChannel {
     fn handle(
         &mut self,
         eng: &mut crate::engine::Engine,
-        _ctx: &mut ActionContext,
+        ctx: &mut ActionContext,
         actor: &ActionActor,
         _version: crate::common::Version,
         mutate: bool,
@@ -35,6 +35,14 @@ impl ActionInterface for DestroyChannel {
         if mutate {
             eng.world.remove_channel(self.channel_id);
         }
+
+        ctx.push_cmd(
+            Command::DeleteChannel {
+                channel_id: self.channel_id,
+            },
+            None,
+            eng.time,
+        );
 
         Ok(ActionResponse::DestroyChannel(DestroyChannelResponse {}))
     }

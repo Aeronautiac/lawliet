@@ -1,7 +1,7 @@
 use crate::{
     common::ActorKey,
     engine::Engine,
-    helpers::{get_actor, get_org},
+    helpers::{get_actor, get_channel, get_org},
     poll::{Poll, PollVisibility},
 };
 
@@ -12,8 +12,10 @@ fn visibility_check(poll: &Poll, eng: &Engine, voter_id: ActorKey) -> bool {
             org.has_member(voter_id)
         }
         PollVisibility::Channel(channel_id) => {
-            // placeholder until channels are implemented into the world
-            true
+            let channel = get_channel(eng, channel_id).expect(
+                "invariant violated: expected valid channel id within a poll visibility enum",
+            );
+            channel.get_member(voter_id).is_some()
         }
         PollVisibility::AllPresent => true,
     }

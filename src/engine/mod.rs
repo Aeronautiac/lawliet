@@ -1,16 +1,16 @@
-use crate::{Time, common::Seed};
 use crate::action::{ActionContext, ActionError, ActionRequest, ActionResponse, ActionResult};
 use crate::command::DeferredCommand;
-use crate::common::SequenceNumber;
+use crate::common::JobID;
 use crate::config::Config;
 use crate::world::World;
+use crate::{Time, common::Seed};
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
 #[derive(PartialEq, Eq)]
 pub struct Job {
-    pub id: SequenceNumber,
+    pub id: JobID,
     pub request: ActionRequest,
     pub cancelled: RefCell<bool>,
 }
@@ -38,7 +38,7 @@ pub struct Engine {
     pub jobs: BinaryHeap<Job>,
     pub deferred_commands: Vec<DeferredCommand>,
     pub rng_state: Seed,
-    next_job_id: SequenceNumber,
+    next_job_id: JobID,
 }
 
 pub type ExecutionResult = Result<(ActionResponse, ActionContext), ActionError>;

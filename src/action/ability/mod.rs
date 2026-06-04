@@ -1,9 +1,9 @@
 pub mod add_ability;
-pub mod destroy_ability;
 pub mod add_link;
 pub mod clear_links;
 pub mod clear_volatile_links;
 pub mod create_and_give_ability;
+pub mod destroy_ability;
 pub mod give_ability;
 pub mod remove_link;
 pub mod use_ability;

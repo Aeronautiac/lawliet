@@ -4,7 +4,7 @@
 */
 
 use crate::{
-    ability::{AbilityBehaviour, AbilityInterface, AbilityResponse},
+    ability::{AbilityBehaviour, AbilityInterface},
     action::{
         ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse, ActionResult,
     },

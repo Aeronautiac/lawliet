@@ -23,7 +23,10 @@ use crate::{
     command::Command,
     common::{ActorKey, Version},
     engine::Engine,
-    helpers::{cmd_all_deferred, get_actor, get_actor_mut, get_notebook, require_alive},
+    helpers::{
+        cmd_all_deferred, get_ability, get_actor, get_actor_mut, get_notebook, get_passive,
+        require_alive,
+    },
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -76,32 +79,30 @@ impl ActionInterface for Kill {
                 killer.kills.push(self.target_id);
             }
 
+            let target = get_actor(eng, self.target_id)?;
+
             if killer_id != self.target_id {
                 // ability transfers
-                for (id, ability) in eng.world.abilities.iter() {
-                    if let Some(owner) = ability.ownership_struct.owner
-                        && owner == self.target_id
-                        && ability.ownership_struct.transferrable
-                    {
+                for id in target.abilities.iter() {
+                    let ability = get_ability(eng, *id)?;
+                    if ability.ownership_struct.transferrable {
                         ability_transferred = true;
                         next_actions.push(Action::GiveAbility(GiveAbility {
                             volatile: false,
-                            ability_id: id,
+                            ability_id: *id,
                             actor_id: killer_id,
                         }));
                     }
                 }
 
                 // passive transfers
-                for (id, passive) in eng.world.passives.iter() {
-                    if let Some(owner) = passive.ownership_struct.owner
-                        && owner == self.target_id
-                        && passive.ownership_struct.transferrable
-                    {
+                for id in target.passives.iter() {
+                    let passive = get_passive(eng, *id)?;
+                    if passive.ownership_struct.transferrable {
                         ability_transferred = true;
                         next_actions.push(Action::GivePassive(GivePassive {
                             volatile: false,
-                            passive_id: id,
+                            passive_id: *id,
                             actor_id: killer_id,
                         }));
                     }
@@ -116,27 +117,23 @@ impl ActionInterface for Kill {
         let target = get_actor(eng, self.target_id)?;
         for id in target.notebooks.iter() {
             let notebook = get_notebook(eng, *id)?;
-            if let Some(owner) = notebook.owner
-                && owner == self.target_id
-            {
-                // it should be impossible
-                // for a notebook to have a current owner and no true owner
-                let true_owner = notebook.get_true_owner().unwrap();
-                if let Some(killer_id) = self.killer_id {
-                    if (true_owner != killer_id) || (owner != true_owner) {
-                        next_actions.push(Action::GiveNotebook(GiveNotebook {
-                            notebook_id: *id,
-                            actor_id: killer_id,
-                            volatile: false,
-                        }));
+            // it should be impossible
+            // for a notebook to have a current owner and no true owner
+            let true_owner = notebook.get_true_owner().unwrap();
+            if let Some(killer_id) = self.killer_id {
+                if (true_owner != killer_id) || (self.target_id != true_owner) {
+                    next_actions.push(Action::GiveNotebook(GiveNotebook {
+                        notebook_id: *id,
+                        actor_id: killer_id,
+                        volatile: false,
+                    }));
 
-                        if owner != killer_id {
-                            notebook_transferred = true;
-                        }
+                    if self.target_id != killer_id {
+                        notebook_transferred = true;
                     }
-                } else if notebook.get_true_owner().unwrap() != self.target_id {
-                    next_actions.push(Action::TakeNotebook(TakeNotebook { notebook_id: *id }));
                 }
+            } else if notebook.get_true_owner().unwrap() != self.target_id {
+                next_actions.push(Action::TakeNotebook(TakeNotebook { notebook_id: *id }));
             };
         }
 

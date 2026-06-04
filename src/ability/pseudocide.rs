@@ -5,10 +5,10 @@ use crate::{
         actor::player::{kill::Kill, revive::Revive, schedule_revive::ScheduleRevive},
     },
     actor::modifier::Modifier,
-    command::{Command, CommandPayload, DeferredCommand},
+    command::Command,
     common::{AbilityKey, ActorKey},
     config::{ability::AbilityName, role::Role},
-    helpers::{cmd_all_deferred, get_player},
+    helpers::cmd_all_deferred,
 };
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone)]
