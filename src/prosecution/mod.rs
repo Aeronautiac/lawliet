@@ -44,7 +44,9 @@
 * period, the prosecution is immediately terminated. (The state of the lawyer is irrelevant beyond
 * initial selection)
 *
-* If the defendant dies during the voting period, the prosecution immediately terminates.
+* If the defendant specifically dies during the voting period, the prosecution immediately terminates.
+* Other modifiers dont matter. In lore, we can say they've been injected with a remote kill device.
+* We can also just prevent kidnappings and such if needed.
 *
 * If visibiliy for a trial is lost (blackout can do this), the trial restarts when the disruption ends
 *
@@ -54,6 +56,20 @@
 * Custody wiretaps you (a bug instance is created). If you pick a lawyer, you establish a private
 * line of communcation with that lawyer until the voting period begins.
 */
+
+// need to think about termination:
+// we can "archive" using deferred commands
+// example:
+// - person imprisoned
+// - prosecution begins
+// - deferred visibility commands sent out to everyone
+// - prosecution concludes
+// - archival command sent to frontend server
+// - engine deletes prosecution from memory
+// - person released
+// - person receives old channel visibility command
+// - when something is archived, it cannot be interacted with and is meant to be explicitly labeled
+// as archived
 
 use crate::{ActorKey, ChannelKey, PollKey, common::JobID};
 

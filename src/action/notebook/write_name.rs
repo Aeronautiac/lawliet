@@ -71,20 +71,16 @@ impl ActionInterface for WriteName {
         if let Some(target_id) = target
             && !book.fake
         {
-            let mut cancelled = false;
-            for job in eng.jobs.iter() {
-                if *job.cancelled.borrow_mut() {
-                    continue;
-                }
-                if let Action::NotebookScheduledKill(data) = &job.request.payload
-                    && data.kill.target_id == target_id
-                {
-                    cancelled = true;
-                    if mutate {
-                        *job.cancelled.borrow_mut() = true;
+            let cancelled = eng.jobs.cancel_all_cond(
+                |job| {
+                    if let Action::NotebookScheduledKill(data) = &job.request.payload {
+                        data.kill.target_id == target_id
+                    } else {
+                        false
                     }
-                }
-            }
+                },
+                mutate,
+            ) > 0;
 
             let book = get_notebook_mut(eng, self.notebook_id)?;
             if mutate {

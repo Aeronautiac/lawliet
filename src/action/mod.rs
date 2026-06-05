@@ -2,7 +2,6 @@ use enum_dispatch::enum_dispatch;
 
 use crate::{
     Time,
-    common::ActorKey,
     action::{
         ability::{
             add_ability::{AddAbility, AddAbilityResponse},
@@ -124,6 +123,7 @@ use crate::{
         },
     },
     command::{Command, CommandPayload},
+    common::ActorKey,
     common::Version,
     engine::Engine,
 };
@@ -136,6 +136,7 @@ pub mod engine;
 pub mod notebook;
 pub mod passive;
 pub mod poll;
+pub mod prosecution;
 pub mod update;
 pub mod world;
 
@@ -391,13 +392,13 @@ pub enum ActionResponse {
     DeferredCmds(DeferredCmdsResponse),
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct OrgActorInfo {
     pub org_id: ActorKey,
     pub player_id: ActorKey,
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum ActionActor {
     Admin,
     System,
@@ -405,7 +406,7 @@ pub enum ActionActor {
     Organization(OrgActorInfo),
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct ActionRequest {
     pub actor: ActionActor,
     pub timestamp: crate::Time,

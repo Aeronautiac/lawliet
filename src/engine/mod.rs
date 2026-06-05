@@ -1,44 +1,19 @@
 use crate::action::{ActionContext, ActionError, ActionRequest, ActionResponse, ActionResult};
 use crate::command::DeferredCommand;
-use crate::common::JobID;
 use crate::config::Config;
+use crate::engine::jobs::Jobs;
 use crate::world::World;
 use crate::{Time, common::Seed};
-use std::cell::RefCell;
-use std::cmp::Ordering;
-use std::collections::BinaryHeap;
 
-#[derive(PartialEq, Eq)]
-pub struct Job {
-    pub id: JobID,
-    pub request: ActionRequest,
-    pub cancelled: RefCell<bool>,
-}
-
-impl Ord for Job {
-    fn cmp(&self, other: &Self) -> Ordering {
-        other
-            .request
-            .timestamp
-            .cmp(&self.request.timestamp)
-            .then_with(|| other.id.cmp(&self.id))
-    }
-}
-
-impl PartialOrd for Job {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
+pub mod jobs;
 
 pub struct Engine {
     pub world: World,
     pub config: Config,
     pub time: Time,
-    pub jobs: BinaryHeap<Job>,
+    pub jobs: Jobs,
     pub deferred_commands: Vec<DeferredCommand>,
     pub rng_state: Seed,
-    next_job_id: JobID,
 }
 
 pub type ExecutionResult = Result<(ActionResponse, ActionContext), ActionError>;
@@ -48,22 +23,15 @@ impl Engine {
         Engine {
             world: World::new(),
             config: Config::new(),
-            jobs: BinaryHeap::new(),
+            jobs: Jobs::new(),
             deferred_commands: vec![],
             time: 0,
             rng_state: 0,
-            next_job_id: 0,
         }
     }
 
     pub fn schedule(&mut self, request: ActionRequest) {
-        let job = Job {
-            id: self.next_job_id,
-            request,
-            cancelled: RefCell::new(false),
-        };
-        self.jobs.push(job);
-        self.next_job_id += 1;
+        self.jobs.push(request);
     }
 
     pub fn is_future_timestamp(&self, timestamp: Time) -> bool {
@@ -122,16 +90,14 @@ impl Engine {
             if self.jobs.is_empty() {
                 break;
             }
+
             let job = self.jobs.peek().unwrap();
             if job.request.timestamp > action.timestamp {
                 break;
             }
 
-            let job = self.jobs.pop().unwrap();
-            if *job.cancelled.borrow() {
-                continue;
-            }
             // ignore the errors of scheduled jobs.
+            let job = self.jobs.pop().unwrap();
             let _ = self.execute_atomic(&mut ctx, job.request);
         }
 

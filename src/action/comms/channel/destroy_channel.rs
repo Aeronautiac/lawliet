@@ -18,6 +18,7 @@ pub struct DestroyChannelResponse {}
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct DestroyChannel {
     pub channel_id: ChannelKey,
+    pub archive: bool,
 }
 
 impl ActionInterface for DestroyChannel {
@@ -36,13 +37,23 @@ impl ActionInterface for DestroyChannel {
             eng.world.remove_channel(self.channel_id);
         }
 
-        ctx.push_cmd(
-            Command::DeleteChannel {
-                channel_id: self.channel_id,
-            },
-            None,
-            eng.time,
-        );
+        if !self.archive {
+            ctx.push_cmd(
+                Command::DeleteChannel {
+                    channel_id: self.channel_id,
+                },
+                None,
+                eng.time,
+            );
+        } else {
+            ctx.push_cmd(
+                Command::ArchiveChannel {
+                    channel_id: self.channel_id,
+                },
+                None,
+                eng.time,
+            );
+        }
 
         Ok(ActionResponse::DestroyChannel(DestroyChannelResponse {}))
     }

@@ -18,10 +18,19 @@ pub struct DeferredCommand {
                                        // receive the command
 }
 
+// IMPORTANT:
+// the frontend does not need to clear data for deleted objects. it may still be useful to have the
+// hosts view these objects or similar.
+// deleted objects should however be hidden from any actual players.
+//
+// archived objects should be displayed to people but may not be interacted with.
+// it is possible to receive a display command or similar for an object that has already been archived.
+
 // commands with no recipient are considered "system" commands and are used to talk directly to the
 // host or the backend of a frontend
 //
 // the frontend server is expected to intercept certain commands if they wish to implement host controls
+
 #[derive(Clone)]
 pub struct CommandPayload {
     pub timestamp: Time,
@@ -172,6 +181,10 @@ pub enum Command {
     // the frontend must handle the cascading effects of handling things tied to the channel
     // (notebooks, groupchats, lounges, etc...)
     DeleteChannel {
+        channel_id: ChannelKey,
+    },
+
+    ArchiveChannel {
         channel_id: ChannelKey,
     },
 
