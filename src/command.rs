@@ -1,7 +1,7 @@
 use indexmap::IndexSet;
 
 use crate::{
-    Time,
+    BugKey, Time,
     actor::{modifier::Modifiers, state::States},
     channel::{ChannelPermissions, SenderDisplay},
     common::{
@@ -25,6 +25,27 @@ pub struct DeferredCommand {
 //
 // archived objects should be displayed to people but may not be interacted with.
 // it is possible to receive a display command or similar for an object that has already been archived.
+//
+// PROBLEM:
+// what if we want to hide the view of an archived object?
+// furthermore, a system for hiding things
+
+// should views of bugs be disruptable?
+// this seems like itd be a cool game mechanic
+// if you know who bugged you, you can kidnap them or similar to disrupt their view of the bug while theyre gone
+// theyll still be able to see it when they return though. (lore reason - theyve got a laptop hidden
+// somewhere)
+// im going to say yes to this one.
+
+// key decision:
+// should players who have received info be able to continue to view that info if a disruption
+// occurs?
+// should they be able to see all messages in a channel which have been sent up to the point of them
+// losing their view permissions for example?
+// what about if theyve bugged someone a while ago, the bug was archived, and they got kidnapped?
+// im going to lean towards yes because people can always just take screenshots of info when they
+// receive it. once its there, its there. this also simplifies things. without this, i'd need a new
+// system for hiding archived views.
 
 // commands with no recipient are considered "system" commands and are used to talk directly to the
 // host or the backend of a frontend
@@ -184,8 +205,30 @@ pub enum Command {
         channel_id: ChannelKey,
     },
 
+    // can no longer send messages or similar, but you can still view if you have/are given view permissions
     ArchiveChannel {
         channel_id: ChannelKey,
+    },
+
+    NewBug {
+        bug_key: BugKey,
+    },
+
+    AddBugMessage {
+        bug_key: BugKey,
+        display: SenderDisplay,
+        content: String,
+    },
+
+    // shouldnt really do much. itll just say that the bug is no longer active.
+    ArchiveBug {
+        bug_key: BugKey,
+    },
+
+    // identical to setting visibility to false for everyone in the game - collapsed into a single
+    // instruction
+    ClearBugVisibily {
+        bug_id: BugKey,
     },
 
     /////=<TARGETTED>=/////
@@ -219,6 +262,11 @@ pub enum Command {
         channel_id: ChannelKey,
         perms: ChannelPermissions,
         displays: IndexSet<SenderDisplay>,
+    },
+
+    SetBugVisibility {
+        bug_id: BugKey,
+        visible: bool,
     },
 
     ////////////////////////////////////////////////

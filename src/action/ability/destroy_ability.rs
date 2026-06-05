@@ -7,9 +7,9 @@
 use crate::{
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
-        ability::remove_link::RemoveLink,
-        comms::bug::destroy_bug::DestroyBug,
+        ability::remove_link::RemoveLink, comms::bug::destroy_bug::DestroyBug,
     },
+    bug::BugSource,
     common::{AbilityKey, BugKey, ChargePoolKey},
     helpers::{get_ability, get_actor, get_actor_mut},
 };
@@ -35,7 +35,11 @@ impl ActionInterface for DestroyAbility {
 
         let ability = get_ability(eng, self.ability_id)?;
         let owner = ability.ownership_struct.owner;
-        let pool_ids: Vec<ChargePoolKey> = ability.pool_links.iter().map(|l| l.link.link_dest).collect();
+        let pool_ids: Vec<ChargePoolKey> = ability
+            .pool_links
+            .iter()
+            .map(|l| l.link.link_dest)
+            .collect();
 
         if let Some(owner_id) = owner {
             get_actor(eng, owner_id)?;
@@ -53,7 +57,7 @@ impl ActionInterface for DestroyAbility {
             .world
             .bugs
             .iter()
-            .filter(|(_, bug)| bug.ability_id == self.ability_id)
+            .filter(|(_, bug)| BugSource::Ability(self.ability_id) == bug.source)
             .map(|(id, _)| id)
             .collect();
 

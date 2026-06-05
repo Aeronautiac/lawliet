@@ -25,8 +25,8 @@
 * The trial period is a time period where both sides present their case/defense. Both sides are given their
 * own time where they are the only ones with speaking privileges in the specific trial channel. After this,
 * there is a short debate period.
-* A "side" in this case is the prosector side or the defendant side. The defendant side consists of
-* both the lawyer and the defendant themselves.
+* A "side" in this case is the prosecutor side or the defendant side. The defendant side consists of
+* both the lawyer and the defendant.
 * When the trial period starts, the prosecutor is given a timed grace period before their presentation
 * timer begins. As soon as they send their first message, the grace period ends. The same is true
 * for the defense.
@@ -55,6 +55,8 @@
 *
 * Custody wiretaps you (a bug instance is created). If you pick a lawyer, you establish a private
 * line of communcation with that lawyer until the voting period begins.
+*
+* You can only be prosecuted by one person at a time. If you are in custody, you cannot be prosecuted.
 */
 
 // need to think about termination:

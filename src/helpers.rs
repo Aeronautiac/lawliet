@@ -11,7 +11,10 @@ use crate::{
     channel::Channel,
     chargepool::ChargePool,
     command::{Command, CommandPayload, DeferredCommand},
-    common::{AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, LoungeKey, NotebookKey, PassiveKey, PollKey, PollWeight},
+    common::{
+        AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, LoungeKey,
+        NotebookKey, PassiveKey, PollKey, PollWeight,
+    },
     config::{
         ability::{AbilityConfig, AbilityIdentifier},
         role::{Role, RoleConfig},
@@ -89,7 +92,10 @@ pub fn require_dead(eng: &Engine, actor_id: ActorKey) -> Result<(), ActionError>
     Err(ActionError::ActorIsAlive)
 }
 
-pub fn get_ability_mut(eng: &mut Engine, ability_id: AbilityKey) -> Result<&mut Ability, ActionError> {
+pub fn get_ability_mut(
+    eng: &mut Engine,
+    ability_id: AbilityKey,
+) -> Result<&mut Ability, ActionError> {
     let target = eng
         .world
         .get_ability_mut(ability_id)
@@ -105,7 +111,10 @@ pub fn get_ability(eng: &Engine, ability_id: AbilityKey) -> Result<&Ability, Act
     Ok(target)
 }
 
-pub fn get_passive_mut(eng: &mut Engine, passive_id: PassiveKey) -> Result<&mut Passive, ActionError> {
+pub fn get_passive_mut(
+    eng: &mut Engine,
+    passive_id: PassiveKey,
+) -> Result<&mut Passive, ActionError> {
     let target = eng
         .world
         .get_passive_mut(passive_id)
@@ -121,7 +130,10 @@ pub fn get_passive(eng: &Engine, passive_id: PassiveKey) -> Result<&Passive, Act
     Ok(target)
 }
 
-pub fn get_ability_config(eng: &Engine, ability: AbilityKey) -> Result<&AbilityConfig, ActionError> {
+pub fn get_ability_config(
+    eng: &Engine,
+    ability: AbilityKey,
+) -> Result<&AbilityConfig, ActionError> {
     let ability = get_ability(eng, ability)?;
     let target = eng.config.abilities.get(&AbilityIdentifier {
         name: ability.ability_name,
@@ -232,7 +244,10 @@ pub fn get_charge_pool(eng: &Engine, id: ChargePoolKey) -> Result<&ChargePool, A
     }
 }
 
-pub fn get_charge_pool_mut(eng: &mut Engine, id: ChargePoolKey) -> Result<&mut ChargePool, ActionError> {
+pub fn get_charge_pool_mut(
+    eng: &mut Engine,
+    id: ChargePoolKey,
+) -> Result<&mut ChargePool, ActionError> {
     let pool = eng.world.get_charge_pool_mut(id);
     if let Some(data) = pool {
         Ok(data)
@@ -348,9 +363,7 @@ pub fn cmd_all_deferred(eng: &mut Engine, cmd: Command, blocking_modifiers: Modi
         .world
         .actors
         .iter()
-        .filter_map(|(id, actor)| {
-            matches!(actor.actor_type, ActorType::Player(_)).then_some(id)
-        })
+        .filter_map(|(id, actor)| matches!(actor.actor_type, ActorType::Player(_)).then_some(id))
         .collect();
     for id in player_ids {
         eng.deferred_commands.push(DeferredCommand {

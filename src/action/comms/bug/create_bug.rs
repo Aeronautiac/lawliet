@@ -4,9 +4,12 @@
 */
 
 use crate::{
-    action::{ActionInterface, ActionResponse},
-    bug::Bug,
-    common::{AbilityKey, ActorKey, BugKey},
+    action::{
+        Action, ActionInterface, ActionResponse,
+        comms::bug::update_bug_visibilities::UpdateBugVisibilities,
+    },
+    bug::{Bug, BugSource},
+    common::{ActorKey, BugKey},
     helpers::{get_ability, get_player_mut},
 };
 
@@ -18,24 +21,27 @@ pub struct CreateBugResponse {
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CreateBug {
     pub target_id: ActorKey,
-    pub ability_id: AbilityKey,
+    pub source: BugSource,
 }
 
 impl ActionInterface for CreateBug {
     fn handle(
         &mut self,
         eng: &mut crate::engine::Engine,
-        _ctx: &mut crate::action::ActionContext,
+        ctx: &mut crate::action::ActionContext,
         actor: &crate::action::ActionActor,
-        _version: crate::common::Version,
+        version: crate::common::Version,
         mutate: bool,
     ) -> crate::action::ActionResult {
         actor.admin_or_system()?;
         get_player_mut(eng, self.target_id)?;
-        get_ability(eng, self.ability_id)?;
+
+        if let BugSource::Ability(ability_id) = self.source {
+            get_ability(eng, ability_id)?;
+        }
 
         let id = if mutate {
-            let bug_id = eng.world.add_bug(Bug::new(self.target_id, self.ability_id));
+            let bug_id = eng.world.add_bug(Bug::new(self.target_id, self.source));
             get_player_mut(eng, self.target_id)
                 .expect("expected valid target player")
                 .add_bug(bug_id);
@@ -43,6 +49,9 @@ impl ActionInterface for CreateBug {
         } else {
             BugKey::default()
         };
+
+        Action::UpdateBugVisibilities(UpdateBugVisibilities {})
+            .handle(eng, ctx, actor, version, mutate)?;
 
         Ok(ActionResponse::CreateBug(CreateBugResponse { id }))
     }

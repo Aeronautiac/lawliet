@@ -4,7 +4,7 @@
 */
 
 use crate::{
-    action::{ActionInterface, ActionResponse},
+    action::{Action, ActionInterface, ActionResponse, comms::channel::set_member::SetMember},
     actor::modifier::Modifier,
     channel::{ChannelPermission, ChannelPermissions},
     common::ActorKey,
@@ -39,36 +39,44 @@ impl ActionInterface for UpdateContactChannels {
 
         for lounge_id in lounges {
             let lounge = get_lounge(eng, lounge_id)?;
+            let channel_id = lounge.channel_id;
             let channel = get_channel_mut(eng, lounge.channel_id)?;
             let mut member_settings = channel
                 .get_member(self.player_id)
                 .expect("expected player to be in a lounge within their lounge cache")
                 .clone();
-            if mutate {
-                if no_contact {
-                    member_settings.perms = ChannelPermissions::EMPTY;
-                } else {
-                    member_settings.perms = ChannelPermission::Send | ChannelPermission::View;
-                }
-                channel.set_member(self.player_id, Some(member_settings));
+            if no_contact {
+                member_settings.perms = ChannelPermissions::EMPTY;
+            } else {
+                member_settings.perms = ChannelPermission::Send | ChannelPermission::View;
             }
+            Action::SetMember(SetMember {
+                player_id: self.player_id,
+                channel_id,
+                settings: Some(member_settings),
+            })
+            .handle(eng, ctx, actor, version, mutate)?;
         }
 
         for gc_id in gcs {
             let gc = get_gc(eng, gc_id)?;
+            let channel_id = gc.channel_id;
             let channel = get_channel_mut(eng, gc.channel_id)?;
             let mut member_settings = channel
                 .get_member(self.player_id)
                 .expect("expected player to be in a gc within their gc cache")
                 .clone();
-            if mutate {
-                if no_contact {
-                    member_settings.perms = ChannelPermissions::EMPTY;
-                } else {
-                    member_settings.perms = ChannelPermission::Send | ChannelPermission::View;
-                }
-                channel.set_member(self.player_id, Some(member_settings));
+            if no_contact {
+                member_settings.perms = ChannelPermissions::EMPTY;
+            } else {
+                member_settings.perms = ChannelPermission::Send | ChannelPermission::View;
             }
+            Action::SetMember(SetMember {
+                player_id: self.player_id,
+                channel_id,
+                settings: Some(member_settings),
+            })
+            .handle(eng, ctx, actor, version, mutate)?;
         }
 
         Ok(ActionResponse::UpdateContactChannels(

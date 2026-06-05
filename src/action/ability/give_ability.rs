@@ -1,5 +1,4 @@
-/*
-* SYSTEM ACTION
+/* SYSTEM ACTION
 * Transfer ownership of an ability to a specified actor and then reset links
 */
 
@@ -12,12 +11,12 @@ use crate::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
         ActionResult,
         ability::{add_link::AddLink, clear_volatile_links::ClearVolatileLinks},
-        comms::bug::try_update_bug_visibility::TryUpdateBugVisibility,
+        comms::bug::update_bug_visibilities::UpdateBugVisibilities,
     },
     chargepool::PoolLink,
     common::{AbilityKey, ActorKey},
     config::ability::{AbilityIdentifier, ConfigPoolLinkDetails},
-    helpers::{get_ability, get_ability_mut, get_actor, get_actor_mut, get_charge_pool_mut},
+    helpers::{get_ability, get_ability_mut, get_actor, get_actor_mut},
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -106,12 +105,8 @@ impl ActionInterface for GiveAbility {
             actor_data.add_ability(self.ability_id);
         }
 
-        Action::TryUpdateBugVisibility(TryUpdateBugVisibility {
-            ability_id: self.ability_id,
-            old_owner,
-            new_owner: self.actor_id,
-        })
-        .handle(eng, ctx, actor, version, mutate)?;
+        Action::UpdateBugVisibilities(UpdateBugVisibilities {})
+            .handle(eng, ctx, actor, version, mutate)?;
 
         Ok(ActionResponse::GiveAbility(GiveAbilityResponse {}))
     }

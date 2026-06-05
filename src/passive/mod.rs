@@ -15,6 +15,7 @@ pub enum PassiveType {
     // are met. if the player loses both their eyes, they cannot use certain abilities anymore.
     ContactLogs(ContactLogType),
     OwnedNotebookBlock, // blocks usage of all notebooks originally owned by the actor
+    CustodyBugReceiver,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]

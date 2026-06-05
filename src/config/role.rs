@@ -3,7 +3,10 @@ use indexmap::IndexMap;
 use crate::{
     actor::{ActorLinkType, player::WorldChannelOverride},
     channel::{ChannelPermission, ChannelPermissions},
-    config::{ability::{AbilityIdentifier, AbilityName}, world::WorldChannelName},
+    config::{
+        ability::{AbilityIdentifier, AbilityName},
+        world::WorldChannelName,
+    },
     passive::{ContactLogType, PassiveType},
 };
 
@@ -169,7 +172,10 @@ pub fn default_role_config() -> RoleConfigMap {
                     transferrable: false,
                 },
             ],
-            passives: vec![],
+            passives: vec![RolePassive {
+                passive_type: PassiveType::CustodyBugReceiver,
+                transferrable: false,
+            }],
             notebooks: vec![],
             actor_links: vec![
                 RoleLink {
@@ -204,10 +210,16 @@ pub fn default_role_config() -> RoleConfigMap {
                     transferrable: false,
                 },
             ],
-            passives: vec![RolePassive {
-                passive_type: PassiveType::ContactLogs(ContactLogType::Full),
-                transferrable: true,
-            }],
+            passives: vec![
+                RolePassive {
+                    passive_type: PassiveType::ContactLogs(ContactLogType::Full),
+                    transferrable: true,
+                },
+                RolePassive {
+                    passive_type: PassiveType::CustodyBugReceiver,
+                    transferrable: false,
+                },
+            ],
             notebooks: vec![],
             actor_links: vec![],
             world_channel_overrides: vec![],

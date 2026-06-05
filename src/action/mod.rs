@@ -52,9 +52,7 @@ use crate::{
                 archive_bug::{ArchiveBug, ArchiveBugResponse},
                 create_bug::{CreateBug, CreateBugResponse},
                 destroy_bug::{DestroyBug, DestroyBugResponse},
-                try_update_bug_visibility::{
-                    TryUpdateBugVisibility, TryUpdateBugVisibilityResponse,
-                },
+                update_bug_visibilities::{UpdateBugVisibilities, UpdateBugVisibilitiesResponse},
             },
             channel::{
                 create_channel::{CreateChannel, CreateChannelResponse},
@@ -123,8 +121,7 @@ use crate::{
         },
     },
     command::{Command, CommandPayload},
-    common::ActorKey,
-    common::Version,
+    common::{ActorKey, Version},
     engine::Engine,
 };
 
@@ -300,13 +297,13 @@ pub enum Action {
     CreateBug(CreateBug),
     ArchiveBug(ArchiveBug),
     DestroyBug(DestroyBug),
-    TryUpdateBugVisibility(TryUpdateBugVisibility),
     AddToWorldChannels(AddToWorldChannels),
     UpdateWorldChannelPerms(UpdateWorldChannelPerms),
     SetWorldChannelOverride(SetWorldChannelOverride),
     InitializeEngine(InitializeEngine),
     SetRandomSeed(SetRandomSeed),
     DeferredCmds(DeferredCmds),
+    UpdateBugVisibilities(UpdateBugVisibilities),
 }
 
 pub enum ActionResponse {
@@ -383,13 +380,13 @@ pub enum ActionResponse {
     CreateBug(CreateBugResponse),
     ArchiveBug(ArchiveBugResponse),
     DestroyBug(DestroyBugResponse),
-    TryUpdateBugVisibility(TryUpdateBugVisibilityResponse),
     AddToWorldChannels(AddToWorldChannelsResponse),
     UpdateWorldChannelPerms(UpdateWorldChannelPermsResponse),
     SetWorldChannelOverride(SetWorldChannelOverrideResponse),
     InitializeEngine(InitializeEngineResponse),
     SetRandomSeed(SetRandomSeedResponse),
     DeferredCmds(DeferredCmdsResponse),
+    UpdateBugVisibilities(UpdateBugVisibilitiesResponse),
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
