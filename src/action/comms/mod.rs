@@ -11,18 +11,27 @@ mod comms_tests {
     use crate::{
         action::{
             Action, ActionActor, ActionRequest, ActionResponse,
+            ability::{add_ability::AddAbility, create_and_give_ability::CreateAndGiveAbility},
+            actor::add_state::AddState,
             comms::{
-                channel::set_loggable::SetLoggable, groupchat::create_groupchat::CreateGroupchat,
+                bug::{
+                    archive_bug::ArchiveBug, create_bug::CreateBug, destroy_bug::DestroyBug,
+                },
+                channel::set_loggable::SetLoggable,
+                groupchat::create_groupchat::CreateGroupchat,
                 lounge::create_lounge::CreateLounge,
             },
         },
         actor::state::State,
+        bug::BugSource,
         channel::{ChannelMember, ChannelPermission, SenderDisplay},
         command::Command,
-        config::role::Role,
+        common::{AbilityKey, ActorKey, BugKey},
+        config::{ability::AbilityName, role::Role},
         engine::Engine,
-        helpers::{get_channel, get_gc, get_player},
+        helpers::{get_bug, get_channel, get_gc, get_player},
         lounge::LoungeVariant,
+        passive::PassiveType,
         test_helpers::*,
     };
 
@@ -513,6 +522,674 @@ mod comms_tests {
         leave_lounge(&mut eng, 0, p1, lounge_id).unwrap();
 
         assert!(!get_player(&eng, p1).unwrap().lounges.contains(&lounge_id));
+    }
+
+    // ---- bug ----
+
+    #[test]
+    fn create_bug_stored_in_world() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        let (response, _) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: p1,
+                    source: BugSource::Custody,
+                }),
+            })
+            .unwrap();
+        let ActionResponse::CreateBug(data) = response else {
+            unreachable!()
+        };
+
+        assert!(get_bug(&eng, data.id).is_ok());
+    }
+
+    #[test]
+    fn create_bug_registered_in_player_bugs() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        let (response, _) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: p1,
+                    source: BugSource::Custody,
+                }),
+            })
+            .unwrap();
+        let ActionResponse::CreateBug(data) = response else {
+            unreachable!()
+        };
+
+        assert!(get_player(&eng, p1).unwrap().bugs.contains(&data.id));
+    }
+
+    #[test]
+    fn create_bug_emits_new_bug_command() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        let (response, ctx) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: p1,
+                    source: BugSource::Custody,
+                }),
+            })
+            .unwrap();
+        let ActionResponse::CreateBug(data) = response else {
+            unreachable!()
+        };
+
+        assert!(ctx.commands.iter().any(|p| {
+            p.recipient.is_none()
+                && matches!(&p.cmd, Command::NewBug { bug_key } if *bug_key == data.id)
+        }));
+    }
+
+    #[test]
+    fn create_bug_invalid_target_fails() {
+        let mut eng = Engine::new();
+
+        assert!(eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: ActorKey::default(),
+                    source: BugSource::Custody,
+                }),
+            })
+            .is_err());
+    }
+
+    #[test]
+    fn create_bug_invalid_ability_source_fails() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        assert!(eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: p1,
+                    source: BugSource::Ability(AbilityKey::default()),
+                }),
+            })
+            .is_err());
+    }
+
+    #[test]
+    fn archive_bug_disables_bug() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        let (response, _) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: p1,
+                    source: BugSource::Custody,
+                }),
+            })
+            .unwrap();
+        let ActionResponse::CreateBug(data) = response else {
+            unreachable!()
+        };
+
+        assert!(get_bug(&eng, data.id).unwrap().enabled);
+
+        eng.execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: 0,
+            payload: Action::ArchiveBug(ArchiveBug { bug_id: data.id }),
+        })
+        .unwrap();
+
+        assert!(!get_bug(&eng, data.id).unwrap().enabled);
+    }
+
+    #[test]
+    fn archive_bug_emits_archive_command() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        let (response, _) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: p1,
+                    source: BugSource::Custody,
+                }),
+            })
+            .unwrap();
+        let ActionResponse::CreateBug(create_data) = response else {
+            unreachable!()
+        };
+
+        let (_, ctx) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::ArchiveBug(ArchiveBug {
+                    bug_id: create_data.id,
+                }),
+            })
+            .unwrap();
+
+        assert!(ctx.commands.iter().any(|p| {
+            p.recipient.is_none()
+                && matches!(&p.cmd, Command::ArchiveBug { bug_key } if *bug_key == create_data.id)
+        }));
+    }
+
+    #[test]
+    fn archive_bug_invalid_id_fails() {
+        let mut eng = Engine::new();
+
+        assert!(eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::ArchiveBug(ArchiveBug {
+                    bug_id: BugKey::default(),
+                }),
+            })
+            .is_err());
+    }
+
+    #[test]
+    fn archive_bug_stays_in_world() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        let (response, _) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: p1,
+                    source: BugSource::Custody,
+                }),
+            })
+            .unwrap();
+        let ActionResponse::CreateBug(data) = response else {
+            unreachable!()
+        };
+
+        eng.execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: 0,
+            payload: Action::ArchiveBug(ArchiveBug { bug_id: data.id }),
+        })
+        .unwrap();
+
+        assert!(get_bug(&eng, data.id).is_ok());
+    }
+
+    #[test]
+    fn destroy_bug_removed_from_world() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        let (response, _) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: p1,
+                    source: BugSource::Custody,
+                }),
+            })
+            .unwrap();
+        let ActionResponse::CreateBug(data) = response else {
+            unreachable!()
+        };
+
+        eng.execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: 0,
+            payload: Action::DestroyBug(DestroyBug { bug_id: data.id }),
+        })
+        .unwrap();
+
+        assert!(get_bug(&eng, data.id).is_err());
+    }
+
+    #[test]
+    fn destroy_bug_removed_from_player_bugs() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        let (response, _) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: p1,
+                    source: BugSource::Custody,
+                }),
+            })
+            .unwrap();
+        let ActionResponse::CreateBug(data) = response else {
+            unreachable!()
+        };
+
+        eng.execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: 0,
+            payload: Action::DestroyBug(DestroyBug { bug_id: data.id }),
+        })
+        .unwrap();
+
+        assert!(!get_player(&eng, p1).unwrap().bugs.contains(&data.id));
+    }
+
+    #[test]
+    fn destroy_bug_emits_delete_command() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+
+        let (response, _) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: p1,
+                    source: BugSource::Custody,
+                }),
+            })
+            .unwrap();
+        let ActionResponse::CreateBug(create_data) = response else {
+            unreachable!()
+        };
+
+        let (_, ctx) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::DestroyBug(DestroyBug {
+                    bug_id: create_data.id,
+                }),
+            })
+            .unwrap();
+
+        assert!(ctx.commands.iter().any(|p| {
+            p.recipient.is_none()
+                && matches!(&p.cmd, Command::DeleteBug { bug_id } if *bug_id == create_data.id)
+        }));
+    }
+
+    #[test]
+    fn destroy_bug_invalid_id_fails() {
+        let mut eng = Engine::new();
+
+        assert!(eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::DestroyBug(DestroyBug {
+                    bug_id: BugKey::default(),
+                }),
+            })
+            .is_err());
+    }
+
+    #[test]
+    fn send_message_relays_to_enabled_bug_on_loggable_channel() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let ch = create_channel(&mut eng, 0, true);
+        set_member(
+            &mut eng,
+            0,
+            p1,
+            ch,
+            Some(ChannelMember {
+                perms: ChannelPermission::Send | ChannelPermission::View,
+                displays: indexset![SenderDisplay::Raw(p1)],
+            }),
+        )
+        .unwrap();
+
+        let (response, _) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: p1,
+                    source: BugSource::Custody,
+                }),
+            })
+            .unwrap();
+        let ActionResponse::CreateBug(bug_data) = response else {
+            unreachable!()
+        };
+
+        let (_, ctx) = send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p1), "hello").unwrap();
+
+        assert!(ctx.commands.iter().any(|p| {
+            p.recipient.is_none()
+                && matches!(&p.cmd, Command::AddBugMessage { bug_key, .. } if *bug_key == bug_data.id)
+        }));
+    }
+
+    #[test]
+    fn send_message_no_relay_on_non_loggable_channel() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let ch = create_channel(&mut eng, 0, false);
+        set_member(
+            &mut eng,
+            0,
+            p1,
+            ch,
+            Some(ChannelMember {
+                perms: ChannelPermission::Send | ChannelPermission::View,
+                displays: indexset![SenderDisplay::Raw(p1)],
+            }),
+        )
+        .unwrap();
+
+        eng.execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: 0,
+            payload: Action::CreateBug(CreateBug {
+                target_id: p1,
+                source: BugSource::Custody,
+            }),
+        })
+        .unwrap();
+
+        let (_, ctx) = send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p1), "hello").unwrap();
+
+        assert!(!ctx
+            .commands
+            .iter()
+            .any(|p| matches!(&p.cmd, Command::AddBugMessage { .. })));
+    }
+
+    #[test]
+    fn send_message_no_relay_for_archived_bug() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let ch = create_channel(&mut eng, 0, true);
+        set_member(
+            &mut eng,
+            0,
+            p1,
+            ch,
+            Some(ChannelMember {
+                perms: ChannelPermission::Send | ChannelPermission::View,
+                displays: indexset![SenderDisplay::Raw(p1)],
+            }),
+        )
+        .unwrap();
+
+        let (response, _) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: p1,
+                    source: BugSource::Custody,
+                }),
+            })
+            .unwrap();
+        let ActionResponse::CreateBug(bug_data) = response else {
+            unreachable!()
+        };
+
+        eng.execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: 0,
+            payload: Action::ArchiveBug(ArchiveBug {
+                bug_id: bug_data.id,
+            }),
+        })
+        .unwrap();
+
+        let (_, ctx) = send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p1), "hello").unwrap();
+
+        assert!(!ctx
+            .commands
+            .iter()
+            .any(|p| matches!(&p.cmd, Command::AddBugMessage { .. })));
+    }
+
+    #[test]
+    fn send_message_relay_correct_content_and_display() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let ch = create_channel(&mut eng, 0, true);
+        set_member(
+            &mut eng,
+            0,
+            p1,
+            ch,
+            Some(ChannelMember {
+                perms: ChannelPermission::Send | ChannelPermission::View,
+                displays: indexset![SenderDisplay::Raw(p1)],
+            }),
+        )
+        .unwrap();
+
+        let (response, _) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: p1,
+                    source: BugSource::Custody,
+                }),
+            })
+            .unwrap();
+        let ActionResponse::CreateBug(bug_data) = response else {
+            unreachable!()
+        };
+
+        let (_, ctx) =
+            send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p1), "secret message").unwrap();
+
+        assert!(ctx.commands.iter().any(|p| {
+            matches!(&p.cmd, Command::AddBugMessage { bug_key, display, content }
+                if *bug_key == bug_data.id
+                    && *display == SenderDisplay::Raw(p1)
+                    && content == "secret message")
+        }));
+    }
+
+    #[test]
+    fn visibility_ability_bug_visible_to_owner() {
+        let mut eng = Engine::new();
+        let owner = add_player(&mut eng, 0, Role::Civilian, "owner");
+        let target = add_player(&mut eng, 0, Role::Civilian, "target");
+        let ab = quick_ability(
+            &mut eng,
+            0,
+            CreateAndGiveAbility {
+                actor_id: owner,
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                transferrable: false,
+                volatile: false,
+            },
+        );
+
+        let (_, ctx) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: target,
+                    source: BugSource::Ability(ab),
+                }),
+            })
+            .unwrap();
+
+        assert!(ctx.commands.iter().any(|p| {
+            p.recipient == Some(owner)
+                && matches!(&p.cmd, Command::SetBugVisibility { visible: true, .. })
+        }));
+    }
+
+    #[test]
+    fn visibility_ability_bug_no_owner_no_set_visibility() {
+        let mut eng = Engine::new();
+        let target = add_player(&mut eng, 0, Role::Civilian, "target");
+
+        let (response, _) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::AddAbility(AddAbility {
+                    ability_name: AbilityName::Gun,
+                    variant: 0,
+                    transferrable: false,
+                }),
+            })
+            .unwrap();
+        let ActionResponse::AddAbility(ab_data) = response else {
+            unreachable!()
+        };
+
+        let (_, ctx) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: target,
+                    source: BugSource::Ability(ab_data.id),
+                }),
+            })
+            .unwrap();
+
+        assert!(!ctx
+            .commands
+            .iter()
+            .any(|p| matches!(&p.cmd, Command::SetBugVisibility { visible: true, .. })));
+    }
+
+    #[test]
+    fn visibility_ability_bug_owner_nopresence_not_visible() {
+        let mut eng = Engine::new();
+        let owner = add_player(&mut eng, 0, Role::Civilian, "owner");
+        let target = add_player(&mut eng, 0, Role::Civilian, "target");
+        let ab = quick_ability(
+            &mut eng,
+            0,
+            CreateAndGiveAbility {
+                actor_id: owner,
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                transferrable: false,
+                volatile: false,
+            },
+        );
+
+        eng.execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: 0,
+            payload: Action::CreateBug(CreateBug {
+                target_id: target,
+                source: BugSource::Ability(ab),
+            }),
+        })
+        .unwrap();
+
+        // Incarcerated gives NoPresence — visibility update is triggered inside AddState
+        let (_, ctx) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::AddState(AddState {
+                    actor_id: owner,
+                    state: State::Incarcerated,
+                }),
+            })
+            .unwrap();
+
+        assert!(!ctx.commands.iter().any(|p| {
+            p.recipient == Some(owner)
+                && matches!(&p.cmd, Command::SetBugVisibility { visible: true, .. })
+        }));
+    }
+
+    #[test]
+    fn visibility_custody_bug_visible_to_receiver() {
+        let mut eng = Engine::new();
+        let receiver = add_player(&mut eng, 0, Role::Civilian, "receiver");
+        let target = add_player(&mut eng, 0, Role::Civilian, "target");
+        quick_passive(&mut eng, 0, receiver, PassiveType::CustodyBugReceiver, false);
+
+        let (_, ctx) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: target,
+                    source: BugSource::Custody,
+                }),
+            })
+            .unwrap();
+
+        assert!(ctx.commands.iter().any(|p| {
+            p.recipient == Some(receiver)
+                && matches!(&p.cmd, Command::SetBugVisibility { visible: true, .. })
+        }));
+    }
+
+    #[test]
+    fn visibility_clears_before_setting() {
+        let mut eng = Engine::new();
+        let owner = add_player(&mut eng, 0, Role::Civilian, "owner");
+        let target = add_player(&mut eng, 0, Role::Civilian, "target");
+        let ab = quick_ability(
+            &mut eng,
+            0,
+            CreateAndGiveAbility {
+                actor_id: owner,
+                ability_name: AbilityName::Gun,
+                variant: 0,
+                transferrable: false,
+                volatile: false,
+            },
+        );
+
+        let (_, ctx) = eng
+            .execute(ActionRequest {
+                actor: ActionActor::System,
+                timestamp: 0,
+                payload: Action::CreateBug(CreateBug {
+                    target_id: target,
+                    source: BugSource::Ability(ab),
+                }),
+            })
+            .unwrap();
+
+        let clear_pos = ctx
+            .commands
+            .iter()
+            .position(|p| matches!(&p.cmd, Command::ClearBugVisibily { .. }))
+            .unwrap();
+        let set_pos = ctx
+            .commands
+            .iter()
+            .position(|p| matches!(&p.cmd, Command::SetBugVisibility { visible: true, .. }))
+            .unwrap();
+
+        assert!(clear_pos < set_pos);
     }
 
     // ---- update_contact_channels ----
