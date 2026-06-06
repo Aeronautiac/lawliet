@@ -12,6 +12,10 @@
 // this can be optimized later, but just calling it in these cases massively simplifies things
 // without having to put it into the update action
 
+// TODO:
+// still need to sort out the case where a bug is deleted
+// when a bug is deleted, the frontend should delete it too
+
 use smallvec::{SmallVec, smallvec};
 
 use crate::{

@@ -41,8 +41,9 @@ pub struct Player {
     pub eyes: u32,
     pub lounges: IndexSet<LoungeKey>,
     pub groupchats: IndexSet<GroupchatKey>,
-    pub bugs: IndexSet<BugKey>,
-    pub world_channel_overrides: IndexMap<WorldChannelName, IndexMap<OverrideSource, SourcedWorldChannelOverride>>,
+    pub bugs: IndexSet<BugKey>, // the bugs targetting this player
+    pub world_channel_overrides:
+        IndexMap<WorldChannelName, IndexMap<OverrideSource, SourcedWorldChannelOverride>>,
 }
 
 impl Player {
@@ -82,12 +83,20 @@ impl Player {
 
         Some(match resolver {
             OverrideResolver::Positive => WorldChannelOverride {
-                default_perms: top.iter().fold(ChannelPermissions::EMPTY, |acc, o| acc | o.default_perms),
-                force_perms: top.iter().fold(ChannelPermissions::EMPTY, |acc, o| acc | o.force_perms),
+                default_perms: top
+                    .iter()
+                    .fold(ChannelPermissions::EMPTY, |acc, o| acc | o.default_perms),
+                force_perms: top
+                    .iter()
+                    .fold(ChannelPermissions::EMPTY, |acc, o| acc | o.force_perms),
             },
             OverrideResolver::Negative => WorldChannelOverride {
-                default_perms: top.iter().fold(ChannelPermissions::all(), |acc, o| acc & o.default_perms),
-                force_perms: top.iter().fold(ChannelPermissions::all(), |acc, o| acc & o.force_perms),
+                default_perms: top
+                    .iter()
+                    .fold(ChannelPermissions::all(), |acc, o| acc & o.default_perms),
+                force_perms: top
+                    .iter()
+                    .fold(ChannelPermissions::all(), |acc, o| acc & o.force_perms),
             },
         })
     }
@@ -110,5 +119,9 @@ impl Player {
 
     pub fn add_bug(&mut self, id: BugKey) {
         self.bugs.insert(id);
+    }
+
+    pub fn remove_bug(&mut self, id: BugKey) {
+        self.bugs.swap_remove(&id);
     }
 }

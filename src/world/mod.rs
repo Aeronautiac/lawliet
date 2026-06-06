@@ -16,7 +16,11 @@ use crate::{
         AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, LoungeKey,
         NotebookKey, PassiveKey, PollKey,
     },
-    config::{actor::organization::OrganizationName, role::Role, world::{WorldChargePoolName, WorldChannelName}},
+    config::{
+        actor::organization::OrganizationName,
+        role::Role,
+        world::{WorldChannelName, WorldChargePoolName},
+    },
     groupchat::Groupchat,
     lounge::Lounge,
     notebook::Notebook,
@@ -263,5 +267,9 @@ impl World {
 
     pub fn get_bug_mut(&mut self, id: BugKey) -> Option<&mut Bug> {
         self.bugs.get_mut(id)
+    }
+
+    pub fn remove_bug(&mut self, id: BugKey) {
+        self.bugs.remove(id);
     }
 }

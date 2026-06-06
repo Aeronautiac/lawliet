@@ -231,6 +231,12 @@ pub enum Command {
         bug_id: BugKey,
     },
 
+    // completely destroy a bug (hide all views)
+    // basically, this bug should have never existed
+    DeleteBug {
+        bug_id: BugKey,
+    },
+
     /////=<TARGETTED>=/////
 
     // remove someone's view of a channel

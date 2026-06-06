@@ -73,8 +73,19 @@ impl ActionInterface for SendMessage {
             for bug_id in bug_ids {
                 let bug = eng.world.get_bug(bug_id).expect("expected valid bug");
                 if bug.enabled {
-                    let _ = bug_id;
-                    // TODO: push BugRelay command once the bug log protocol is implemented
+                    // IMPORTANT:
+                    // since we're using the player's diplay here, it means that if they're posing
+                    // as someone else and send a message, the message will be relayed with that
+                    // fake identity (it will reveal them).
+                    ctx.push_cmd(
+                        Command::AddBugMessage {
+                            bug_key: bug_id,
+                            display: self.display,
+                            content: self.content.clone(),
+                        },
+                        None,
+                        eng.time,
+                    );
                 }
             }
         }

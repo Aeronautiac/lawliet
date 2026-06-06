@@ -22,6 +22,9 @@ pub struct DestroyAbility {
     pub ability_id: AbilityKey,
 }
 
+// TODO:
+// use smallvec to avoid heap fragmentation
+
 impl ActionInterface for DestroyAbility {
     fn handle(
         &mut self,
