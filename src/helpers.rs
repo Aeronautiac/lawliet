@@ -13,7 +13,7 @@ use crate::{
     command::{Command, CommandPayload, DeferredCommand},
     common::{
         AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, LoungeKey,
-        NotebookKey, PassiveKey, PollKey, PollWeight,
+        NotebookKey, PassiveKey, PollKey, PollWeight, ProsecutionKey,
     },
     config::{
         ability::{AbilityConfig, AbilityIdentifier},
@@ -25,6 +25,7 @@ use crate::{
     notebook::Notebook,
     passive::{Passive, PassiveType},
     poll::Poll,
+    prosecution::Prosecution,
 };
 
 pub fn get_actor(eng: &Engine, actor_id: ActorKey) -> Result<&Actor, ActionError> {
@@ -356,6 +357,30 @@ pub fn get_bug(eng: &Engine, id: BugKey) -> Result<&Bug, ActionError> {
 
 pub fn get_bug_mut(eng: &mut Engine, id: BugKey) -> Result<&mut Bug, ActionError> {
     eng.world.get_bug_mut(id).ok_or(ActionError::BugNotFound)
+}
+
+pub fn get_prosecution(eng: &Engine, id: ProsecutionKey) -> Result<&Prosecution, ActionError> {
+    eng.world
+        .get_prosecution(id)
+        .ok_or(ActionError::ProsecutionNotFound)
+}
+
+pub fn get_prosecution_mut(
+    eng: &mut Engine,
+    id: ProsecutionKey,
+) -> Result<&mut Prosecution, ActionError> {
+    eng.world
+        .get_prosecution_mut(id)
+        .ok_or(ActionError::ProsecutionNotFound)
+}
+
+pub fn require_not_defendant(eng: &Engine, actor_id: ActorKey) -> Result<(), ActionError> {
+    let actor = get_actor(eng, actor_id)?;
+    if actor.has_state(State::Custody) {
+        Err(ActionError::AlreadyADefendant)
+    } else {
+        Ok(())
+    }
 }
 
 pub fn cmd_all_deferred(eng: &mut Engine, cmd: Command, blocking_modifiers: Modifiers) {

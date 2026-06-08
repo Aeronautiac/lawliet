@@ -86,7 +86,7 @@ mod world;
 
 pub use common::{
     AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, ID, LoungeKey,
-    NotebookKey, PassiveKey, PollKey, Time,
+    NotebookKey, PassiveKey, PollKey, ProsecutionKey, Time,
 };
 
 // most of what remains within the engine are small tasks

@@ -11,6 +11,7 @@ new_key_type! {
     pub struct LoungeKey;
     pub struct GroupchatKey;
     pub struct BugKey;
+    pub struct ProsecutionKey;
 }
 
 pub type ID = usize; // host-inserted frontend identifiers (e.g. OverrideSource::Manual)

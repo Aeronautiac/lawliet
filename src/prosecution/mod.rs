@@ -1,135 +1,119 @@
 /*
-* Prosecution lifecycle:
-* - Custody period
-* - Trial period
-* - Voting period
+* Prosecution lifecycle: Custody → Trial → Voting
 *
-* Prosecutions have:
-* - Prosecutor
-*   * have displays (same as senders, so just generalize the senderdisplay type to
-*   userdisplay)
-* - Defendant
-*   * also have displays, though there's currently nothing in the game where the defendant is
-*   anonymous (they will always be raw)
-* - Optional Lawyer
-*   * The defendant is shown an option to select a lawyer. No response before the custody period ends
-*   means they get no lawyer by default.
-* - An autonomous flag
+* Participants:
+* - Prosecutor: has displays (stored in the trial channel, not here)
+* - Defendant: same; currently always raw (no anonymous defendant mechanic)
+* - Lawyer (optional): defendant may select one during custody. No selection before custody
+*   ends means no lawyer.
+* - Autonomous flag: if false, a host must manually approve every phase transition.
 *
-* The custody/grace period happens on prosecution. It lasts until some time limit
-* is reached or both the prosecutor and defendant have agreed to start the trial period.
-* (the max duration is configurable)
+* Custody period:
+*   Ends when both sides signal ready OR the timeout fires. In non-autonomous mode,
+*   host approval is also required before advancing.
 *
-* If the prosecution is not autonomous, then a host must approve every phase transition.
+* Trial period:
+*   Each side gets a presentation slot. The active side starts in a grace subphase with its
+*   own timer. Sending any message during grace immediately advances to presentation and
+*   replaces the timer with the presentation duration. If the grace timer fires instead,
+*   the advance still happens. After both presentations, a debate period begins. If one side
+*   signals done the timer is shortened; if both signal done the debate ends immediately.
+*   When the debate timer expires, speaking privileges are revoked for both sides regardless
+*   of host input. Host approval is still required to advance to the voting phase if
+*   non-autonomous. Advancing out of the trial phase entirely also requires host approval
+*   if non-autonomous.
 *
-* The trial period is a time period where both sides present their case/defense. Both sides are given their
-* own time where they are the only ones with speaking privileges in the specific trial channel. After this,
-* there is a short debate period.
-* A "side" in this case is the prosecutor side or the defendant side. The defendant side consists of
-* both the lawyer and the defendant.
-* When the trial period starts, the prosecutor is given a timed grace period before their presentation
-* timer begins. As soon as they send their first message, the grace period ends. The same is true
-* for the defense.
-* After both presentation periods, the debate period immediately begins. At this point, any side can
-* deliberately choose to shorten the timer to some set duration (say 15 minutes or so) by stating
-* they are finished.
+* Voting period:
+*   An anonymous poll is added to the trial channel. Guilty majority → defendant executed;
+*   otherwise they are released. The vote runs for a fixed duration.
 *
-* After the trial period fully concludes, the voting period begins. A poll is added to the channel
-* to determine the trial outcome anonymously.
+* Termination conditions:
+* - Custody or Trial: prosecutor or defendant gains NoPresence → immediate termination.
+*   (Lawyer state is irrelevant after selection.)
+* - Voting: defendant dies → immediate termination.
 *
-* If the majority of the votes were guilty, the target is executed. Otherwise, they are set free.
-* The vote lasts some set duration regardless of when the trial ended.
+* Disruption rules (not yet implemented):
+* - If trial visibility is lost (e.g. blackout), the trial restarts when it returns.
+* - If poll visibility is lost during voting, the voting period is extended by the
+*   duration of the disruption.
 *
-* If either the defendant or prosecutor gain the NoPresence modifier during the custody or trial
-* period, the prosecution is immediately terminated. (The state of the lawyer is irrelevant beyond
-* initial selection)
-*
-* If the defendant specifically dies during the voting period, the prosecution immediately terminates.
-* Other modifiers dont matter. In lore, we can say they've been injected with a remote kill device.
-* We can also just prevent kidnappings and such if needed.
-*
-* If visibiliy for a trial is lost (blackout can do this), the trial restarts when the disruption ends
-*
-* If general visibility of the poll for the trial is lost, the voting period is extended by the
-* duration of the disturbance.
-*
-* Custody wiretaps you (a bug instance is created). If you pick a lawyer, you establish a private
-* line of communcation with that lawyer until the voting period begins.
-*
-* You can only be prosecuted by one person at a time. If you are in custody, you cannot be prosecuted.
+* Other rules:
+* - Custody wiretaps the defendant (a custody bug is created by SetCustody).
+* - Selecting a lawyer opens a private channel between defendant and lawyer, open until
+*   the voting period begins.
+* - The only uniqueness constraint is on defendants: a player may not be the defendant in
+*   more than one active prosecution at a time. There is no restriction on how many
+*   prosecutions a player may initiate, nor on prosecuting someone while being prosecuted
+*   yourself.
 */
 
-// need to think about termination:
-// we can "archive" using deferred commands
-// example:
-// - person imprisoned
-// - prosecution begins
-// - deferred visibility commands sent out to everyone
-// - prosecution concludes
-// - archival command sent to frontend server
-// - engine deletes prosecution from memory
-// - person released
-// - person receives old channel visibility command
-// - when something is archived, it cannot be interacted with and is meant to be explicitly labeled
-// as archived
+// Termination note:
+// Archived channels/prosecutions are marked as non-interactive on the frontend but remain
+// visible. Deferred commands handle the case where a player receives a visibility grant
+// for an already-archived object — the frontend should label it archived and block interaction.
 
 use crate::{ActorKey, ChannelKey, PollKey, common::JobID};
 
+#[derive(Debug)]
 pub struct Lawyer {
     pub actor_id: ActorKey,
     pub channel_id: ChannelKey,
 }
 
+#[derive(Debug)]
 pub struct ProsecutionDefense {
     pub defendant: ActorKey,
     pub lawyer: Option<Lawyer>,
 }
 
+#[derive(Debug)]
 pub enum TrialSubphase {
     Grace,
     Presentation,
 }
 
+#[derive(Debug)]
 pub enum TrialPhase {
     Prosecutor(TrialSubphase),
     Defense(TrialSubphase),
-    Debate,
+    // one done → timer shortened; both done → immediately end (host approval still applies)
+    // timer expiry revokes speaking privileges for both sides regardless of host input
+    Debate {
+        prosecutor_done: bool,
+        defense_done: bool,
+    },
 }
 
+#[derive(Debug)]
 pub enum ProsecutionPhase {
-    // advancement:
-    //   both true || timeout:
-    //     if not autonomous:
-    //       advance if host approval
-    //     else:
-    //       advance
+    // Advances when both ready flags are set OR timeout fires.
+    // In non-autonomous mode, host must also call AdvanceProsecution to confirm.
     Custody {
-        prosecutor_start: bool,
-        defense_start: bool,
+        prosecutor_ready: bool,
+        defense_ready: bool,
         timeout_job_id: JobID,
     },
 
-    // advancement:
-    //   debate phase complete:
-    //     if not autonomous:
-    //       advance with host approval
-    //     else:
-    //       advance
+    // timeout_job_id tracks the current active timer and is replaced on every subphase transition.
+    //
+    // Grace → Presentation: first message from the active side OR grace timeout fires;
+    //   cancel the grace job and schedule the presentation timer.
+    // Presentation → next phase: presentation timeout fires.
+    // Debate → Voting: timeout fires (speaking privileges revoked immediately), OR one done
+    //   flag shortens it, OR both done ends it immediately. Non-autonomous: host approval
+    //   required to advance to the voting phase, but privilege revocation happens regardless.
     Trial {
         phase: TrialPhase,
         channel_id: ChannelKey,
-        timeout_job_id: JobID, // constantly switched up depending on subphase
+        timeout_job_id: JobID,
     },
 
     Voting {
-        // necessary to quickly find polls to extend the duration of
         poll_id: PollKey,
     },
 }
 
-// channels already have user displays
-// it is probably only necessary to decide on displays on creation, meaning it isnt relevant to his
-// specific struct, and further meaning that senderdisplay does not actually require a refactor
+#[derive(Debug)]
 pub struct Prosecution {
     pub prosecutor: ActorKey,
     pub defense: ProsecutionDefense,

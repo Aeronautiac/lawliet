@@ -10,6 +10,7 @@ use crate::{
             bug::update_bug_visibilities::UpdateBugVisibilities,
             update_contact_channels::UpdateContactChannels,
         },
+        prosecution::cull_prosecutions::CullProsecutions,
         world::update_world_channel_perms::UpdateWorldChannelPerms,
     },
     actor::state::State,
@@ -56,6 +57,9 @@ impl ActionInterface for RemoveState {
         }
 
         Action::UpdateBugVisibilities(UpdateBugVisibilities {})
+            .handle(eng, ctx, actor, version, mutate)?;
+
+        Action::CullProsecutions(CullProsecutions {})
             .handle(eng, ctx, actor, version, mutate)?;
 
         Ok(ActionResponse::RemoveState(RemoveStateResponse {}))

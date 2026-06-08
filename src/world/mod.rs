@@ -14,7 +14,7 @@ use crate::{
     chargepool::ChargePool,
     common::{
         AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, LoungeKey,
-        NotebookKey, PassiveKey, PollKey,
+        NotebookKey, PassiveKey, PollKey, ProsecutionKey,
     },
     config::{
         actor::organization::OrganizationName,
@@ -26,6 +26,7 @@ use crate::{
     notebook::Notebook,
     passive::Passive,
     poll::Poll,
+    prosecution::Prosecution,
 };
 
 #[derive(Debug)]
@@ -48,6 +49,7 @@ pub struct World {
     pub lounges: SlotMap<LoungeKey, Lounge>,
     pub groupchats: SlotMap<GroupchatKey, Groupchat>,
     pub bugs: SlotMap<BugKey, Bug>,
+    pub prosecutions: SlotMap<ProsecutionKey, Prosecution>,
     pub world_channel_map: IndexMap<WorldChannelName, ChannelKey>,
 }
 
@@ -67,6 +69,7 @@ impl World {
             lounges: SlotMap::with_key(),
             groupchats: SlotMap::with_key(),
             bugs: SlotMap::with_key(),
+            prosecutions: SlotMap::with_key(),
             world_channel_map: IndexMap::new(),
         }
     }
@@ -255,6 +258,22 @@ impl World {
 
     pub fn get_groupchat_mut(&mut self, id: GroupchatKey) -> Option<&mut Groupchat> {
         self.groupchats.get_mut(id)
+    }
+
+    pub fn add_prosecution(&mut self, prosecution: Prosecution) -> ProsecutionKey {
+        self.prosecutions.insert(prosecution)
+    }
+
+    pub fn get_prosecution(&self, id: ProsecutionKey) -> Option<&Prosecution> {
+        self.prosecutions.get(id)
+    }
+
+    pub fn get_prosecution_mut(&mut self, id: ProsecutionKey) -> Option<&mut Prosecution> {
+        self.prosecutions.get_mut(id)
+    }
+
+    pub fn remove_prosecution(&mut self, id: ProsecutionKey) {
+        self.prosecutions.remove(id);
     }
 
     pub fn add_bug(&mut self, bug: Bug) -> BugKey {

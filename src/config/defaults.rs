@@ -9,6 +9,9 @@ pub struct DefaultConfig {
     pub notebook_successes_per_day: u16,
     pub notebook_failures_per_day: u16,
     pub org_vote_time: Time,
+    pub debate_default_timeout: Time,
+    pub debate_shortened_timeout: Time,
+    pub custody_timeout: Time,
 }
 
 pub fn default_defaults() -> DefaultConfig {
@@ -22,6 +25,9 @@ pub fn default_defaults() -> DefaultConfig {
         }],
         notebook_successes_per_day: 1,
         notebook_failures_per_day: 3,
-        org_vote_time: 6 * 60 * 60 * 1000, // 6 hrs
+        org_vote_time: 6 * 60 * 60 * 1000,        // 6 hrs
+        debate_default_timeout: 60 * 60 * 1000,   // 1 hr
+        debate_shortened_timeout: 15 * 60 * 1000, // 15 minutes
+        custody_timeout: 4 * 60 * 60 * 1000,      // 4 hrs
     }
 }

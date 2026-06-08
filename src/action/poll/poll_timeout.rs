@@ -1,12 +1,16 @@
 /*
 * SYSTEM ACTION
 * Handle a poll timeout
-* (try to resolve the poll, if it accepts, execute, else, just delete it)
+* (try to resolve the poll, if it accepts, execute, else clean it up)
 */
 
 use crate::{
-    action::{ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult},
-    common::PollKey,
+    action::{
+        Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
+        poll::poll_cleanup::PollCleanup,
+    },
+    common::{PollKey, Version},
+    engine::Engine,
     helpers::get_poll,
     poll::PolicyResult,
 };
@@ -22,44 +26,36 @@ pub struct PollTimeout {
 impl ActionInterface for PollTimeout {
     fn handle(
         &mut self,
-        eng: &mut crate::engine::Engine,
+        eng: &mut Engine,
         ctx: &mut ActionContext,
         actor: &ActionActor,
-        version: crate::common::Version,
+        version: Version,
         mutate: bool,
     ) -> ActionResult {
         actor.admin_or_system()?;
 
         let poll = get_poll(eng, self.poll_id)?;
         let mut payload = poll.payload.clone();
+        let policy_res = poll.timeout_policy(eng);
+
         if payload.validate(eng, ctx, actor, version).is_err() {
-            // TODO:
-            // Tell frontend to acknowledge action failure (this should never happen in
-            // practice. The poll will update and fail beforehand.)
+            // TODO: tell frontend to acknowledge action failure
         } else {
-            let poll = get_poll(eng, self.poll_id).unwrap();
-            let policy_res = poll.timeout_policy(eng);
             match policy_res {
                 PolicyResult::Accept => {
                     payload.handle(eng, ctx, actor, version, mutate)?;
-                    if mutate {
-                        eng.world.remove_poll(self.poll_id);
-                    }
                 }
-                PolicyResult::Reject => {
-                    // TODO:
-                    // tell frontend to acknowledge rejection
+                PolicyResult::Reject | PolicyResult::Inconclusive => {
+                    // TODO: tell frontend to acknowledge rejection
                 }
-                PolicyResult::Inconclusive => {
-                    // TODO:
-                    // tell frontend to acknowledge rejection
-                }
-            };
+            }
         }
 
-        if mutate {
-            eng.world.remove_poll(self.poll_id);
-        }
+        Action::PollCleanup(PollCleanup {
+            poll_id: self.poll_id,
+            cancelled: false,
+        })
+        .handle(eng, ctx, actor, version, mutate)?;
 
         Ok(ActionResponse::PollTimeout(PollTimeoutResponse {}))
     }
