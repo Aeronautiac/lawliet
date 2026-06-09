@@ -12,6 +12,9 @@ pub struct DefaultConfig {
     pub debate_default_timeout: Time,
     pub debate_shortened_timeout: Time,
     pub custody_timeout: Time,
+    pub trial_vote_duration: Time,
+    pub presentation_grace_timeout: Time,
+    pub presentation_timeout: Time,
 }
 
 pub fn default_defaults() -> DefaultConfig {
@@ -25,9 +28,12 @@ pub fn default_defaults() -> DefaultConfig {
         }],
         notebook_successes_per_day: 1,
         notebook_failures_per_day: 3,
-        org_vote_time: 6 * 60 * 60 * 1000,        // 6 hrs
-        debate_default_timeout: 60 * 60 * 1000,   // 1 hr
-        debate_shortened_timeout: 15 * 60 * 1000, // 15 minutes
-        custody_timeout: 4 * 60 * 60 * 1000,      // 4 hrs
+        org_vote_time: 6 * 60 * 60 * 1000,          // 6 hrs
+        presentation_grace_timeout: 60 * 60 * 1000, // 1 hr
+        presentation_timeout: 30 * 60 * 1000,       // 30 min
+        debate_default_timeout: 60 * 60 * 1000,     // 1 hr
+        debate_shortened_timeout: 15 * 60 * 1000,   // 15 minutes
+        custody_timeout: 4 * 60 * 60 * 1000,        // 4 hrs
+        trial_vote_duration: 6 * 60 * 60 * 1000,    // 6 hrs
     }
 }
