@@ -1,4 +1,15 @@
-use crate::{Time, config::ability::AbilityIdentifier};
+use crate::{
+    Time,
+    config::ability::{AbilityIdentifier, AbilityName},
+};
+
+const fn hrs(t: Time) -> Time {
+    t * 60 * 60 * 1000
+}
+
+const fn mins(t: Time) -> Time {
+    t * 60 * 1000
+}
 
 pub struct DefaultConfig {
     pub death_message: String,
@@ -19,21 +30,21 @@ pub struct DefaultConfig {
 
 pub fn default_defaults() -> DefaultConfig {
     DefaultConfig {
-        death_message: "They died from a sudden heart attack.".into(),
-        life_link_death_message: "They died to a sudden heart attack.".into(),
-        pseudocide_duration: 24 * 60 * 60 * 1000, // 24 hrs
         universal_abilities: vec![AbilityIdentifier {
-            name: crate::config::ability::AbilityName::Contact,
+            name: AbilityName::Contact,
             variant: 0,
         }],
+        death_message: "They died from a sudden heart attack.".into(),
+        life_link_death_message: "They died to a sudden heart attack.".into(),
+        pseudocide_duration: hrs(24),
         notebook_successes_per_day: 1,
         notebook_failures_per_day: 3,
-        org_vote_time: 6 * 60 * 60 * 1000,          // 6 hrs
-        presentation_grace_timeout: 60 * 60 * 1000, // 1 hr
-        presentation_timeout: 30 * 60 * 1000,       // 30 min
-        debate_default_timeout: 60 * 60 * 1000,     // 1 hr
-        debate_shortened_timeout: 15 * 60 * 1000,   // 15 minutes
-        custody_timeout: 4 * 60 * 60 * 1000,        // 4 hrs
-        trial_vote_duration: 6 * 60 * 60 * 1000,    // 6 hrs
+        org_vote_time: hrs(6),
+        presentation_grace_timeout: hrs(1),
+        presentation_timeout: mins(30),
+        debate_default_timeout: hrs(1),
+        debate_shortened_timeout: mins(15),
+        custody_timeout: hrs(4),
+        trial_vote_duration: hrs(6),
     }
 }
