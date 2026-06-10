@@ -35,18 +35,28 @@ impl ActionInterface for PollTimeout {
         actor.admin_or_system()?;
 
         let poll = get_poll(eng, self.poll_id)?;
-        let mut payload = poll.payload.clone();
+        let mut acc_payload = poll.accept_payload.clone();
+        let mut rej_payload = poll.reject_payload.clone();
         let policy_res = poll.timeout_policy(eng);
 
-        if payload.validate(eng, ctx, actor, version).is_err() {
+        if acc_payload.as_mut().is_some_and(|p| p.validate(eng, ctx, actor, version).is_err())
+            || rej_payload.as_mut().is_some_and(|p| p.validate(eng, ctx, actor, version).is_err())
+        {
             // TODO: tell frontend to acknowledge action failure
         } else {
             match policy_res {
                 PolicyResult::Accept => {
-                    payload.handle(eng, ctx, actor, version, mutate)?;
+                    if let Some(mut act) = acc_payload {
+                        act.handle(eng, ctx, actor, version, mutate)?;
+                    }
                 }
-                PolicyResult::Reject | PolicyResult::Inconclusive => {
-                    // TODO: tell frontend to acknowledge rejection
+                PolicyResult::Reject => {
+                    if let Some(mut act) = rej_payload {
+                        act.handle(eng, ctx, actor, version, mutate)?;
+                    }
+                }
+                PolicyResult::Inconclusive => {
+                    // TODO: tell frontend to acknowledge inconclusive result
                 }
             }
         }

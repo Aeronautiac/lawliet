@@ -61,7 +61,8 @@ mod poll_tests {
                 update_policy: PollPolicy::AlwaysInconclusive,
                 timeout_policy: PollPolicy::AlwaysInconclusive,
                 duration: None,
-                payload: Box::new(Action::Null(Null {})),
+                accept_payload: Box::new(Some(Action::Null(Null {}))),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -89,7 +90,8 @@ mod poll_tests {
                 update_policy: PollPolicy::AlwaysInconclusive,
                 timeout_policy: PollPolicy::AlwaysInconclusive,
                 duration: None,
-                payload: Box::new(Action::Null(Null {})),
+                accept_payload: Box::new(Some(Action::Null(Null {}))),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -115,7 +117,8 @@ mod poll_tests {
                 update_policy: PollPolicy::AlwaysInconclusive,
                 timeout_policy: PollPolicy::AlwaysInconclusive,
                 duration: None,
-                payload: Box::new(Action::Null(Null {})),
+                accept_payload: Box::new(Some(Action::Null(Null {}))),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -140,7 +143,8 @@ mod poll_tests {
                 update_policy: PollPolicy::AlwaysInconclusive,
                 timeout_policy: PollPolicy::AlwaysInconclusive,
                 duration: None,
-                payload: Box::new(Action::Null(Null {})),
+                accept_payload: Box::new(None),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -167,7 +171,8 @@ mod poll_tests {
                 update_policy: PollPolicy::AlwaysInconclusive,
                 timeout_policy: PollPolicy::AlwaysInconclusive,
                 duration: None,
-                payload: Box::new(Action::Null(Null {})),
+                accept_payload: Box::new(None),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -190,7 +195,8 @@ mod poll_tests {
                 update_policy: PollPolicy::AlwaysInconclusive,
                 timeout_policy: PollPolicy::AlwaysInconclusive,
                 duration: None,
-                payload: Box::new(Action::Null(Null {})),
+                accept_payload: Box::new(None),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -213,7 +219,8 @@ mod poll_tests {
                 update_policy: PollPolicy::Majority,
                 timeout_policy: PollPolicy::Majority,
                 duration: Some(20),
-                payload: Box::new(default_kill(p2)),
+                accept_payload: Box::new(Some(default_kill(p2))),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -245,7 +252,8 @@ mod poll_tests {
                 update_policy: PollPolicy::Majority,
                 timeout_policy: PollPolicy::AlwaysInconclusive,
                 duration: Some(10),
-                payload: Box::new(default_kill(p1)),
+                accept_payload: Box::new(Some(default_kill(p1))),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -267,7 +275,8 @@ mod poll_tests {
                 update_policy: PollPolicy::Majority,
                 timeout_policy: PollPolicy::AlwaysInconclusive,
                 duration: None,
-                payload: Box::new(default_kill(p2)),
+                accept_payload: Box::new(Some(default_kill(p2))),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -302,7 +311,8 @@ mod poll_tests {
                 update_policy: PollPolicy::Majority,
                 timeout_policy: PollPolicy::WinningVote,
                 duration: Some(10),
-                payload: Box::new(default_kill(p4)),
+                accept_payload: Box::new(Some(default_kill(p4))),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -342,7 +352,8 @@ mod poll_tests {
                 update_policy: PollPolicy::AlwaysInconclusive,
                 timeout_policy: PollPolicy::WinningVote,
                 duration: Some(10),
-                payload: Box::new(default_kill(p1)),
+                accept_payload: Box::new(Some(default_kill(p1))),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -373,7 +384,8 @@ mod poll_tests {
                 update_policy: PollPolicy::AlwaysInconclusive,
                 timeout_policy: PollPolicy::Majority,
                 duration: Some(10),
-                payload: Box::new(default_kill(p1)),
+                accept_payload: Box::new(Some(default_kill(p1))),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -414,7 +426,8 @@ mod poll_tests {
                 update_policy: PollPolicy::Majority,
                 timeout_policy: PollPolicy::Majority,
                 duration: Some(5),
-                payload: Box::new(default_kill(p1)),
+                accept_payload: Box::new(Some(default_kill(p1))),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -451,7 +464,8 @@ mod poll_tests {
                 update_policy: PollPolicy::Majority,
                 timeout_policy: PollPolicy::Majority,
                 duration: Some(5),
-                payload: Box::new(default_kill(p1)),
+                accept_payload: Box::new(Some(default_kill(p1))),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -479,7 +493,8 @@ mod poll_tests {
                 update_policy: PollPolicy::Majority,
                 timeout_policy: PollPolicy::Majority,
                 duration: None,
-                payload: Box::new(default_kill(p1)),
+                accept_payload: Box::new(Some(default_kill(p1))),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -513,7 +528,8 @@ mod poll_tests {
                 update_policy: PollPolicy::AlwaysInconclusive,
                 timeout_policy: PollPolicy::WinningVote,
                 duration: Some(5),
-                payload: Box::new(default_kill(p1)),
+                accept_payload: Box::new(Some(default_kill(p1))),
+                reject_payload: Box::new(None),
             },
         );
 
@@ -541,12 +557,46 @@ mod poll_tests {
                 update_policy: PollPolicy::Majority,
                 timeout_policy: PollPolicy::AlwaysInconclusive,
                 duration: None,
-                payload: Box::new(default_kill(p2)),
+                accept_payload: Box::new(Some(default_kill(p2))),
+                reject_payload: Box::new(None),
             },
         );
 
         quick_kill(&mut eng, 0, true, true, false, p2);
         assert!(add_vote(&mut eng, 0, poll_id, p1, true).is_err());
+    }
+
+    #[test]
+    fn rejection_payload() {
+        let mut eng = Engine::new();
+        let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
+        let p2 = add_player(&mut eng, 0, Role::Civilian, "p2");
+
+        let poll_id = create_poll(
+            &mut eng,
+            0,
+            CreatePoll {
+                voter_policy: VoterPolicy::Present,
+                visibility: PollVisibility::AllPresent,
+                update_policy: PollPolicy::Majority,
+                timeout_policy: PollPolicy::AlwaysInconclusive,
+                duration: None,
+                accept_payload: Box::new(Some(default_kill(p1))),
+                reject_payload: Box::new(Some(default_kill(p2))),
+            },
+        );
+
+        add_vote(&mut eng, 0, poll_id, p1, false).unwrap();
+
+        let p2_actor = get_actor(&eng, p2).unwrap();
+        assert!(!p2_actor.has_state(State::Dead));
+
+        add_vote(&mut eng, 0, poll_id, p2, false).unwrap();
+
+        let p2_actor = get_actor(&eng, p2).unwrap();
+        assert!(p2_actor.has_state(State::Dead));
+        let p1_actor = get_actor(&eng, p1).unwrap();
+        assert!(!p1_actor.has_state(State::Dead));
     }
 
     // TODO:

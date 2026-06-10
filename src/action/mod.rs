@@ -109,6 +109,7 @@ use crate::{
         prosecution::{
             advance_prosecution::{AdvanceProsecution, AdvanceProsecutionResponse},
             cull_prosecutions::{CullProsecutions, CullProsecutionsResponse},
+            prosecution_vote_res::{ProsecutionVoteRes, ProsecutionVoteResResponse},
             select_lawyer::{SelectLawyer, SelectLawyerResponse},
             set_custody::{SetCustody, SetCustodyResponse},
             signal_ready::{SignalReady, SignalReadyResponse},
@@ -330,6 +331,7 @@ pub enum Action {
     SetRandomSeed(SetRandomSeed),
     DeferredCmds(DeferredCmds),
     UpdateBugVisibilities(UpdateBugVisibilities),
+    ProsecutionVoteRes(ProsecutionVoteRes),
 }
 
 pub enum ActionResponse {
@@ -421,6 +423,7 @@ pub enum ActionResponse {
     SetRandomSeed(SetRandomSeedResponse),
     DeferredCmds(DeferredCmdsResponse),
     UpdateBugVisibilities(UpdateBugVisibilitiesResponse),
+    ProsecutionVoteRes(ProsecutionVoteResResponse),
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]

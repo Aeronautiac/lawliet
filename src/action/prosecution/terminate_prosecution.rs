@@ -16,8 +16,7 @@
 use crate::{
     action::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
-        comms::channel::destroy_channel::DestroyChannel,
-        poll::poll_cleanup::PollCleanup,
+        comms::channel::destroy_channel::DestroyChannel, poll::poll_cleanup::PollCleanup,
         prosecution::set_custody::SetCustody,
     },
     common::{ProsecutionKey, Version},
@@ -63,10 +62,10 @@ impl ActionInterface for TerminateProsecution {
             _ => None,
         };
 
-        if mutate {
-            if let Some(job_id) = timeout_job_id {
-                eng.jobs.cancel_id(job_id);
-            }
+        if let Some(job_id) = timeout_job_id
+            && mutate
+        {
+            eng.jobs.cancel_id(job_id);
         }
 
         if let Some(poll_id) = voting_poll {

@@ -54,11 +54,13 @@ use crate::{
     ChannelKey, Time,
     action::{
         Action, ActionActor, ActionInterface, ActionRequest, ActionResponse, ActionResult,
-        comms::channel::create_channel::CreateChannel,
+        comms::channel::create_channel::CreateChannel, poll::create_poll::CreatePoll,
+        prosecution::prosecution_vote_res::ProsecutionVoteRes,
     },
     common::{JobID, ProsecutionKey},
     engine::Engine,
     helpers::{get_prosecution, get_prosecution_mut},
+    poll::{PollPolicy, PollVisibility, VoterPolicy},
     prosecution::{ProsecutionPhase, TrialPhase, TrialSubphase},
 };
 
@@ -203,8 +205,42 @@ impl ActionInterface for AdvanceProsecution {
                         prosecutor_done,
                         defense_done,
                     } => {
-                        // TODO:
-                        // start poll
+                        let response = Action::CreatePoll(CreatePoll {
+                            accept_payload: Box::new(Some(Action::ProsecutionVoteRes(
+                                ProsecutionVoteRes {
+                                    prosecution_id: self.prosecution_id,
+                                    success: true,
+                                },
+                            ))),
+                            reject_payload: Box::new(Some(Action::ProsecutionVoteRes(
+                                ProsecutionVoteRes {
+                                    prosecution_id: self.prosecution_id,
+                                    success: false,
+                                },
+                            ))),
+                            voter_policy: VoterPolicy::Present,
+                            update_policy: PollPolicy::AlwaysInconclusive,
+                            timeout_policy: PollPolicy::WinningVote,
+                            visibility: PollVisibility::AllPresent,
+                            duration: Some(eng.config.defaults.trial_vote_duration),
+                        })
+                        .handle(
+                            eng,
+                            ctx,
+                            &ActionActor::System,
+                            version,
+                            mutate,
+                        )?;
+                        let ActionResponse::CreatePoll(create_poll_response) = response else {
+                            unreachable!();
+                        };
+                        let id = create_poll_response.id;
+
+                        if mutate {
+                            let prosecution = get_prosecution_mut(eng, self.prosecution_id)
+                                .expect("prosecution was already validated");
+                            prosecution.phase = ProsecutionPhase::Voting { poll_id: id };
+                        }
                     }
                 }
             }

@@ -34,6 +34,8 @@ mod policies;
 // - if an update policy returns inconclusive, nothing happens
 // - if an update policy returns reject or accept, the poll concludes
 // - a poll will always conclude with the return of a timeout policy
+//
+// polls now have individual accept and reject actions
 
 #[derive(PartialEq, Eq, Clone, Debug, Copy)]
 pub enum VoterPolicy {
@@ -59,9 +61,9 @@ pub enum PollPolicy {
 
 #[derive(PartialEq, Eq, Clone, Debug, Copy)]
 pub enum PollVisibility {
-    Org(ActorKey),     // everyone present within an org
+    Org(ActorKey),       // everyone present within an org
     Channel(ChannelKey), // everyone present within a channel
-    AllPresent,  // everyone present in the game (not kidnapped, dead, etc...)
+    AllPresent,          // everyone present in the game (not kidnapped, dead, etc...)
 }
 
 #[derive(Debug)]
@@ -79,7 +81,8 @@ pub struct VoteQuery {
 
 #[derive(Debug)]
 pub struct Poll {
-    pub payload: Action,
+    pub accept_payload: Option<Action>,
+    pub reject_payload: Option<Action>,
     pub visibility: PollVisibility,
     pub update_policy: PollPolicy,
     pub timeout_policy: PollPolicy,
@@ -89,14 +92,16 @@ pub struct Poll {
 
 impl Poll {
     pub fn new(
-        payload: Action,
+        accept_payload: Option<Action>,
+        reject_payload: Option<Action>,
         visibility: PollVisibility,
         update_policy: PollPolicy,
         timeout_policy: PollPolicy,
         voter_policy: VoterPolicy,
     ) -> Self {
         Poll {
-            payload,
+            accept_payload,
+            reject_payload,
             visibility,
             update_policy,
             timeout_policy,

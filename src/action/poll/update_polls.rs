@@ -30,20 +30,34 @@ impl ActionInterface for UpdatePolls {
         actor.admin_or_system()?;
 
         let mut polls_to_cancel: SmallVec<[PollKey; 8]> = smallvec![];
-        let mut polls_to_accept: SmallVec<[(PollKey, Action); 8]> = smallvec![];
-        let mut polls_to_reject: SmallVec<[PollKey; 8]> = smallvec![];
+        let mut polls_to_accept: SmallVec<[(PollKey, Option<Action>); 8]> = smallvec![];
+        let mut polls_to_reject: SmallVec<[(PollKey, Option<Action>); 8]> = smallvec![];
         let ids: Vec<PollKey> = eng.world.polls.keys().collect();
         for id in ids {
             let poll = get_poll(eng, id).unwrap();
-            let mut payload = poll.payload.clone();
-            if payload.validate(eng, ctx, actor, version).is_err() {
+            let mut acc_payload = poll.accept_payload.clone();
+            let mut rej_payload = poll.reject_payload.clone();
+
+            if acc_payload.is_some()
+                && acc_payload
+                    .as_mut()
+                    .unwrap()
+                    .validate(eng, ctx, &ActionActor::System, version)
+                    .is_err()
+                || rej_payload.is_some()
+                    && rej_payload
+                        .as_mut()
+                        .unwrap()
+                        .validate(eng, ctx, &ActionActor::System, version)
+                        .is_err()
+            {
                 polls_to_cancel.push(id);
             } else {
                 let poll = get_poll(eng, id).unwrap();
                 let policy_res = poll.update_policy(eng);
                 match policy_res {
-                    PolicyResult::Accept => polls_to_accept.push((id, payload)),
-                    PolicyResult::Reject => polls_to_reject.push(id),
+                    PolicyResult::Accept => polls_to_accept.push((id, acc_payload)),
+                    PolicyResult::Reject => polls_to_reject.push((id, rej_payload)),
                     _ => {}
                 };
             }
@@ -57,7 +71,10 @@ impl ActionInterface for UpdatePolls {
             // - send command to frontend to acknowledge poll cancellation
         }
 
-        for id in polls_to_reject {
+        for (id, action) in polls_to_reject {
+            if let Some(mut act) = action {
+                act.handle(eng, ctx, &ActionActor::System, version, mutate)?;
+            }
             if mutate {
                 eng.world.remove_poll(id);
             }
@@ -66,8 +83,10 @@ impl ActionInterface for UpdatePolls {
         }
 
         // the actions are guaranteed to succeed by this point. if they dont, something's wrong.
-        for (id, mut action) in polls_to_accept {
-            action.handle(eng, ctx, actor, version, mutate)?;
+        for (id, action) in polls_to_accept {
+            if let Some(mut act) = action {
+                act.handle(eng, ctx, &ActionActor::System, version, mutate)?;
+            }
             if mutate {
                 eng.world.remove_poll(id);
             }

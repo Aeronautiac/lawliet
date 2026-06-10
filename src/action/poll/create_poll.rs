@@ -26,7 +26,8 @@ pub struct CreatePoll {
     pub visibility: PollVisibility,
     pub update_policy: PollPolicy,
     pub timeout_policy: PollPolicy,
-    pub payload: Box<Action>,
+    pub accept_payload: Box<Option<Action>>,
+    pub reject_payload: Box<Option<Action>>,
     pub duration: Option<Time>,
 }
 
@@ -43,7 +44,8 @@ impl ActionInterface for CreatePoll {
 
         let id = if mutate {
             eng.world.add_poll(Poll::new(
-                *(self.payload.clone()),
+                *(self.accept_payload.clone()),
+                *(self.reject_payload.clone()),
                 self.visibility,
                 self.update_policy,
                 self.timeout_policy,

@@ -92,13 +92,16 @@ impl ActionInterface for SystemUseOrgAbility {
                     visibility: PollVisibility::Org(self.org_id),
                     update_policy: PollPolicy::Majority,
                     timeout_policy: PollPolicy::Majority,
-                    payload: Box::new(Action::SystemUseOrgAbility(SystemUseOrgAbility {
-                        org_id: self.org_id,
-                        user_id: self.user_id,
-                        ability_id: self.ability_id,
-                        ability_args: self.ability_args.clone(),
-                        dont_vote: true,
-                    })),
+                    accept_payload: Box::new(Some(Action::SystemUseOrgAbility(
+                        SystemUseOrgAbility {
+                            org_id: self.org_id,
+                            user_id: self.user_id,
+                            ability_id: self.ability_id,
+                            ability_args: self.ability_args.clone(),
+                            dont_vote: true,
+                        },
+                    ))),
+                    reject_payload: Box::new(None),
                     duration: Some(eng.config.defaults.org_vote_time),
                 })
                 .handle(eng, ctx, &ActionActor::System, version, mutate)?;

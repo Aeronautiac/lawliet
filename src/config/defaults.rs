@@ -14,6 +14,7 @@ const fn mins(t: Time) -> Time {
 pub struct DefaultConfig {
     pub death_message: String,
     pub life_link_death_message: String,
+    pub execution_death_message: String,
     pub pseudocide_duration: Time,                   // milliseconds
     pub universal_abilities: Vec<AbilityIdentifier>, // the abilities that everyone gets regardless
     // of role
@@ -35,7 +36,8 @@ pub fn default_defaults() -> DefaultConfig {
             variant: 0,
         }],
         death_message: "They died from a sudden heart attack.".into(),
-        life_link_death_message: "They died to a sudden heart attack.".into(),
+        life_link_death_message: "They died because of a life link.".into(),
+        execution_death_message: "They were found guilty and subsequently executed.".into(),
         pseudocide_duration: hrs(24),
         notebook_successes_per_day: 1,
         notebook_failures_per_day: 3,
