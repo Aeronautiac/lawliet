@@ -1,6 +1,9 @@
 use crate::{
     action::{
         actor::{add_state::AddState, player::give_role::GiveRole, remove_state::RemoveState},
+        kidnapping::{
+            create_kidnapping::CreateKidnapping, release_kidnapping::ReleaseKidnapping,
+        },
         comms::{
             channel::{
                 create_channel::CreateChannel, send_message::SendMessage, set_member::SetMember,
@@ -57,9 +60,10 @@ use crate::{
     actor::organization::LeadershipTransferPolicies,
     chargepool::PoolLinkType,
     common::{
-        AbilityKey, ActorKey, ChannelKey, ChargeCount, ChargePoolKey, GroupchatKey, LinkWeight,
-        LoungeKey, NotebookKey, PassiveKey, PollKey,
+        AbilityKey, ActorKey, ChannelKey, ChargeCount, ChargePoolKey, GroupchatKey, KidnappingKey,
+        LinkWeight, LoungeKey, NotebookKey, PassiveKey, PollKey,
     },
+    kidnapping::KidnappingType,
     config::{actor::organization::OrganizationName, role::Role},
     engine::{Engine, ExecutionResult},
     passive::PassiveType,
@@ -710,4 +714,39 @@ pub fn set_world_channel_override(
             override_data,
         }),
     })
+}
+
+pub fn create_kidnapping(
+    eng: &mut Engine,
+    time: Time,
+    kidnapper_id: ActorKey,
+    victim_id: ActorKey,
+    kidnapping_type: KidnappingType,
+) -> (KidnappingKey, ChannelKey) {
+    let data = eng
+        .execute(ActionRequest {
+            actor: ActionActor::System,
+            timestamp: time,
+            payload: Action::CreateKidnapping(CreateKidnapping {
+                kidnapper_id,
+                victim_id,
+                kidnapping_type,
+            }),
+        })
+        .unwrap()
+        .0;
+    let ActionResponse::CreateKidnapping(r) = data else {
+        unreachable!()
+    };
+    let ch = eng.world.get_kidnapping(r.id).unwrap().channel_id;
+    (r.id, ch)
+}
+
+pub fn release_kidnapping(eng: &mut Engine, time: Time, kidnapping_id: KidnappingKey) {
+    eng.execute(ActionRequest {
+        actor: ActionActor::System,
+        timestamp: time,
+        payload: Action::ReleaseKidnapping(ReleaseKidnapping { kidnapping_id }),
+    })
+    .unwrap();
 }

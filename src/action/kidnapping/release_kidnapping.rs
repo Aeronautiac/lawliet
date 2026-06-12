@@ -49,6 +49,10 @@ impl ActionInterface for ReleaseKidnapping {
             return Err(ActionError::InsufficientPermissions);
         }
 
+        if mutate {
+            eng.world.remove_kidnapping(self.kidnapping_id);
+        }
+
         Action::DestroyChannel(DestroyChannel {
             channel_id,
             archive: true,
@@ -60,10 +64,6 @@ impl ActionInterface for ReleaseKidnapping {
             state: State::Kidnapped,
         })
         .handle(eng, ctx, &ActionActor::System, version, mutate)?;
-
-        if mutate {
-            eng.world.remove_kidnapping(self.kidnapping_id);
-        }
 
         Ok(ActionResponse::ReleaseKidnapping(
             ReleaseKidnappingResponse {},
