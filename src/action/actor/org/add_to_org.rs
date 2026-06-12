@@ -7,6 +7,7 @@ use crate::{
     action::{
         Action, ActionError, ActionInterface, ActionResponse,
         actor::org::change_org_leader::ChangeOrgLeader,
+        kidnapping::update_kidnap_channels::UpdateKidnapChannels,
     },
     actor::{ActorLink, ActorLinkType},
     common::ActorKey,
@@ -69,6 +70,9 @@ impl ActionInterface for AddToOrg {
                 .handle(eng, ctx, actor, version, mutate)?;
             }
         }
+
+        Action::UpdateKidnapChannels(UpdateKidnapChannels {})
+            .handle(eng, ctx, actor, version, mutate)?;
 
         Ok(ActionResponse::AddToOrg(AddToOrgResponse {}))
     }

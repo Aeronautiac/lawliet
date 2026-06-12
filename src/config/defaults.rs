@@ -27,6 +27,7 @@ pub struct DefaultConfig {
     pub trial_vote_duration: Time,
     pub presentation_grace_timeout: Time,
     pub presentation_timeout: Time,
+    pub kidnap_time: Time,
 }
 
 pub fn default_defaults() -> DefaultConfig {
@@ -48,5 +49,6 @@ pub fn default_defaults() -> DefaultConfig {
         debate_shortened_timeout: mins(15),
         custody_timeout: hrs(4),
         trial_vote_duration: hrs(6),
+        kidnap_time: hrs(24),
     }
 }

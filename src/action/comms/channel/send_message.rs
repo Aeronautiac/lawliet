@@ -5,7 +5,8 @@
 
 use crate::{
     action::{ActionError, ActionInterface, ActionResponse},
-    channel::{ChannelPermission, SenderDisplay},
+    actor::ActorDisplay,
+    channel::ChannelPermission,
     command::Command,
     common::{BugKey, ChannelKey},
     helpers::{get_channel, player_id},
@@ -17,7 +18,7 @@ pub struct SendMessageResponse {}
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct SendMessage {
     pub channel_id: ChannelKey,
-    pub display: SenderDisplay,
+    pub display: ActorDisplay,
     pub content: String,
 }
 

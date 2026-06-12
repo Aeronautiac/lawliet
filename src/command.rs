@@ -2,8 +2,8 @@ use indexmap::IndexSet;
 
 use crate::{
     BugKey, Time,
-    actor::{modifier::Modifiers, state::States},
-    channel::{ChannelPermissions, SenderDisplay},
+    actor::{ActorDisplay, modifier::Modifiers, state::States},
+    channel::ChannelPermissions,
     common::{
         AbilityKey, ActorKey, AttemptCount, ChannelKey, ChargeCount, GroupchatKey, IterationCount,
         LoungeKey, NotebookKey, PassiveKey,
@@ -183,7 +183,7 @@ pub enum Command {
     AddMessage {
         content: String,
         channel_id: ChannelKey,
-        sender_display: SenderDisplay,
+        sender_display: ActorDisplay,
     },
 
     // map a lounge id to a channel id
@@ -216,7 +216,7 @@ pub enum Command {
 
     AddBugMessage {
         bug_key: BugKey,
-        display: SenderDisplay,
+        display: ActorDisplay,
         content: String,
     },
 
@@ -253,21 +253,21 @@ pub enum Command {
     // display a channel member
     ShowChannelMember {
         channel_id: ChannelKey,
-        display: SenderDisplay,
+        display: ActorDisplay,
         channel_perms: ChannelPermissions,
     },
 
     // remove a channel member display
     RemoveChannelMember {
         channel_id: ChannelKey,
-        display: SenderDisplay,
+        display: ActorDisplay,
     },
 
     // update a player's view of the channel based on their permissions
     UpdateChannelView {
         channel_id: ChannelKey,
         perms: ChannelPermissions,
-        displays: IndexSet<SenderDisplay>,
+        displays: IndexSet<ActorDisplay>,
     },
 
     SetBugVisibility {

@@ -26,8 +26,7 @@ use crate::{
         ActionResponse, ActionResult,
         prosecution::{advance_prosecution::AdvanceProsecution, set_custody::SetCustody},
     },
-    actor::modifier::Modifier,
-    channel::SenderDisplay,
+    actor::{ActorDisplay, modifier::Modifier},
     common::{ProsecutionKey, Version},
     engine::Engine,
     helpers::{get_actor, require_player},
@@ -42,9 +41,9 @@ pub struct StartProsecutionResponse {
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct StartProsecution {
     pub prosecutor_id: ActorKey,
-    pub prosecutor_display: SenderDisplay,
+    pub prosecutor_display: ActorDisplay,
     pub defendant_id: ActorKey,
-    pub defendant_display: SenderDisplay,
+    pub defendant_display: ActorDisplay,
     pub autonomous: bool,
 }
 

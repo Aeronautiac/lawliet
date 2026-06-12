@@ -6,12 +6,9 @@
 */
 
 use crate::{
-    action::{
-        Action, ActionInterface, ActionResponse,
-        comms::channel::set_member::SetMember,
-    },
-    actor::player::OverrideResolver,
-    channel::{ChannelMember, ChannelPermission, ChannelPermissions, SenderDisplay},
+    action::{Action, ActionInterface, ActionResponse, comms::channel::set_member::SetMember},
+    actor::{ActorDisplay, player::OverrideResolver},
+    channel::{ChannelMember, ChannelPermission, ChannelPermissions},
     common::{ActorKey, ChannelKey},
     helpers::{get_actor, get_player},
 };
@@ -39,7 +36,7 @@ impl ActionInterface for UpdateWorldChannelPerms {
         get_player(eng, self.player_id)?;
 
         let player_modifiers = get_actor(eng, self.player_id)?.modifiers();
-        let updates: Vec<(ChannelKey, ChannelPermissions, IndexSet<SenderDisplay>)> = {
+        let updates: Vec<(ChannelKey, ChannelPermissions, IndexSet<ActorDisplay>)> = {
             let player = get_player(eng, self.player_id)?;
             eng.world
                 .world_channel_map
@@ -48,8 +45,12 @@ impl ActionInterface for UpdateWorldChannelPerms {
                     let config = eng.config.world_config.world_channels.get(name)?;
                     let over = player.get_world_channel_override(*name, OverrideResolver::Positive);
 
-                    let base = over.as_ref().map_or(config.default_perms, |o| o.default_perms);
-                    let force = over.as_ref().map_or(ChannelPermissions::EMPTY, |o| o.force_perms);
+                    let base = over
+                        .as_ref()
+                        .map_or(config.default_perms, |o| o.default_perms);
+                    let force = over
+                        .as_ref()
+                        .map_or(ChannelPermissions::EMPTY, |o| o.force_perms);
 
                     let mut blocked = ChannelPermissions::EMPTY;
                     if !(player_modifiers & config.send_blocking).is_empty() {

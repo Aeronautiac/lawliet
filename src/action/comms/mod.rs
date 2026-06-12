@@ -14,17 +14,15 @@ mod comms_tests {
             ability::{add_ability::AddAbility, create_and_give_ability::CreateAndGiveAbility},
             actor::add_state::AddState,
             comms::{
-                bug::{
-                    archive_bug::ArchiveBug, create_bug::CreateBug, destroy_bug::DestroyBug,
-                },
+                bug::{archive_bug::ArchiveBug, create_bug::CreateBug, destroy_bug::DestroyBug},
                 channel::set_loggable::SetLoggable,
                 groupchat::create_groupchat::CreateGroupchat,
                 lounge::create_lounge::CreateLounge,
             },
         },
-        actor::state::State,
+        actor::{ActorDisplay, state::State},
         bug::BugSource,
-        channel::{ChannelMember, ChannelPermission, SenderDisplay},
+        channel::{ChannelMember, ChannelPermission},
         command::Command,
         common::{AbilityKey, ActorKey, BugKey},
         config::{ability::AbilityName, role::Role},
@@ -50,7 +48,7 @@ mod comms_tests {
             ch,
             Some(ChannelMember {
                 perms: ChannelPermission::Send | ChannelPermission::View,
-                displays: indexset![SenderDisplay::Raw(p1)],
+                displays: indexset![ActorDisplay::Raw(p1)],
             }),
         )
         .unwrap();
@@ -71,7 +69,7 @@ mod comms_tests {
             ch,
             Some(ChannelMember {
                 perms: ChannelPermission::Send | ChannelPermission::View,
-                displays: indexset![SenderDisplay::Raw(p1)],
+                displays: indexset![ActorDisplay::Raw(p1)],
             }),
         )
         .unwrap();
@@ -93,7 +91,7 @@ mod comms_tests {
             ch,
             Some(ChannelMember {
                 perms: ChannelPermission::Send | ChannelPermission::View,
-                displays: indexset![SenderDisplay::Raw(p1)],
+                displays: indexset![ActorDisplay::Raw(p1)],
             }),
         )
         .unwrap();
@@ -117,7 +115,7 @@ mod comms_tests {
             ch,
             Some(ChannelMember {
                 perms: ChannelPermission::Send | ChannelPermission::View,
-                displays: indexset![SenderDisplay::Raw(p1)],
+                displays: indexset![ActorDisplay::Raw(p1)],
             }),
         )
         .unwrap();
@@ -163,18 +161,18 @@ mod comms_tests {
             ch,
             Some(ChannelMember {
                 perms: ChannelPermission::Send | ChannelPermission::View,
-                displays: indexset![SenderDisplay::Raw(p1)],
+                displays: indexset![ActorDisplay::Raw(p1)],
             }),
         )
         .unwrap();
 
-        let (_, ctx) = send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p1), "hello").unwrap();
+        let (_, ctx) = send_message(&mut eng, 0, p1, ch, ActorDisplay::Raw(p1), "hello").unwrap();
 
         assert!(ctx.commands.iter().any(|p| {
             matches!(&p.cmd, Command::AddMessage { channel_id, content, sender_display }
                 if *channel_id == ch
                     && content == "hello"
-                    && *sender_display == SenderDisplay::Raw(p1))
+                    && *sender_display == ActorDisplay::Raw(p1))
         }));
     }
 
@@ -184,7 +182,7 @@ mod comms_tests {
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
         let ch = create_channel(&mut eng, 0, false);
 
-        assert!(send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p1), "hello").is_err());
+        assert!(send_message(&mut eng, 0, p1, ch, ActorDisplay::Raw(p1), "hello").is_err());
     }
 
     #[test]
@@ -200,12 +198,12 @@ mod comms_tests {
             ch,
             Some(ChannelMember {
                 perms: ChannelPermission::View.into(),
-                displays: indexset![SenderDisplay::Raw(p1)],
+                displays: indexset![ActorDisplay::Raw(p1)],
             }),
         )
         .unwrap();
 
-        assert!(send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p1), "hello").is_err());
+        assert!(send_message(&mut eng, 0, p1, ch, ActorDisplay::Raw(p1), "hello").is_err());
     }
 
     #[test]
@@ -222,13 +220,13 @@ mod comms_tests {
             ch,
             Some(ChannelMember {
                 perms: ChannelPermission::Send | ChannelPermission::View,
-                displays: indexset![SenderDisplay::Raw(p1)],
+                displays: indexset![ActorDisplay::Raw(p1)],
             }),
         )
         .unwrap();
 
         // p1 tries to send as p2 which they do not own
-        assert!(send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p2), "hello").is_err());
+        assert!(send_message(&mut eng, 0, p1, ch, ActorDisplay::Raw(p2), "hello").is_err());
     }
 
     #[test]
@@ -244,7 +242,7 @@ mod comms_tests {
             ch,
             Some(ChannelMember {
                 perms: ChannelPermission::Send | ChannelPermission::View,
-                displays: indexset![SenderDisplay::Raw(p1)],
+                displays: indexset![ActorDisplay::Raw(p1)],
             }),
         )
         .unwrap();
@@ -269,7 +267,7 @@ mod comms_tests {
             ch,
             Some(ChannelMember {
                 perms: ChannelPermission::Send | ChannelPermission::View,
-                displays: indexset![SenderDisplay::Raw(p1)],
+                displays: indexset![ActorDisplay::Raw(p1)],
             }),
         )
         .unwrap();
@@ -599,8 +597,8 @@ mod comms_tests {
     fn create_bug_invalid_target_fails() {
         let mut eng = Engine::new();
 
-        assert!(eng
-            .execute(ActionRequest {
+        assert!(
+            eng.execute(ActionRequest {
                 actor: ActionActor::System,
                 timestamp: 0,
                 payload: Action::CreateBug(CreateBug {
@@ -608,7 +606,8 @@ mod comms_tests {
                     source: BugSource::Custody,
                 }),
             })
-            .is_err());
+            .is_err()
+        );
     }
 
     #[test]
@@ -616,8 +615,8 @@ mod comms_tests {
         let mut eng = Engine::new();
         let p1 = add_player(&mut eng, 0, Role::Civilian, "p1");
 
-        assert!(eng
-            .execute(ActionRequest {
+        assert!(
+            eng.execute(ActionRequest {
                 actor: ActionActor::System,
                 timestamp: 0,
                 payload: Action::CreateBug(CreateBug {
@@ -625,7 +624,8 @@ mod comms_tests {
                     source: BugSource::Ability(AbilityKey::default()),
                 }),
             })
-            .is_err());
+            .is_err()
+        );
     }
 
     #[test]
@@ -698,15 +698,16 @@ mod comms_tests {
     fn archive_bug_invalid_id_fails() {
         let mut eng = Engine::new();
 
-        assert!(eng
-            .execute(ActionRequest {
+        assert!(
+            eng.execute(ActionRequest {
                 actor: ActionActor::System,
                 timestamp: 0,
                 payload: Action::ArchiveBug(ArchiveBug {
                     bug_id: BugKey::default(),
                 }),
             })
-            .is_err());
+            .is_err()
+        );
     }
 
     #[test]
@@ -835,15 +836,16 @@ mod comms_tests {
     fn destroy_bug_invalid_id_fails() {
         let mut eng = Engine::new();
 
-        assert!(eng
-            .execute(ActionRequest {
+        assert!(
+            eng.execute(ActionRequest {
                 actor: ActionActor::System,
                 timestamp: 0,
                 payload: Action::DestroyBug(DestroyBug {
                     bug_id: BugKey::default(),
                 }),
             })
-            .is_err());
+            .is_err()
+        );
     }
 
     #[test]
@@ -858,7 +860,7 @@ mod comms_tests {
             ch,
             Some(ChannelMember {
                 perms: ChannelPermission::Send | ChannelPermission::View,
-                displays: indexset![SenderDisplay::Raw(p1)],
+                displays: indexset![ActorDisplay::Raw(p1)],
             }),
         )
         .unwrap();
@@ -877,7 +879,7 @@ mod comms_tests {
             unreachable!()
         };
 
-        let (_, ctx) = send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p1), "hello").unwrap();
+        let (_, ctx) = send_message(&mut eng, 0, p1, ch, ActorDisplay::Raw(p1), "hello").unwrap();
 
         assert!(ctx.commands.iter().any(|p| {
             p.recipient.is_none()
@@ -897,7 +899,7 @@ mod comms_tests {
             ch,
             Some(ChannelMember {
                 perms: ChannelPermission::Send | ChannelPermission::View,
-                displays: indexset![SenderDisplay::Raw(p1)],
+                displays: indexset![ActorDisplay::Raw(p1)],
             }),
         )
         .unwrap();
@@ -912,12 +914,13 @@ mod comms_tests {
         })
         .unwrap();
 
-        let (_, ctx) = send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p1), "hello").unwrap();
+        let (_, ctx) = send_message(&mut eng, 0, p1, ch, ActorDisplay::Raw(p1), "hello").unwrap();
 
-        assert!(!ctx
-            .commands
-            .iter()
-            .any(|p| matches!(&p.cmd, Command::AddBugMessage { .. })));
+        assert!(
+            !ctx.commands
+                .iter()
+                .any(|p| matches!(&p.cmd, Command::AddBugMessage { .. }))
+        );
     }
 
     #[test]
@@ -932,7 +935,7 @@ mod comms_tests {
             ch,
             Some(ChannelMember {
                 perms: ChannelPermission::Send | ChannelPermission::View,
-                displays: indexset![SenderDisplay::Raw(p1)],
+                displays: indexset![ActorDisplay::Raw(p1)],
             }),
         )
         .unwrap();
@@ -960,12 +963,13 @@ mod comms_tests {
         })
         .unwrap();
 
-        let (_, ctx) = send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p1), "hello").unwrap();
+        let (_, ctx) = send_message(&mut eng, 0, p1, ch, ActorDisplay::Raw(p1), "hello").unwrap();
 
-        assert!(!ctx
-            .commands
-            .iter()
-            .any(|p| matches!(&p.cmd, Command::AddBugMessage { .. })));
+        assert!(
+            !ctx.commands
+                .iter()
+                .any(|p| matches!(&p.cmd, Command::AddBugMessage { .. }))
+        );
     }
 
     #[test]
@@ -980,7 +984,7 @@ mod comms_tests {
             ch,
             Some(ChannelMember {
                 perms: ChannelPermission::Send | ChannelPermission::View,
-                displays: indexset![SenderDisplay::Raw(p1)],
+                displays: indexset![ActorDisplay::Raw(p1)],
             }),
         )
         .unwrap();
@@ -1000,12 +1004,12 @@ mod comms_tests {
         };
 
         let (_, ctx) =
-            send_message(&mut eng, 0, p1, ch, SenderDisplay::Raw(p1), "secret message").unwrap();
+            send_message(&mut eng, 0, p1, ch, ActorDisplay::Raw(p1), "secret message").unwrap();
 
         assert!(ctx.commands.iter().any(|p| {
             matches!(&p.cmd, Command::AddBugMessage { bug_key, display, content }
                 if *bug_key == bug_data.id
-                    && *display == SenderDisplay::Raw(p1)
+                    && *display == ActorDisplay::Raw(p1)
                     && content == "secret message")
         }));
     }
@@ -1075,10 +1079,11 @@ mod comms_tests {
             })
             .unwrap();
 
-        assert!(!ctx
-            .commands
-            .iter()
-            .any(|p| matches!(&p.cmd, Command::SetBugVisibility { visible: true, .. })));
+        assert!(
+            !ctx.commands
+                .iter()
+                .any(|p| matches!(&p.cmd, Command::SetBugVisibility { visible: true, .. }))
+        );
     }
 
     #[test]
@@ -1131,7 +1136,13 @@ mod comms_tests {
         let mut eng = Engine::new();
         let receiver = add_player(&mut eng, 0, Role::Civilian, "receiver");
         let target = add_player(&mut eng, 0, Role::Civilian, "target");
-        quick_passive(&mut eng, 0, receiver, PassiveType::CustodyBugReceiver, false);
+        quick_passive(
+            &mut eng,
+            0,
+            receiver,
+            PassiveType::CustodyBugReceiver,
+            false,
+        );
 
         let (_, ctx) = eng
             .execute(ActionRequest {

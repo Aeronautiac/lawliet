@@ -106,6 +106,11 @@ use crate::{
             remove_vote::{RemoveVote, RemoveVoteResponse},
             update_polls::{UpdatePolls, UpdatePollsResponse},
         },
+        kidnapping::{
+            create_kidnapping::{CreateKidnapping, CreateKidnappingResponse},
+            release_kidnapping::{ReleaseKidnapping, ReleaseKidnappingResponse},
+            update_kidnap_channels::{UpdateKidnapChannels, UpdateKidnapChannelsResponse},
+        },
         prosecution::{
             advance_prosecution::{AdvanceProsecution, AdvanceProsecutionResponse},
             cull_prosecutions::{CullProsecutions, CullProsecutionsResponse},
@@ -141,6 +146,7 @@ pub mod actor;
 pub mod chargepool;
 pub mod comms;
 pub mod engine;
+pub mod kidnapping;
 pub mod notebook;
 pub mod passive;
 pub mod poll;
@@ -208,6 +214,8 @@ pub enum ActionError {
     AlreadySignalled,
     LawyerAlreadySelected,
     CannotBeOwnLawyer,
+    KidnappingNotFound,
+    ActorHasStrengthenedPresence,
 }
 
 pub type ActionResult = Result<ActionResponse, ActionError>;
@@ -332,6 +340,9 @@ pub enum Action {
     DeferredCmds(DeferredCmds),
     UpdateBugVisibilities(UpdateBugVisibilities),
     ProsecutionVoteRes(ProsecutionVoteRes),
+    CreateKidnapping(CreateKidnapping),
+    ReleaseKidnapping(ReleaseKidnapping),
+    UpdateKidnapChannels(UpdateKidnapChannels),
 }
 
 pub enum ActionResponse {
@@ -424,6 +435,9 @@ pub enum ActionResponse {
     DeferredCmds(DeferredCmdsResponse),
     UpdateBugVisibilities(UpdateBugVisibilitiesResponse),
     ProsecutionVoteRes(ProsecutionVoteResResponse),
+    CreateKidnapping(CreateKidnappingResponse),
+    ReleaseKidnapping(ReleaseKidnappingResponse),
+    UpdateKidnapChannels(UpdateKidnapChannelsResponse),
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]

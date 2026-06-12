@@ -18,7 +18,8 @@ use crate::{
             update_contact_channels::UpdateContactChannels,
         },
     },
-    channel::{ChannelMember, ChannelPermissions, SenderDisplay},
+    actor::ActorDisplay,
+    channel::{ChannelMember, ChannelPermissions},
     command::Command,
     common::{ActorKey, ChannelKey, LoungeKey},
     helpers::{get_player, get_player_mut},
@@ -37,7 +38,7 @@ pub struct CreateLounge {
 }
 
 struct Participant {
-    pub displays: IndexSet<SenderDisplay>,
+    pub displays: IndexSet<ActorDisplay>,
     pub id: ActorKey,
 }
 
@@ -62,8 +63,8 @@ impl ActionInterface for CreateLounge {
                 participants.push(Participant {
                     id: *creator_id,
                     displays: indexset![
-                        SenderDisplay::Raw(*contacted_id),
-                        SenderDisplay::Raw(*contactor_id),
+                        ActorDisplay::Raw(*contacted_id),
+                        ActorDisplay::Raw(*contactor_id),
                     ],
                 });
             }
@@ -73,11 +74,11 @@ impl ActionInterface for CreateLounge {
             } => {
                 participants.push(Participant {
                     id: *contactor_id,
-                    displays: indexset![SenderDisplay::Raw(*contactor_id),],
+                    displays: indexset![ActorDisplay::Raw(*contactor_id),],
                 });
                 participants.push(Participant {
                     id: *contacted_id,
-                    displays: indexset![SenderDisplay::Raw(*contacted_id),],
+                    displays: indexset![ActorDisplay::Raw(*contacted_id),],
                 });
             }
         };

@@ -1,29 +1,27 @@
 use crate::{
     action::{
-        actor::{add_state::AddState, remove_state::RemoveState},
-        actor::player::give_role::GiveRole,
-        world::set_world_channel_override::SetWorldChannelOverride,
+        actor::{add_state::AddState, player::give_role::GiveRole, remove_state::RemoveState},
         comms::{
             channel::{
-                create_channel::CreateChannel,
-                send_message::SendMessage,
-                set_member::SetMember,
+                create_channel::CreateChannel, send_message::SendMessage, set_member::SetMember,
             },
             groupchat::{
-                add_to_groupchat::AddToGroupchat,
-                create_groupchat::CreateGroupchat,
-                remove_from_groupchat::RemoveFromGroupchat,
-                set_groupchat_owner::SetGroupchatOwner,
+                add_to_groupchat::AddToGroupchat, create_groupchat::CreateGroupchat,
+                remove_from_groupchat::RemoveFromGroupchat, set_groupchat_owner::SetGroupchatOwner,
             },
             lounge::{
-                create_lounge::CreateLounge,
-                leave_lounge::LeaveLounge,
+                create_lounge::CreateLounge, leave_lounge::LeaveLounge,
                 remove_from_lounge::RemoveFromLounge,
             },
         },
+        world::set_world_channel_override::SetWorldChannelOverride,
     },
-    actor::{player::{OverrideSource, WorldChannelOverride}, state::State},
-    channel::{ChannelMember, SenderDisplay},
+    actor::{
+        ActorDisplay,
+        player::{OverrideSource, WorldChannelOverride},
+        state::State,
+    },
+    channel::ChannelMember,
     config::world::WorldChannelName,
     lounge::LoungeVariant,
 };
@@ -58,13 +56,21 @@ use crate::{
     },
     actor::organization::LeadershipTransferPolicies,
     chargepool::PoolLinkType,
-    common::{AbilityKey, ActorKey, ChannelKey, ChargeCount, ChargePoolKey, GroupchatKey, LinkWeight, LoungeKey, NotebookKey, PassiveKey, PollKey},
+    common::{
+        AbilityKey, ActorKey, ChannelKey, ChargeCount, ChargePoolKey, GroupchatKey, LinkWeight,
+        LoungeKey, NotebookKey, PassiveKey, PollKey,
+    },
     config::{actor::organization::OrganizationName, role::Role},
     engine::{Engine, ExecutionResult},
     passive::PassiveType,
 };
 
-pub fn add_player(eng: &mut Engine, timestamp: Time, starting_role: Role, true_name: &str) -> ActorKey {
+pub fn add_player(
+    eng: &mut Engine,
+    timestamp: Time,
+    starting_role: Role,
+    true_name: &str,
+) -> ActorKey {
     let data = eng
         .execute(ActionRequest {
             timestamp,
@@ -151,7 +157,13 @@ pub fn null_action(eng: &mut Engine, time: Time) {
     .unwrap();
 }
 
-pub fn quick_lend(eng: &mut Engine, time: Time, notebook_id: NotebookKey, player_lending: ActorKey, lend_to: ActorKey) {
+pub fn quick_lend(
+    eng: &mut Engine,
+    time: Time,
+    notebook_id: NotebookKey,
+    player_lending: ActorKey,
+    lend_to: ActorKey,
+) {
     eng.execute(ActionRequest {
         actor: ActionActor::Player(player_lending),
         timestamp: time,
@@ -237,7 +249,12 @@ pub fn add_vote(
     })
 }
 
-pub fn remove_vote(eng: &mut Engine, time: Time, poll_id: PollKey, voter_id: ActorKey) -> ExecutionResult {
+pub fn remove_vote(
+    eng: &mut Engine,
+    time: Time,
+    poll_id: PollKey,
+    voter_id: ActorKey,
+) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor: ActionActor::Player(voter_id),
         timestamp: time,
@@ -379,7 +396,12 @@ pub fn add_to_org(
     })
 }
 
-pub fn remove_from_org(eng: &mut Engine, time: Time, org: ActorKey, actor: ActorKey) -> ExecutionResult {
+pub fn remove_from_org(
+    eng: &mut Engine,
+    time: Time,
+    org: ActorKey,
+    actor: ActorKey,
+) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor: ActionActor::System,
         timestamp: time,
@@ -407,7 +429,12 @@ pub fn set_leadership(
     .unwrap();
 }
 
-pub fn change_leader(eng: &mut Engine, time: Time, org: ActorKey, actor: Option<ActorKey>) -> ExecutionResult {
+pub fn change_leader(
+    eng: &mut Engine,
+    time: Time,
+    org: ActorKey,
+    actor: Option<ActorKey>,
+) -> ExecutionResult {
     eng.execute(ActionRequest {
         actor: ActionActor::System,
         timestamp: time,
@@ -418,7 +445,11 @@ pub fn change_leader(eng: &mut Engine, time: Time, org: ActorKey, actor: Option<
     })
 }
 
-pub fn quick_org_ability(eng: &mut Engine, time: Time, args: CreateAndGiveOrgAbility) -> AbilityKey {
+pub fn quick_org_ability(
+    eng: &mut Engine,
+    time: Time,
+    args: CreateAndGiveOrgAbility,
+) -> AbilityKey {
     let data = eng
         .execute(ActionRequest {
             actor: ActionActor::System,
@@ -520,7 +551,7 @@ pub fn send_message(
     time: Time,
     player_id: ActorKey,
     channel_id: ChannelKey,
-    display: SenderDisplay,
+    display: ActorDisplay,
     content: &str,
 ) -> ExecutionResult {
     eng.execute(ActionRequest {
@@ -602,7 +633,11 @@ pub fn set_gc_owner(
     })
 }
 
-pub fn create_lounge(eng: &mut Engine, time: Time, variant: LoungeVariant) -> (LoungeKey, ChannelKey) {
+pub fn create_lounge(
+    eng: &mut Engine,
+    time: Time,
+    variant: LoungeVariant,
+) -> (LoungeKey, ChannelKey) {
     let data = eng
         .execute(ActionRequest {
             actor: ActionActor::System,

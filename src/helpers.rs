@@ -12,8 +12,8 @@ use crate::{
     chargepool::ChargePool,
     command::{Command, CommandPayload, DeferredCommand},
     common::{
-        AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, LoungeKey,
-        NotebookKey, PassiveKey, PollKey, PollWeight, ProsecutionKey,
+        AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, KidnappingKey,
+        LoungeKey, NotebookKey, PassiveKey, PollKey, PollWeight, ProsecutionKey,
     },
     config::{
         ability::{AbilityConfig, AbilityIdentifier},
@@ -21,6 +21,7 @@ use crate::{
     },
     engine::Engine,
     groupchat::Groupchat,
+    kidnapping::Kidnapping,
     lounge::Lounge,
     notebook::Notebook,
     passive::{Passive, PassiveType},
@@ -372,6 +373,21 @@ pub fn get_prosecution_mut(
     eng.world
         .get_prosecution_mut(id)
         .ok_or(ActionError::ProsecutionNotFound)
+}
+
+pub fn get_kidnapping(eng: &Engine, id: KidnappingKey) -> Result<&Kidnapping, ActionError> {
+    eng.world
+        .get_kidnapping(id)
+        .ok_or(ActionError::KidnappingNotFound)
+}
+
+pub fn get_kidnapping_mut(
+    eng: &mut Engine,
+    id: KidnappingKey,
+) -> Result<&mut Kidnapping, ActionError> {
+    eng.world
+        .get_kidnapping_mut(id)
+        .ok_or(ActionError::KidnappingNotFound)
 }
 
 pub fn require_not_defendant(eng: &Engine, actor_id: ActorKey) -> Result<(), ActionError> {

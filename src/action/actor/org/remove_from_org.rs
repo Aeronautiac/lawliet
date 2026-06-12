@@ -4,7 +4,10 @@
 */
 
 use crate::{
-    action::{ActionError, ActionInterface, ActionResponse},
+    action::{
+        Action, ActionError, ActionInterface, ActionResponse,
+        kidnapping::update_kidnap_channels::UpdateKidnapChannels,
+    },
     actor::{ActorLink, ActorLinkType},
     common::ActorKey,
     helpers::{get_actor, get_actor_mut, get_org_mut},
@@ -45,6 +48,9 @@ impl ActionInterface for RemoveFromOrg {
             });
             dbg!(&actor);
         }
+
+        Action::UpdateKidnapChannels(UpdateKidnapChannels {})
+            .handle(eng, ctx, actor, version, mutate)?;
 
         Ok(ActionResponse::RemoveFromOrg(RemoveFromOrgResponse {}))
     }

@@ -10,6 +10,7 @@ use crate::{
             bug::update_bug_visibilities::UpdateBugVisibilities,
             update_contact_channels::UpdateContactChannels,
         },
+        kidnapping::update_kidnap_channels::UpdateKidnapChannels,
         prosecution::cull_prosecutions::CullProsecutions,
         world::update_world_channel_perms::UpdateWorldChannelPerms,
     },
@@ -68,6 +69,9 @@ impl ActionInterface for AddState {
         }
 
         Action::UpdateBugVisibilities(UpdateBugVisibilities {})
+            .handle(eng, ctx, actor, version, mutate)?;
+
+        Action::UpdateKidnapChannels(UpdateKidnapChannels {})
             .handle(eng, ctx, actor, version, mutate)?;
 
         Action::CullProsecutions(CullProsecutions {})

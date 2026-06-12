@@ -1,6 +1,8 @@
+use smallvec::smallvec;
 use std::{cmp::Ordering, collections::BinaryHeap};
 
 use indexmap::IndexMap;
+use smallvec::SmallVec;
 
 use crate::{Time, action::ActionRequest, common::JobID};
 
@@ -53,13 +55,16 @@ impl Jobs {
     where
         F: Fn(&Job) -> bool,
     {
-        let mut c = 0;
-        for (_, job) in self.jobs.iter_mut() {
+        let mut to_cancel: SmallVec<[JobID; 8]> = smallvec![];
+        for (id, job) in self.jobs.iter_mut() {
             if !job.cancelled && cond(job) {
-                if mutate {
-                    job.cancelled = true;
-                }
-                c += 1;
+                to_cancel.push(*id);
+            }
+        }
+        let c = to_cancel.len();
+        if mutate {
+            for id in to_cancel {
+                self.cancel_id(id);
             }
         }
         c
@@ -81,6 +86,7 @@ impl Jobs {
         if let Some(job) = self.jobs.get_mut(&id) {
             job.cancelled = true;
             self.cancelled_count += 1;
+            self.pop_cancelled();
             true
         } else {
             false

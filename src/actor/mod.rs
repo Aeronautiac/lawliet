@@ -43,6 +43,15 @@ pub enum ActorType {
     Player(Player),
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord)]
+pub enum ActorDisplay {
+    Raw(ActorKey),
+    Org(ActorKey),
+    Role(Role),
+    Mysterious,
+    System,
+}
+
 #[derive(Debug)]
 pub struct Actor {
     pub kills: Vec<ActorKey>,

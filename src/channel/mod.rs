@@ -19,6 +19,7 @@
 
 use indexmap::{IndexMap, IndexSet};
 
+use crate::actor::ActorDisplay;
 use crate::common::ActorKey;
 use crate::config::role::Role;
 use enumflags2::{BitFlags, bitflags};
@@ -35,12 +36,12 @@ use enumflags2::{BitFlags, bitflags};
 // you don't want to allow the deletion of a channel that a lounge depends on without deleting the
 // lounge as well for instance
 
-#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord)]
-pub enum SenderDisplay {
-    Raw(ActorKey),
-    Role(Role),
-    Mysterious,
-}
+// #[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord)]
+// pub enum ActorDisplay {
+//     Raw(ActorKey),
+//     Role(Role),
+//     Mysterious,
+// }
 
 #[bitflags]
 #[repr(u8)]
@@ -54,7 +55,7 @@ pub type ChannelPermissions = BitFlags<ChannelPermission>;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ChannelMember {
     pub perms: ChannelPermissions,
-    pub displays: IndexSet<SenderDisplay>,
+    pub displays: IndexSet<ActorDisplay>,
 }
 
 #[derive(Debug)]

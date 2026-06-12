@@ -1,67 +1,110 @@
 /*
 * lawliet
 * a high performance deterministic headless engine written in rust for a multi-day death note social deduction game
-* - process atomic actions
-* - simulate a timeline
-* - maintain an internal priority queue of future events for job scheduling
-* - most actions are executed directly
-* - actions may invoke other actions
-* - adding an event to the priority queue requires an action
-* - handle permissions
-* - handle game init and configuration through a series of actions
-* - handle pure game logic
+*
+* --- core engine ---
+* the Engine owns: World (all game state in typed slotmaps), Config (dynamic runtime tuning),
+* Jobs (min-heap priority queue of scheduled events), and a deferred command buffer.
+* actions are validated in a non-mutating dry-run pass first, then executed if valid. sub-actions
+* are invoked recursively and share the same command buffer across the entire action tree. pending
+* jobs are flushed before each requested action to maintain temporal causality. time is a u128 of
+* unix milliseconds. the engine panics on inconsistent state — it is designed to be rolled back
+* by replaying the saved action log.
+*
+* --- actors ---
+* players and organizations are both actors. actor structs carry IndexSets of ability, passive,
+* and notebook keys — these are caches for performance and utility; true ownership is tracked
+* within each respective struct and must be kept in sync with the actor cache.
+* players additionally cache lounge, groupchat, and bug keys (bugs = wiretaps targeting them).
+* players also carry: role, true name, eye count, and per-channel world channel overrides (keyed
+* by WorldChannelName; sources are Role, Manual host id, or PressConference; ties at the same
+* priority level are resolved via Positive (OR) or Negative (AND)).
+* organizations carry: an optional leader, a members map with founding-member metadata,
+* a blacklist, and per-ability policy rules (RequireLeader, RequireVote).
+* both actor types accumulate states (Dead, Incarcerated, IPP, Kidnapped, Custody) and modifiers
+* (NoPresence, NoContact, WriteImmunity, DisablePassiveLinks, etc.) as enumflag2 bitfields, keyed
+* by source so that overlapping additions from different sources are removed independently.
+* actors can be linked bidirectionally — Life links chain death/revive events; Passive links cause
+* an actor to inherit another actor's passives (severed on death unless disabled).
+*
+* --- config ---
+* config is dynamic; changing it is an action and takes effect immediately. RoleConfig maps each
+* role to its default abilities, passives, notebooks, actor links, and world channel overrides.
+* AbilityConfig maps ability identifiers (type + optional variant) to default charge pool links
+* and presence requirements. StateModifierMap and WorldConfig hold global defaults.
+*
+* --- abilities and passives ---
+* abilities have an OwnershipStruct (owner, volatile, transferrable) and a set of AbilityPoolLinks
+* to ChargePool objects. get_usage_limit() returns the minimum available uses across Limit-type
+* pools, falling back to max from Pool-type pools. volatile abilities are destroyed on role change;
+* transferrable abilities survive death. passives mirror the same ownership model. passive types:
+* Wanted (silent prosecution immunity), VoteAmplification, VolatileEyes, ContactLogs (Full/Even/Odd),
+* OwnedNotebookBlock, CustodyBugReceiver. actor_get_effective_passive traverses actor links
+* recursively to collect inherited passives, respecting the DisablePassiveLinks modifier.
+*
+* --- notebooks ---
+* notebooks are real or fake (fake writes cannot kill) and volatile or persistent. ownership chain:
+* original_owner -> owner -> borrowed (temporary holder). dormant_true_owner supports pseudocide
+* revival mechanics. per-actor success/failure counts reset at each iteration boundary.
+* lend() and awaken_dormant_owner() manage the full borrowing lifecycle.
+*
+* --- charge pools ---
+* both PoolLinkTypes subtract weight charges from every linked ability on use. the difference is
+* in the failure condition: Limit fails if any linked ability cannot afford the cost; Pool fails
+* only if none of the linked abilities can afford the cost. charges decay per iteration via
+* base_reset_time. on_use() deducts weight charges; add_charges() replenishes. on_link/on_unlink
+* track reference counts — unlink returning true signals the pool is safe to destroy.
+*
+* --- polls ---
+* polls carry optional accept/reject action payloads that fire on resolution. visibility scopes:
+* Org, Channel, or AllPresent. VoterPolicy: Present (not dead/imprisoned/kidnapped, can see poll).
+* PollPolicy: AlwaysInconclusive, Majority (>50%), or WinningVote (highest count; ties inconclusive).
+* update_policy is checked on each vote; timeout_policy fires when the timer expires. vote weight:
+* organizations vote 0; players vote 1, or more with a VoteAmplification passive.
+*
+* --- prosecution ---
+* three-phase state machine: Custody -> Trial -> Voting.
+* Custody: both sides signal ready or a timeout fires; non-autonomous requires host approval.
+* Trial: two-sided subphases (Grace -> Presentation) then Debate. Grace starts immediately; the
+* first message from either side triggers Presentation; Debate ends when both signal done or timeout.
+* Voting: anonymous poll; guilty majority executes the defendant.
+* ProsecutionDefense holds the defendant and an optional Lawyer with a private channel.
+* the autonomous flag bypasses host approval for all phase transitions.
+* NoPresence on the prosecutor or defendant terminates prosecution immediately.
+* a custody bug is auto-created to wiretap the defendant for the duration.
+*
+* --- kidnapping ---
+* wraps a private channel with kidnapping metadata. type: Anonymous or Public(ActorDisplay).
+* applying a kidnapping sets the Kidnapped state on the victim, which carries whatever modifiers
+* are associated with that state in config.
+*
+* --- channels, lounges, groupchats, bugs ---
+* Channel is the primitive: a members map with Send/View permission bitflags per actor and a
+* loggable flag for ability queries (e.g. autopsy). no message storage — yagami handles that.
+* Lounge wraps a channel for two-actor contact; Fake lounges expose the true creator's identity to
+* a tapper without the creator's knowledge. Groupchat wraps a channel with an optional owner;
+* owner leaving sets owner to None. Bug is a wiretap on a target actor, sourced from an ability or
+* a custody event; expired bugs are retained in memory for persistent history access.
+*
+* --- commands ---
+* CommandPayload carries a timestamp, optional recipient, and a Command variant. DeferredCommand
+* adds blocking_modifiers — the command is withheld until the recipient has none of them active.
+* command coverage: Death, Kidnapping, PseudocideRevival, ActorState, channel lifecycle (add
+* message, map lounge/gc, delete, archive), notebook ops (map, write, borrow status), ability /
+* passive views, bug events (new, message, archive, delete), and iteration progress. commands
+* without a recipient are forwarded to the backend; recipient-targeted commands go to a specific
+* player's client.
+*
+* --- yagami (external) ---
+* hosts multiple lawliet instances and communicates via IPC. acts as persistence and routing layer.
+* game state is never snapshotted — it is reconstructed from a saved action log. action buffers
+* are flushed to postgres on timer, significant action, or full buffer. multithreaded process.
+*
+* --- frontend protocol ---
+* frontends are dumb: they receive commands and errors and render accordingly. frontend servers
+* handle routing. response data structs are used internally (tests, sub-actions, yagami). each
+* frontend must support host controls and player game views.
 */
-
-// config is dynamic and determines many aspects of game behaviour during action processing
-// changing config is an action (this allows for hosts to tune config values while a game is running,
-// and have it influence game behaviour immediately)
-// lawliet begins with default config, but you may change aspects of config with different actions
-//
-// a player is a distinct stateful actor
-//
-// an organization is similar to a player
-// it is an instance of an actor
-// it is a group of players, and its behaviour is identified by its type similarly to how players
-// have roles
-//
-// a role is an identifier and
-// a role is associated with some set of abilities and passives in the config struct
-// the presence of a role within an organization can influence what that organization can do
-//
-// abilities are distinct stateful objects
-// abilities have rules and permissions
-// abilities can be owned by different kinds of actors and can be transferred between actors
-// depending on their properties
-// abilities have an ability type which is simply an identifier
-// abilities may have a variant to further narrow behaviour if necessary
-//
-// a state is a simple identity with a set of restrictions associated with it
-// restrictions can be added without states, but adding a state will add the restrictions
-// associated with that state in config
-//
-// a restriction blocks some specific permission or set of permissions
-// actors have source maps of "sources" to restrictions. they utilize bitmaps for utility and minor
-// performance gains.
-// for example, "incarcerated": [ ALIVE | PHYSICAL | SUPERNATURAL ] is an example of a restriction
-// mapping.
-//
-// yagami hosts multiple lawliet instances and communicates via ipc. it also acts as a persistence
-// and routing layer.
-// game state is not snapshotted. instead, it is reconstructed from a saved actions sequence.
-// yagami stores actions into a buffer. when certain conditions are met (timer, significant action,
-// full buffer, etc...) it flushes it to a postgres db.
-// yagami is a multithreaded process
-//
-// lawliet is designed to crash when state is inconsistent as it can easily be rebooted and rolled
-// back when necessary
-//
-// a frontend sends action requests to yagami, and yagami sends back the result. if the action
-// succeeded, a command buffer is sent back. a proper frontend uses these commands to render
-// the game state meant for that specific player.
-// - Frontend clients are dumb and respond only to commands and errors
-// - Frontend servers handle routing and similar tasks
-// - Response data structs are used internally (tests, sub-action return values, yagami)
-// - Frontends must have host controls and game views
 
 mod ability;
 mod action;
@@ -75,6 +118,7 @@ mod config;
 mod engine;
 mod groupchat;
 mod helpers;
+mod kidnapping;
 mod lounge;
 mod notebook;
 mod ownership;
@@ -85,8 +129,8 @@ mod test_helpers;
 mod world;
 
 pub use common::{
-    AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, ID, LoungeKey,
-    NotebookKey, PassiveKey, PollKey, ProsecutionKey, Time,
+    AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, ID, KidnappingKey,
+    LoungeKey, NotebookKey, PassiveKey, PollKey, ProsecutionKey, Time,
 };
 
 // most of what remains within the engine are small tasks
