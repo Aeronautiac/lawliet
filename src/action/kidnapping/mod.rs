@@ -1,4 +1,5 @@
 pub mod create_kidnapping;
+pub mod cull_kidnappings;
 pub mod release_kidnapping;
 pub mod update_kidnap_channels;
 
@@ -192,7 +193,7 @@ mod tests {
         let result = eng.execute(ActionRequest {
             actor: ActionActor::Player(other),
             timestamp: 1,
-            payload: Action::ReleaseKidnapping(ReleaseKidnapping { kidnapping_id: kid_id }),
+            payload: Action::ReleaseKidnapping(ReleaseKidnapping { kidnapping_id: kid_id, forced: false }),
         });
         assert!(matches!(result, Err(ActionError::InsufficientPermissions)));
     }
@@ -217,7 +218,7 @@ mod tests {
         let result = eng.execute(ActionRequest {
             actor: ActionActor::Player(owner),
             timestamp: 1,
-            payload: Action::ReleaseKidnapping(ReleaseKidnapping { kidnapping_id: kid_id }),
+            payload: Action::ReleaseKidnapping(ReleaseKidnapping { kidnapping_id: kid_id, forced: false }),
         });
         assert!(result.is_ok());
         assert!(get_kidnapping(&eng, kid_id).is_err());

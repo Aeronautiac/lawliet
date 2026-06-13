@@ -30,6 +30,8 @@
 * Termination conditions:
 * - Custody or Trial: prosecutor or defendant gains NoPresence → immediate termination.
 *   (Lawyer state is irrelevant after selection.)
+* - Source ability (if applicable) is destroyed (within any phase), or prosecutor is not in the source ability's
+*   owning organization during the custody or trial phase.
 * - Voting: defendant dies → immediate termination.
 *
 * Disruption rules (not yet implemented):
@@ -52,7 +54,13 @@
 // visible. Deferred commands handle the case where a player receives a visibility grant
 // for an already-archived object — the frontend should label it archived and block interaction.
 
-use crate::{ActorKey, ChannelKey, PollKey, common::JobID};
+use crate::{AbilityKey, ActorKey, ChannelKey, PollKey, common::JobID};
+
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+pub enum ProsecutionSource {
+    None,
+    Ability(AbilityKey),
+}
 
 #[derive(Debug)]
 pub struct Lawyer {
@@ -113,8 +121,12 @@ pub enum ProsecutionPhase {
     },
 }
 
+// TODO:
+// add non-autonomous behaviour
+
 #[derive(Debug)]
 pub struct Prosecution {
+    pub source: ProsecutionSource,
     pub prosecutor: ActorKey,
     pub defense: ProsecutionDefense,
     pub phase: ProsecutionPhase,

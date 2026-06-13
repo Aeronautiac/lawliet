@@ -747,7 +747,7 @@ pub fn release_kidnapping(eng: &mut Engine, time: Time, kidnapping_id: Kidnappin
     eng.execute(ActionRequest {
         actor: ActionActor::System,
         timestamp: time,
-        payload: Action::ReleaseKidnapping(ReleaseKidnapping { kidnapping_id }),
+        payload: Action::ReleaseKidnapping(ReleaseKidnapping { kidnapping_id, forced: false }),
     })
     .unwrap();
 }

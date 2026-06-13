@@ -30,7 +30,7 @@ use crate::{
     common::{ProsecutionKey, Version},
     engine::Engine,
     helpers::{get_actor, require_player},
-    prosecution::{Prosecution, ProsecutionDefense, ProsecutionPhase},
+    prosecution::{Prosecution, ProsecutionDefense, ProsecutionPhase, ProsecutionSource},
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -40,6 +40,7 @@ pub struct StartProsecutionResponse {
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct StartProsecution {
+    pub source: ProsecutionSource,
     pub prosecutor_id: ActorKey,
     pub prosecutor_display: ActorDisplay,
     pub defendant_id: ActorKey,
@@ -84,6 +85,7 @@ impl ActionInterface for StartProsecution {
             let custody_timeout = eng.time + eng.config.defaults.custody_timeout;
 
             let prosecution_id = eng.world.add_prosecution(Prosecution {
+                source: self.source,
                 prosecutor: self.prosecutor_id,
                 defense: ProsecutionDefense {
                     defendant: self.defendant_id,

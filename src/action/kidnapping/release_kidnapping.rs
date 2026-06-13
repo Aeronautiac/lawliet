@@ -31,6 +31,7 @@ pub struct ReleaseKidnappingResponse {}
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct ReleaseKidnapping {
     pub kidnapping_id: KidnappingKey,
+    pub forced: bool,
 }
 
 impl ActionInterface for ReleaseKidnapping {
@@ -58,7 +59,7 @@ impl ActionInterface for ReleaseKidnapping {
 
         Action::DestroyChannel(DestroyChannel {
             channel_id,
-            archive: true,
+            archive: !self.forced,
         })
         .handle(eng, ctx, &ActionActor::System, version, mutate)?;
 

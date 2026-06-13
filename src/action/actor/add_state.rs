@@ -12,7 +12,6 @@ use crate::{
         },
         incarceration::update_prison_channel::UpdatePrisonChannel,
         kidnapping::update_kidnap_channels::UpdateKidnapChannels,
-        prosecution::cull_prosecutions::CullProsecutions,
         world::update_world_channel_perms::UpdateWorldChannelPerms,
     },
     actor::state::State,
@@ -74,8 +73,6 @@ impl ActionInterface for AddState {
 
         Action::UpdateKidnapChannels(UpdateKidnapChannels {})
             .handle(eng, ctx, actor, version, mutate)?;
-
-        Action::CullProsecutions(CullProsecutions {}).handle(eng, ctx, actor, version, mutate)?;
 
         Action::UpdatePrisonChannel(UpdatePrisonChannel {
             actor_id: self.actor_id,

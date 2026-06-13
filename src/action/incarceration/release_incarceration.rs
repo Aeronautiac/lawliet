@@ -29,6 +29,7 @@ pub struct ReleaseIncarcerationResponse {}
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct ReleaseIncarceration {
     pub incarceration_id: IncarcerationKey,
+    pub forced: bool,
 }
 
 impl ActionInterface for ReleaseIncarceration {

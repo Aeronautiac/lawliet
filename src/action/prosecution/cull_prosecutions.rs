@@ -1,14 +1,18 @@
 /*
 * SYSTEM ACTION
 * Check all active prosecutions for forced termination conditions.
-* Called from AddState and RemoveState, since all termination conditions are driven by
-* state changes (NoPresence, death).
+* Called from Update so it runs once per action rather than from individual actions.
 *
 * Poll resolution is not handled here — when the prosecution poll concludes it calls a
 * dedicated action to apply the verdict and terminate the prosecution.
 *
+* All phases:
+*   if the source is an ability, and the ability doesn't exist → TerminateProsecution
+*
 * Custody or Trial phase:
 *   if prosecutor or defendant has NoPresence → TerminateProsecution
+*   if the source is an ability, the ability is owned by an organization, and the prosecutor is no
+*   longer part of that organization → TerminateProsecution
 *
 * Voting phase:
 *   if defendant is dead → TerminateProsecution
@@ -19,11 +23,11 @@ use crate::{
         Action, ActionActor, ActionContext, ActionInterface, ActionResponse, ActionResult,
         prosecution::terminate_prosecution::TerminateProsecution,
     },
-    actor::{modifier::Modifier, state::State},
+    actor::{ActorType, modifier::Modifier, state::State},
     common::{ProsecutionKey, Version},
     engine::Engine,
     helpers::get_actor,
-    prosecution::ProsecutionPhase,
+    prosecution::{ProsecutionPhase, ProsecutionSource},
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -53,12 +57,41 @@ impl ActionInterface for CullProsecutions {
                 let defendant = get_actor(eng, prosecution.defense.defendant)
                     .expect("defendant must be a valid actor");
 
-                let should_terminate = match &prosecution.phase {
-                    ProsecutionPhase::Custody { .. } | ProsecutionPhase::Trial { .. } => {
-                        prosecutor.has_modifier(Modifier::NoPresence)
-                            || defendant.has_modifier(Modifier::NoPresence)
+                let should_terminate = 'check: {
+                    // All phases: source ability destroyed
+                    if let ProsecutionSource::Ability(ab) = prosecution.source {
+                        if eng.world.get_ability(ab).is_none() {
+                            break 'check true;
+                        }
                     }
-                    ProsecutionPhase::Voting { .. } => defendant.has_state(State::Dead),
+
+                    match &prosecution.phase {
+                        ProsecutionPhase::Custody { .. } | ProsecutionPhase::Trial { .. } => {
+                            if prosecutor.has_modifier(Modifier::NoPresence)
+                                || defendant.has_modifier(Modifier::NoPresence)
+                            {
+                                break 'check true;
+                            }
+
+                            // Source ability owned by org but prosecutor left that org
+                            if let ProsecutionSource::Ability(ab) = prosecution.source {
+                                if let Some(ability) = eng.world.get_ability(ab) {
+                                    if let Some(owner_id) = ability.ownership_struct.owner {
+                                        let owner = get_actor(eng, owner_id)
+                                            .expect("ability owner must be a valid actor");
+                                        if let ActorType::Org(org) = &owner.actor_type {
+                                            if !org.members.contains_key(&prosecution.prosecutor) {
+                                                break 'check true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            false
+                        }
+                        ProsecutionPhase::Voting { .. } => defendant.has_state(State::Dead),
+                    }
                 };
 
                 should_terminate.then_some(key)
@@ -66,10 +99,17 @@ impl ActionInterface for CullProsecutions {
             .collect();
 
         for prosecution_id in to_terminate {
-            Action::TerminateProsecution(TerminateProsecution { prosecution_id })
-                .handle(eng, ctx, &ActionActor::System, version, mutate)?;
+            Action::TerminateProsecution(TerminateProsecution { prosecution_id }).handle(
+                eng,
+                ctx,
+                &ActionActor::System,
+                version,
+                mutate,
+            )?;
         }
 
-        Ok(ActionResponse::CullProsecutions(CullProsecutionsResponse {}))
+        Ok(ActionResponse::CullProsecutions(
+            CullProsecutionsResponse {},
+        ))
     }
 }

@@ -81,11 +81,13 @@ use crate::{
         },
         incarceration::{
             create_incarceration::{CreateIncarceration, CreateIncarcerationResponse},
+            cull_incarcerations::{CullIncarcerations, CullIncarceratationsResponse},
             release_incarceration::{ReleaseIncarceration, ReleaseIncarcerationResponse},
             update_prison_channel::{UpdatePrisonChannel, UpdatePrisonChannelResponse},
         },
         kidnapping::{
             create_kidnapping::{CreateKidnapping, CreateKidnappingResponse},
+            cull_kidnappings::{CullKidnappings, CullKidnappingsResponse},
             release_kidnapping::{ReleaseKidnapping, ReleaseKidnappingResponse},
             update_kidnap_channels::{UpdateKidnapChannels, UpdateKidnapChannelsResponse},
         },
@@ -349,10 +351,12 @@ pub enum Action {
     ProsecutionVoteRes(ProsecutionVoteRes),
     CreateKidnapping(CreateKidnapping),
     ReleaseKidnapping(ReleaseKidnapping),
+    CullKidnappings(CullKidnappings),
     UpdateKidnapChannels(UpdateKidnapChannels),
     UpdatePrisonChannel(UpdatePrisonChannel),
     CreateIncarceration(CreateIncarceration),
     ReleaseIncarceration(ReleaseIncarceration),
+    CullIncarcerations(CullIncarcerations),
 }
 
 pub enum ActionResponse {
@@ -447,10 +451,12 @@ pub enum ActionResponse {
     ProsecutionVoteRes(ProsecutionVoteResResponse),
     CreateKidnapping(CreateKidnappingResponse),
     ReleaseKidnapping(ReleaseKidnappingResponse),
+    CullKidnappings(CullKidnappingsResponse),
     UpdateKidnapChannels(UpdateKidnapChannelsResponse),
     UpdatePrisonChannel(UpdatePrisonChannelResponse),
     CreateIncarceration(CreateIncarcerationResponse),
     ReleaseIncarceration(ReleaseIncarcerationResponse),
+    CullIncarcerations(CullIncarceratationsResponse),
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
