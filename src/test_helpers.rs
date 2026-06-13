@@ -2,7 +2,8 @@ use crate::{
     action::{
         actor::{add_state::AddState, player::give_role::GiveRole, remove_state::RemoveState},
         kidnapping::{
-            create_kidnapping::CreateKidnapping, release_kidnapping::ReleaseKidnapping,
+            create_kidnapping::CreateKidnapping,
+            release_kidnapping::ReleaseKidnapping,
         },
         comms::{
             channel::{
@@ -63,7 +64,7 @@ use crate::{
         AbilityKey, ActorKey, ChannelKey, ChargeCount, ChargePoolKey, GroupchatKey, KidnappingKey,
         LinkWeight, LoungeKey, NotebookKey, PassiveKey, PollKey,
     },
-    kidnapping::KidnappingType,
+    kidnapping::{KidnappingSource, KidnappingType},
     config::{actor::organization::OrganizationName, role::Role},
     engine::{Engine, ExecutionResult},
     passive::PassiveType,
@@ -719,18 +720,18 @@ pub fn set_world_channel_override(
 pub fn create_kidnapping(
     eng: &mut Engine,
     time: Time,
-    kidnapper_id: ActorKey,
     victim_id: ActorKey,
     kidnapping_type: KidnappingType,
+    source: KidnappingSource,
 ) -> (KidnappingKey, ChannelKey) {
     let data = eng
         .execute(ActionRequest {
             actor: ActionActor::System,
             timestamp: time,
             payload: Action::CreateKidnapping(CreateKidnapping {
-                kidnapper_id,
                 victim_id,
                 kidnapping_type,
+                source,
             }),
         })
         .unwrap()

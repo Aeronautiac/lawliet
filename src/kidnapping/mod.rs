@@ -8,7 +8,7 @@
 * Kidnapped players may be released early by the kidnapper or a host.
 */
 
-use crate::{ActorKey, ChannelKey, actor::ActorDisplay};
+use crate::{ActorKey, ChannelKey, actor::ActorDisplay, common::AbilityKey};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum KidnappingType {
@@ -16,11 +16,18 @@ pub enum KidnappingType {
     Public(ActorDisplay),
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum KidnappingSource {
+    None,
+    Ability(AbilityKey),
+}
+
 #[derive(Debug)]
 pub struct Kidnapping {
     pub victim: ActorKey,
     pub channel_id: ChannelKey,
     pub kidnapping_type: KidnappingType,
-    pub kidnapper: ActorKey, // this is typically an org, but in the future there may be individual
-                             // kidnap abilities as well. think Mello.
+    // the ability whose owner may release this kidnapping and whose owner is used as the
+    // kidnapper for channel management (org → members added; player → player added)
+    pub source: KidnappingSource,
 }

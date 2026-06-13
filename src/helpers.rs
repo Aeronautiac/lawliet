@@ -12,15 +12,17 @@ use crate::{
     chargepool::ChargePool,
     command::{Command, CommandPayload, DeferredCommand},
     common::{
-        AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, KidnappingKey,
-        LoungeKey, NotebookKey, PassiveKey, PollKey, PollWeight, ProsecutionKey,
+        AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, IncarcerationKey,
+        KidnappingKey, LoungeKey, NotebookKey, PassiveKey, PollKey, PollWeight, ProsecutionKey,
     },
     config::{
         ability::{AbilityConfig, AbilityIdentifier},
         role::{Role, RoleConfig},
+        world::WorldChannelName,
     },
     engine::Engine,
     groupchat::Groupchat,
+    incarceration::Incarceration,
     kidnapping::Kidnapping,
     lounge::Lounge,
     notebook::Notebook,
@@ -316,6 +318,23 @@ pub fn get_channel_mut(eng: &mut Engine, id: ChannelKey) -> Result<&mut Channel,
     }
 }
 
+pub fn get_world_channel(eng: &Engine, name: WorldChannelName) -> Result<&Channel, ActionError> {
+    let &id = eng
+        .world
+        .world_channel_map
+        .get(&name)
+        .ok_or(ActionError::ChannelDoesntExist)?;
+    get_channel(eng, id)
+}
+
+pub fn get_world_channel_id(eng: &Engine, name: WorldChannelName) -> Result<ChannelKey, ActionError> {
+    eng.world
+        .world_channel_map
+        .get(&name)
+        .copied()
+        .ok_or(ActionError::ChannelDoesntExist)
+}
+
 pub fn get_lounge(eng: &Engine, id: LoungeKey) -> Result<&Lounge, ActionError> {
     let lounge = eng.world.get_lounge(id);
     if let Some(data) = lounge {
@@ -379,6 +398,34 @@ pub fn get_kidnapping(eng: &Engine, id: KidnappingKey) -> Result<&Kidnapping, Ac
     eng.world
         .get_kidnapping(id)
         .ok_or(ActionError::KidnappingNotFound)
+}
+
+pub fn actor_owns_ability(eng: &Engine, actor: &ActionActor, ability_id: AbilityKey) -> bool {
+    let Some(acting_id) = actor_id(actor) else {
+        return false;
+    };
+    get_ability(eng, ability_id)
+        .ok()
+        .and_then(|a| a.ownership_struct.owner)
+        .is_some_and(|owner| owner == acting_id)
+}
+
+pub fn get_incarceration(
+    eng: &Engine,
+    id: IncarcerationKey,
+) -> Result<&Incarceration, ActionError> {
+    eng.world
+        .get_incarceration(id)
+        .ok_or(ActionError::IncarcerationNotFound)
+}
+
+pub fn get_incarceration_mut(
+    eng: &mut Engine,
+    id: IncarcerationKey,
+) -> Result<&mut Incarceration, ActionError> {
+    eng.world
+        .get_incarceration_mut(id)
+        .ok_or(ActionError::IncarcerationNotFound)
 }
 
 pub fn get_kidnapping_mut(

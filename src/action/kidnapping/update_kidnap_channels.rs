@@ -8,9 +8,10 @@
 *   alive + currently kidnapped → Send | View, Raw display
 *   otherwise                   → EMPTY perms
 *
-* Kidnapper (org only):
-*   each member present  → Send | View, Mysterious (anon) or Raw (public)
-*   each member absent   → EMPTY perms
+* Kidnapper side (derived from source ability owner):
+*   owner is org  → each present member gets Send | View
+*   owner is player → that player gets Send | View if present
+*   display: Mysterious (anonymous) or Raw (public)
 *
 * TODO: commands & optimizations
 */
@@ -26,8 +27,8 @@ use crate::{
     channel::{ChannelMember, ChannelPermission, ChannelPermissions},
     common::{ActorKey, ChannelKey, Version},
     engine::Engine,
-    helpers::get_actor,
-    kidnapping::KidnappingType,
+    helpers::{get_ability, get_actor},
+    kidnapping::{KidnappingSource, KidnappingType},
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -40,7 +41,7 @@ struct KidnappingData {
     victim: ActorKey,
     channel_id: ChannelKey,
     kidnapping_type: KidnappingType,
-    kidnapper: ActorKey,
+    source: KidnappingSource,
 }
 
 struct MemberUpdate {
@@ -68,7 +69,7 @@ impl ActionInterface for UpdateKidnapChannels {
                 victim: k.victim,
                 channel_id: k.channel_id,
                 kidnapping_type: k.kidnapping_type,
-                kidnapper: k.kidnapper,
+                source: k.source,
             })
             .collect();
 
@@ -92,18 +93,31 @@ impl ActionInterface for UpdateKidnapChannels {
                 },
             });
 
-            let org_members: Vec<ActorKey> = {
-                let kidnapper_actor =
-                    get_actor(eng, kd.kidnapper).expect("kidnapper must be valid");
-                if let ActorType::Org(org) = &kidnapper_actor.actor_type {
-                    org.members.keys().copied().collect()
-                } else {
-                    vec![]
+            // derive kidnapper-side members from the source ability's owner
+            let kidnapper_members: Vec<ActorKey> = match kd.source {
+                KidnappingSource::None => vec![],
+                KidnappingSource::Ability(ab_key) => {
+                    match get_ability(eng, ab_key)
+                        .ok()
+                        .and_then(|ab| ab.ownership_struct.owner)
+                    {
+                        None => vec![],
+                        Some(owner_id) => {
+                            let owner = get_actor(eng, owner_id)
+                                .expect("ability owner must be valid");
+                            if let ActorType::Org(org) = &owner.actor_type {
+                                org.members.keys().copied().collect()
+                            } else {
+                                vec![owner_id]
+                            }
+                        }
+                    }
                 }
             };
 
-            for member_id in org_members {
-                let member_actor = get_actor(eng, member_id).expect("org member must be valid");
+            for member_id in kidnapper_members {
+                let member_actor =
+                    get_actor(eng, member_id).expect("kidnapper-side member must be valid");
                 let perms = if !member_actor.has_modifier(Modifier::NoPresence) {
                     ChannelPermission::Send | ChannelPermission::View
                 } else {

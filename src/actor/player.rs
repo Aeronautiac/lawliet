@@ -18,8 +18,9 @@ pub struct WorldChannelOverride {
 #[derive(PartialEq, Eq, Clone, Debug, Hash)]
 pub enum OverrideSource {
     Role(Role),
-    Manual(ID), // host-inserted frontend identifier
-    PressConference(ActorKey),
+    Manual(ID),                // host-inserted frontend identifier
+    PressConference(ActorKey), // the id is the person who put them up
+    Incarceration,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]

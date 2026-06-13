@@ -15,6 +15,7 @@ pub enum WorldChargePoolName {
 pub enum WorldChannelName {
     News,
     General,
+    Prison,
 }
 
 pub struct WorldChannelConfig {
@@ -54,6 +55,14 @@ impl WorldConfig {
                 default_perms: ChannelPermission::Send | ChannelPermission::View,
                 send_blocking: Modifier::NoContact.into(),
                 view_blocking: Modifier::NoContact.into(),
+            },
+        );
+        channels.insert(
+            WorldChannelName::Prison,
+            WorldChannelConfig {
+                default_perms: ChannelPermissions::EMPTY,
+                send_blocking: Modifiers::EMPTY,
+                view_blocking: Modifiers::EMPTY,
             },
         );
 

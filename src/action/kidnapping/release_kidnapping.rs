@@ -1,11 +1,13 @@
 /*
-* ADMIN / SYSTEM / KIDNAPPER ACTION
-* Release a kidnapped player. The kidnapper or a host may trigger this.
+* ADMIN / SYSTEM / ABILITY-OWNER ACTION
+* Release a kidnapped player.
+*
+* Authorization: actor must be authoritative, or own the kidnapping's source ability.
 *
 * On execution:
-* - archive the kidnapping channel
+* - remove kidnapping record (before RemoveState so UpdateKidnapChannels sees it gone)
 * - RemoveState(victim, State::Kidnapped)
-* - remove kidnapping from world
+* - DestroyChannel(channel, archive: true)
 *
 * TODO: commands (reveal kidnapper identity if public kidnapping)
 */
@@ -19,7 +21,8 @@ use crate::{
     actor::state::State,
     common::{KidnappingKey, Version},
     engine::Engine,
-    helpers::{actor_id, get_kidnapping},
+    helpers::{actor_owns_ability, get_kidnapping},
+    kidnapping::KidnappingSource,
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -40,11 +43,11 @@ impl ActionInterface for ReleaseKidnapping {
         mutate: bool,
     ) -> ActionResult {
         let kidnapping = get_kidnapping(eng, self.kidnapping_id)?;
-        let kidnapper = kidnapping.kidnapper;
         let victim_id = kidnapping.victim;
         let channel_id = kidnapping.channel_id;
 
-        let authorized = actor.is_authoritative() || actor_id(actor) == Some(kidnapper);
+        let authorized = actor.is_authoritative()
+            || matches!(kidnapping.source, KidnappingSource::Ability(ab) if actor_owns_ability(eng, actor, ab));
         if !authorized {
             return Err(ActionError::InsufficientPermissions);
         }

@@ -13,8 +13,8 @@ use crate::{
     channel::Channel,
     chargepool::ChargePool,
     common::{
-        AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, KidnappingKey,
-        LoungeKey, NotebookKey, PassiveKey, PollKey, ProsecutionKey,
+        AbilityKey, ActorKey, BugKey, ChannelKey, ChargePoolKey, GroupchatKey, IncarcerationKey,
+        KidnappingKey, LoungeKey, NotebookKey, PassiveKey, PollKey, ProsecutionKey,
     },
     config::{
         actor::organization::OrganizationName,
@@ -22,6 +22,7 @@ use crate::{
         world::{WorldChannelName, WorldChargePoolName},
     },
     groupchat::Groupchat,
+    incarceration::Incarceration,
     kidnapping::Kidnapping,
     lounge::Lounge,
     notebook::Notebook,
@@ -52,6 +53,7 @@ pub struct World {
     pub bugs: SlotMap<BugKey, Bug>,
     pub prosecutions: SlotMap<ProsecutionKey, Prosecution>,
     pub kidnappings: SlotMap<KidnappingKey, Kidnapping>,
+    pub incarcerations: SlotMap<IncarcerationKey, Incarceration>,
     pub world_channel_map: IndexMap<WorldChannelName, ChannelKey>,
 }
 
@@ -73,6 +75,7 @@ impl World {
             bugs: SlotMap::with_key(),
             prosecutions: SlotMap::with_key(),
             kidnappings: SlotMap::with_key(),
+            incarcerations: SlotMap::with_key(),
             world_channel_map: IndexMap::new(),
         }
     }
@@ -309,5 +312,21 @@ impl World {
 
     pub fn remove_kidnapping(&mut self, id: KidnappingKey) {
         self.kidnappings.remove(id);
+    }
+
+    pub fn add_incarceration(&mut self, incarceration: Incarceration) -> IncarcerationKey {
+        self.incarcerations.insert(incarceration)
+    }
+
+    pub fn get_incarceration(&self, id: IncarcerationKey) -> Option<&Incarceration> {
+        self.incarcerations.get(id)
+    }
+
+    pub fn get_incarceration_mut(&mut self, id: IncarcerationKey) -> Option<&mut Incarceration> {
+        self.incarcerations.get_mut(id)
+    }
+
+    pub fn remove_incarceration(&mut self, id: IncarcerationKey) {
+        self.incarcerations.remove(id);
     }
 }

@@ -79,6 +79,16 @@ use crate::{
             null::{Null, NullResponse},
             schedule_job::{ScheduleJob, ScheduleJobResponse},
         },
+        incarceration::{
+            create_incarceration::{CreateIncarceration, CreateIncarcerationResponse},
+            release_incarceration::{ReleaseIncarceration, ReleaseIncarcerationResponse},
+            update_prison_channel::{UpdatePrisonChannel, UpdatePrisonChannelResponse},
+        },
+        kidnapping::{
+            create_kidnapping::{CreateKidnapping, CreateKidnappingResponse},
+            release_kidnapping::{ReleaseKidnapping, ReleaseKidnappingResponse},
+            update_kidnap_channels::{UpdateKidnapChannels, UpdateKidnapChannelsResponse},
+        },
         notebook::{
             add_notebook::{AddNotebook, AddNotebookResponse},
             create_and_give_notebook::{CreateAndGiveNotebook, CreateAndGiveNotebookResponse},
@@ -105,11 +115,6 @@ use crate::{
             poll_timeout::{PollTimeout, PollTimeoutResponse},
             remove_vote::{RemoveVote, RemoveVoteResponse},
             update_polls::{UpdatePolls, UpdatePollsResponse},
-        },
-        kidnapping::{
-            create_kidnapping::{CreateKidnapping, CreateKidnappingResponse},
-            release_kidnapping::{ReleaseKidnapping, ReleaseKidnappingResponse},
-            update_kidnap_channels::{UpdateKidnapChannels, UpdateKidnapChannelsResponse},
         },
         prosecution::{
             advance_prosecution::{AdvanceProsecution, AdvanceProsecutionResponse},
@@ -146,6 +151,7 @@ pub mod actor;
 pub mod chargepool;
 pub mod comms;
 pub mod engine;
+pub mod incarceration;
 pub mod kidnapping;
 pub mod notebook;
 pub mod passive;
@@ -215,6 +221,7 @@ pub enum ActionError {
     LawyerAlreadySelected,
     CannotBeOwnLawyer,
     KidnappingNotFound,
+    IncarcerationNotFound,
     ActorHasStrengthenedPresence,
 }
 
@@ -343,6 +350,9 @@ pub enum Action {
     CreateKidnapping(CreateKidnapping),
     ReleaseKidnapping(ReleaseKidnapping),
     UpdateKidnapChannels(UpdateKidnapChannels),
+    UpdatePrisonChannel(UpdatePrisonChannel),
+    CreateIncarceration(CreateIncarceration),
+    ReleaseIncarceration(ReleaseIncarceration),
 }
 
 pub enum ActionResponse {
@@ -438,6 +448,9 @@ pub enum ActionResponse {
     CreateKidnapping(CreateKidnappingResponse),
     ReleaseKidnapping(ReleaseKidnappingResponse),
     UpdateKidnapChannels(UpdateKidnapChannelsResponse),
+    UpdatePrisonChannel(UpdatePrisonChannelResponse),
+    CreateIncarceration(CreateIncarcerationResponse),
+    ReleaseIncarceration(ReleaseIncarcerationResponse),
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]

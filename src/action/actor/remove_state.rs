@@ -10,6 +10,7 @@ use crate::{
             bug::update_bug_visibilities::UpdateBugVisibilities,
             update_contact_channels::UpdateContactChannels,
         },
+        incarceration::update_prison_channel::UpdatePrisonChannel,
         kidnapping::update_kidnap_channels::UpdateKidnapChannels,
         prosecution::cull_prosecutions::CullProsecutions,
         world::update_world_channel_perms::UpdateWorldChannelPerms,
@@ -63,8 +64,12 @@ impl ActionInterface for RemoveState {
         Action::UpdateKidnapChannels(UpdateKidnapChannels {})
             .handle(eng, ctx, actor, version, mutate)?;
 
-        Action::CullProsecutions(CullProsecutions {})
-            .handle(eng, ctx, actor, version, mutate)?;
+        Action::CullProsecutions(CullProsecutions {}).handle(eng, ctx, actor, version, mutate)?;
+
+        Action::UpdatePrisonChannel(UpdatePrisonChannel {
+            actor_id: self.actor_id,
+        })
+        .handle(eng, ctx, actor, version, mutate)?;
 
         Ok(ActionResponse::RemoveState(RemoveStateResponse {}))
     }

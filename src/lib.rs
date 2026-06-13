@@ -118,6 +118,7 @@ mod config;
 mod engine;
 mod groupchat;
 mod helpers;
+mod incarceration;
 mod kidnapping;
 mod lounge;
 mod notebook;
@@ -133,21 +134,13 @@ pub use common::{
     LoungeKey, NotebookKey, PassiveKey, PollKey, ProsecutionKey, Time,
 };
 
-// most of what remains within the engine are small tasks
-// the most difficult one here is defining and managing the frontend communication protocol
-// as well as the prosecution system
-// kidnappings are trivial, but they do need their own stateful objects because they can directly
-// interacted with and have their own channels
-// a minimal frontend can likely be implemented with what has been written so far, but it is
-// probably best to finish the engine first
-
 // TODO:
 // - Add destroy actions for the different kinds of objects (actors will be the final destroyable objects. they may get very messy.)
+// - Things like kidnappings, prosecutions, and incarcerations should be released/terminated if the
+// source ability (if applicable) is destroyed.
 // - Go through everything and implement frontend commands
-// - Implement prosecution and custody system
-// - Implement kidnapping
+// - Test prosecution system
 // - Implement world initialization and iteration progression
-// - Write the test cases that depend on the new systems being implemented
 // - Begin implementing every ability and write tests for them
 // - Write extensive integration tests
 // - Write yagami

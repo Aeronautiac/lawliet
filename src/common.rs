@@ -13,6 +13,7 @@ new_key_type! {
     pub struct BugKey;
     pub struct ProsecutionKey;
     pub struct KidnappingKey;
+    pub struct IncarcerationKey;
 }
 
 pub type ID = usize; // host-inserted frontend identifiers (e.g. OverrideSource::Manual)

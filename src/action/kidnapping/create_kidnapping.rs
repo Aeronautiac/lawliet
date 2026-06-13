@@ -3,20 +3,19 @@
 * Kidnap a player: create the kidnapping object, channel, and apply State::Kidnapped.
 *
 * Preconditions:
-* - kidnapper exists
 * - victim exists, is a player, does not have NoPresence, does not have StrengthenedPresence
+* - if source is Ability, that ability must exist
 *
 * On execution:
 * - create channel (loggable)
-* - add victim to channel (Send | View, displayed as Raw)
 * - AddState(victim, State::Kidnapped)
 * - store Kidnapping in world
+* - UpdateKidnapChannels (sets victim + ability-owner-side perms)
 *
 * TODO: commands
 */
 
 use crate::{
-    ActorKey,
     action::{
         Action, ActionActor, ActionContext, ActionError, ActionInterface, ActionResponse,
         ActionResult,
@@ -26,10 +25,10 @@ use crate::{
     },
     actor::modifier::Modifier,
     actor::state::State,
-    common::{KidnappingKey, Version},
+    common::{ActorKey, KidnappingKey, Version},
     engine::Engine,
-    helpers::{get_actor, require_player},
-    kidnapping::{Kidnapping, KidnappingType},
+    helpers::{get_ability, get_actor, require_player},
+    kidnapping::{Kidnapping, KidnappingSource, KidnappingType},
 };
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -39,9 +38,9 @@ pub struct CreateKidnappingResponse {
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CreateKidnapping {
-    pub kidnapper_id: ActorKey,
     pub victim_id: ActorKey,
     pub kidnapping_type: KidnappingType,
+    pub source: KidnappingSource,
 }
 
 impl ActionInterface for CreateKidnapping {
@@ -55,7 +54,10 @@ impl ActionInterface for CreateKidnapping {
     ) -> ActionResult {
         actor.admin_or_system()?;
 
-        get_actor(eng, self.kidnapper_id)?;
+        if let KidnappingSource::Ability(ab) = self.source {
+            get_ability(eng, ab)?;
+        }
+
         require_player(eng, self.victim_id)?;
 
         let victim = get_actor(eng, self.victim_id).expect("already validated");
@@ -89,7 +91,7 @@ impl ActionInterface for CreateKidnapping {
                 victim: self.victim_id,
                 channel_id,
                 kidnapping_type: self.kidnapping_type,
-                kidnapper: self.kidnapper_id,
+                source: self.source,
             })
         } else {
             KidnappingKey::default()
